@@ -8,23 +8,146 @@
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #43cea2, #185a9d);
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .logo-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+    }
+
+    .logo-container img {
+      height: 60px;
+      width: auto;
+    }
+
+    .container {
+      text-align: center;
+      padding: 20px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .subject-section {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 40px;
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+      max-width: 900px;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .subject-section h2 {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .grade-display {
+      font-size: 1.5rem;
+      margin-bottom: 30px;
+      font-weight: 600;
+      color: #ffeba7;
+    }
+
+    .subject-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      padding-top: 20px;
+    }
+
+    .subject-buttons button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      padding: 20px;
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 15px;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .subject-buttons button i {
+      font-size: 1.5rem;
+    }
+
+    .subject-buttons button:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .back-button {
+      margin-top: 30px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      border-radius: 30px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .back-button:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-radius: 20px 20px 0 0;
+      margin-top: 20px;
+    }
+  </style>
 </head>
 
 <body>
   <div class="logo-container">
-    <img src="moe-logo.webp" alt="Ministry of Education Logo">
+    <img src="moe-logo.webp" alt="Logo" />
   </div>
 
-  <div id="main-content">
-    <section id="subjects-page">
-      <button class="back-button" onclick="goBackToGradesPage()">
-        <i class="fas fa-arrow-left"></i> Back to Grades
-      </button>
-      <h2><i class="fas fa-book-open"></i> Select a Subject for <span id="grade-display"></span></h2>
-      <div class="subject-list">
-        <button onclick="navigateToSubjectPage('mathematics')"><i class="fas fa-square-root-alt"></i> Mathematics</button>
-        <button onclick="navigateToSubjectPage('english')"><i class="fas fa-language"></i> English</button>
+  <div class="container">
+    <section class="subject-section">
+      <h2 id="grade-title">Select a Subject for <span id="grade-display"></span></h2>
+      <div class="subject-buttons">
+        <button onclick="navigateToSubjectPage('mathematics')"><i class="fas fa-calculator"></i> Mathematics</button>
+        <button onclick="navigateToSubjectPage('english')"><i class="fas fa-book"></i> English</button>
         <button onclick="navigateToSubjectPage('kiswahili')"><i class="fas fa-comments"></i> Kiswahili</button>
         <button onclick="navigateToSubjectPage('integrated-science')"><i class="fas fa-flask"></i> Integrated Science</button>
         <button onclick="navigateToSubjectPage('social-studies')"><i class="fas fa-globe-americas"></i> Social Studies</button>
@@ -45,14 +168,14 @@
       window.location.href = "note.html?subject=" + encodeURIComponent(subject);
     }
 
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
       const grade = localStorage.getItem('selectedGrade') || 'Unknown Grade';
       document.getElementById('grade-display').textContent = grade;
     });
   </script>
 
   <footer>
-    <p>Copyright &copy; Sparkminds</p>
+    <p>&copy; 2024 Creative Learning. All rights reserved.</p>
   </footer>
 </body>
 
