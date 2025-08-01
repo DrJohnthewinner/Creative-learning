@@ -28,10 +28,9 @@
       align-items: center;
       padding: 20px;
       background-attachment: fixed;
-      position: relative; /* Added for logo positioning */
+      position: relative;
     }
 
-    /* Logo positioned absolutely at top left */
     .moe-logo {
       position: absolute;
       top: 20px;
@@ -48,12 +47,19 @@
       width: 100%;
       max-width: 1000px;
       animation: fadeIn 1s ease-in-out;
-      padding-top: 80px; /* Added space for the logo */
+      padding-top: 80px;
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     #notes-page {
@@ -229,6 +235,36 @@
       margin-bottom: 10px;
     }
 
+    .error-state {
+      text-align: center;
+      padding: 50px;
+      color: #fff;
+      font-size: 1.1rem;
+    }
+
+    .error-state i {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .retry-button {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50px;
+      padding: 10px 20px;
+      cursor: pointer;
+      margin-top: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .retry-button:hover {
+      background: #fff;
+      color: #6a82fb;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
     .footer {
       width: 100%;
       padding: 20px;
@@ -283,8 +319,15 @@
     }
 
     @keyframes slideUp {
-      from { transform: translateY(30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .note-topic {
@@ -404,7 +447,6 @@
 </head>
 
 <body>
-  <!-- Ministry of Education Logo at top left -->
   <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
 
   <div id="main-content">
@@ -416,10 +458,8 @@
       <h2 id="subject-title"><i class="fas fa-book"></i> Notes for <span id="subject-name"></span> (<span
           id="grade-display"></span>)</h2>
 
-      <div id="subject-notes-area" class="loading-state">
-        <i class="fas fa-spinner fa-spin"></i>
-        <p>Loading notes...</p>
-      </div>
+      <div id="subject-notes-area">
+        </div>
     </section>
   </div>
 
@@ -429,7 +469,8 @@
         <a href="https://smart-mind1.netlify.app/admin.html" target="_blank" class="footer-link">&copy; Sparkminds</a>
       </p>
       <p>
-        For schemes and exams <a href="https://junior-sch.netlify.app" target="_blank" class="footer-button">Click Here</a>
+        For schemes and exams <a href="https://junior-sch.netlify.app" target="_blank" class="footer-button">Click
+          Here</a>
       </p>
     </div>
   </footer>
@@ -471,6 +512,14 @@
     });
 
     function loadSubjectNotes(subjectId, grade, notesArea) {
+      // Show loading state immediately
+      notesArea.innerHTML = `
+        <div class="loading-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <p>Loading notes...</p>
+        </div>
+      `;
+
       db.collection('notes')
         .where('subject', '==', subjectId)
         .where('grade', '==', grade)
@@ -532,7 +581,15 @@
         })
         .catch(error => {
           console.error("Error loading notes:", error);
-          notesArea.innerHTML = `<p>Error loading notes. Please try again later.</p>`;
+          notesArea.innerHTML = `
+            <div class="error-state">
+              <i class="fas fa-exclamation-triangle"></i>
+              <p>Error loading notes. Please try again later.</p>
+              <button class="retry-button" onclick="loadSubjectNotes('${subjectId}', '${grade}', document.getElementById('subject-notes-area'))">
+                <i class="fas fa-sync-alt"></i> Try Again
+              </button>
+            </div>
+          `;
         });
     }
 
@@ -546,4 +603,4 @@
     }
   </script>
 </body>
-</html>
+  </html>
