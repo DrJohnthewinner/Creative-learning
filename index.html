@@ -31,40 +31,41 @@
             animation: fadeIn 1s ease-in-out;
         }
         h1 {
-            font-size: 3rem;
-            margin-bottom: 10px;
             font-weight: 700;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
         p {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             margin-bottom: 30px;
             line-height: 1.6;
-            font-weight: 400;
         }
         .button-group {
             display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 30px;
         }
         .action-button {
             display: inline-block;
             padding: 15px 30px;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: #fff;
+            border-radius: 50px;
+            background: #fff;
+            color: #6a82fb;
+            font-size: 1.3rem;
+            font-weight: 700;
             text-decoration: none;
-            background: linear-gradient(45deg, #fc5c7d, #6a82fb);
-            border-radius: 30px;
-            border: none;
-            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
         }
         .action-button:hover {
-            transform: translateY(-5px);
-            /* Add a more impressive hover for multiple buttons */
+            background: #fc5c7d;
+            color: #fff;
+            transform: translateY(-5px) scale(1.03);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
         @keyframes fadeIn {
@@ -72,7 +73,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Responsive Adjustments */
         @media (max-width: 600px) {
             .container {
                 padding: 30px 20px;
@@ -108,8 +108,8 @@
         <h1>Welcome to Creative Learning!</h1>
         <p>Embark on an exciting journey of knowledge and discovery. Our platform is designed to make learning engaging and fun for students of all grades.</p>
         <div class="button-group">
-            <a href="landing.html" class="action-button">Learn via Notes</a>
-            <a href="#" class="action-button">Take a Quiz</a>
+            <a href="landing.html" class="action-button">Learn via Smart Mind</a>
+            <a href="https://junior-sch.netlify.app" target="_blank" class="action-button">Download Schemes and Assessments</a>
         </div>
     </div>
 </body>
