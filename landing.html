@@ -125,4 +125,212 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(0, 0, 0,
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .grade-list button:hover {
+      background: #fff;
+      color: #6a82fb;
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(106, 130, 251, 0.5);
+    }
+
+    .home-button {
+      margin-top: 25px;
+      padding: 12px 25px;
+      border: none;
+      border-radius: 50px;
+      background: rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .home-button:hover {
+      background: #fff;
+      color: #fc5c7d;
+      transform: translateY(-3px);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .footer {
+      margin-top: 30px;
+      padding: 15px;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 0.95rem;
+      text-align: center;
+      width: 100%;
+      text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    @media (max-width: 550px) {
+      #grade-selection {
+        padding: 30px 20px;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+        gap: 10px;
+      }
+
+      h1 .fas {
+        font-size: 2rem;
+      }
+
+      .inspiration-message {
+        font-size: 1rem;
+        padding: 15px;
+      }
+
+      .grade-list button {
+        font-size: 1.1rem;
+        padding: 15px 25px;
+      }
+
+      .moe-logo {
+        height: 40px;
+        top: 15px;
+        left: 15px;
+      }
+
+      #main-content {
+        padding-top: 70px;
+      }
+    }
+
+    @media (max-width: 380px) {
+      h1 {
+        font-size: 1.8rem;
+      }
+      h1 .fas {
+        font-size: 1.6rem;
+      }
+      .inspiration-message {
+        font-size: 0.9rem;
+      }
+      .grade-list button {
+        font-size: 1rem;
+        padding: 12px 20px;
+      }
+
+      .moe-logo {
+        height: 35px;
+        top: 10px;
+        left: 10px;
+      }
+
+      #main-content {
+        padding-top: 60px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
+
+  <div id="main-content">
+    <section id="grade-selection">
+      <h1><i class="fas fa-graduation-cap"></i> Select Your Grade</h1>
+      <div class="inspiration-message">
+        "Every step you take in learning builds a stronger future. Embrace the journey of discovery!"
+      </div>
+      <div class="grade-list">
+        <button onclick="selectGrade('Grade 7')">Grade 7</button>
+        <button onclick="selectGrade('Grade 8')">Grade 8</button>
+        <button onclick="selectGrade('Grade 9')">Grade 9</button>
+      </div>
+      <button class="home-button" onclick="window.location.href='index.html'">
+        <i class="fas fa-home"></i> Go back to home page
+      </button>
+    </section>
+  </div>
+
+  <script src="script.js"></script>
+  <footer class="footer">
+    <div class="footer-container">
+      <p>
+        <a href="https://smart-mind1.netlify.app/admin.html" target="_blank" style="color: rgba(255, 255, 255, 0.7); text-decoration: none;">&copy; Sparkminds</a>
+      </p>
+      <p>
+        For schemes and exams <a href="https://junior-sch.netlify.app" target="_blank" class="footer-button">Click Here</a>
+      </p>
+    </div>
+  </footer>
+
+  <style>
+    .footer {
+      width: 100%;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      border-radius: 20px 20px 0 0;
+      animation: slideUp 1s ease-in-out;
+    }
+
+    .footer-container {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .footer-link {
+      color: rgba(255, 255, 255, 0.8);
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s;
+    }
+
+    .footer-link:hover {
+      color: #fc5c7d;
+    }
+
+    .footer-button {
+      display: inline-block;
+      padding: 10px 20px;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+    }
+
+    .footer-button:hover {
+      background: #fff;
+      color: #6a82fb;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(106, 130, 251, 0.5);
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+  </style>
+</body>
+</html>
