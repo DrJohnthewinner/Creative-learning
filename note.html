@@ -29,8 +29,10 @@
       padding: 20px;
       background-attachment: fixed;
       position: relative;
+      /* Added for logo positioning */
     }
 
+    /* Logo positioned absolutely at top left */
     .moe-logo {
       position: absolute;
       top: 20px;
@@ -48,11 +50,19 @@
       max-width: 1000px;
       animation: fadeIn 1s ease-in-out;
       padding-top: 80px;
+      /* Added space for the logo */
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     #notes-page {
@@ -282,8 +292,15 @@
     }
 
     @keyframes slideUp {
-      from { transform: translateY(30px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
     }
 
     .note-topic {
@@ -300,6 +317,27 @@
       color: rgba(255, 255, 255, 0.8);
       margin-top: 3px;
       font-style: italic;
+    }
+
+    .download-button {
+      display: block;
+      margin-top: 15px;
+      padding: 10px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      border-radius: 5px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .download-button:hover {
+      background: #fff;
+      color: #6a82fb;
+      transform: scale(1.05);
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
 
     @media (max-width: 768px) {
@@ -427,7 +465,8 @@
         <a href="https://smart-mind1.netlify.app/admin.html" target="_blank" class="footer-link">&copy; Sparkminds</a>
       </p>
       <p>
-        For schemes and exams <a href="https://junior-sch.netlify.app" target="_blank" class="footer-button">Click Here</a>
+        For schemes and exams <a href="https://junior-sch.netlify.app" target="_blank" class="footer-button">Click
+          Here</a>
       </p>
     </div>
   </footer>
@@ -521,6 +560,7 @@
                   <div class="note-content">${note.content}</div>
                   ${fileDisplay}
                   <small>Posted: ${date}</small>
+                  <button class="download-button" onclick="downloadNote(this)">Download Note</button>
                 </div>
               </li>
             `;
@@ -542,6 +582,30 @@
         details.style.display = 'block';
       }
     }
+
+    // This function will handle the downloading of the note content
+    function downloadNote(buttonElement) {
+        const noteItem = buttonElement.closest('.note-item');
+        const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
+        const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
+
+        // Create the content for the text file
+        const fileContent = `Topic: ${topic}\nSubtopic: ${subTopic}`;
+
+        // Create a Blob with the content
+        const blob = new Blob([fileContent], { type: 'text/plain' });
+
+        // Create a link element to trigger the download
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = `Note_${topic.replace(/\s/g, '_')}.txt`;
+
+        // Append the link to the body and click it to start the download
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
   </script>
 </body>
+
 </html>
