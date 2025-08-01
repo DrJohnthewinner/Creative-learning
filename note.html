@@ -8,6 +8,8 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Add PDF.js library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
@@ -228,6 +230,70 @@
       margin-bottom: 10px;
     }
 
+    /* PDF Preview Styles */
+    .pdf-preview-container {
+      margin-top: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 10px;
+      background: rgba(0, 0, 0, 0.2);
+    }
+
+    .pdf-preview {
+      width: 100%;
+      height: 500px;
+      overflow-y: auto;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 5px;
+      margin-bottom: 10px;
+    }
+
+    .pdf-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+    }
+
+    .pdf-page-navigator {
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pdf-page-navigator button {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .pdf-page-navigator button:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    .pdf-scale-controls {
+      display: flex;
+      gap: 5px;
+    }
+
+    .pdf-scale-controls button {
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
     .footer {
       width: 100%;
       padding: 20px;
@@ -342,6 +408,10 @@
       #main-content {
         padding-top: 70px;
       }
+
+      .pdf-preview {
+        height: 400px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -398,6 +468,15 @@
       #main-content {
         padding-top: 60px;
       }
+
+      .pdf-preview {
+        height: 300px;
+      }
+
+      .pdf-controls {
+        flex-direction: column;
+        gap: 10px;
+      }
     }
   </style>
 </head>
@@ -433,6 +512,10 @@
   </footer>
 
   <script>
+    // Initialize PDF.js worker
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.11.338/pdf.worker.min.js';
+
     const firebaseConfig = {
       apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
       authDomain: "creative-learning-f2252.firebaseapp.com",
@@ -447,6 +530,9 @@
     const SUPABASE_URL = 'https://jjqbpiujwmlfgztpinyp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcWJwaXVqd21sZmd6dHBpbnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTA3MzgsImV4cCI6MjA2NDk2NjczOH0.YOUR_ACTUAL_ANON_KEY_HERE';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Cache for PDF documents
+    const pdfCache = {};
 
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
@@ -492,10 +578,30 @@
             if (note.fileUrl) {
               if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
                 fileDisplay = `
-                  <a href="${note.fileUrl}" target="_blank" class="file-link">
-                    <i class="fas fa-file-pdf"></i> View PDF
-                  </a>
+                  <div class="pdf-preview-container">
+                    <p><strong>PDF Preview:</strong></p>
+                    <div class="pdf-preview" id="pdf-preview-${noteId}">
+                      <p>Loading PDF preview...</p>
+                    </div>
+                    <div class="pdf-controls">
+                      <a href="${note.fileUrl}" target="_blank" class="file-link">
+                        <i class="fas fa-download"></i> Download Full PDF
+                      </a>
+                      <div class="pdf-page-navigator">
+                        <button onclick="changePdfPage('${noteId}', -1)"><i class="fas fa-chevron-left"></i></button>
+                        <span id="pdf-page-num-${noteId}">Page 1</span>
+                        <button onclick="changePdfPage('${noteId}', 1)"><i class="fas fa-chevron-right"></i></button>
+                      </div>
+                      <div class="pdf-scale-controls">
+                        <button onclick="changePdfScale('${noteId}', 0.8)">-</button>
+                        <button onclick="changePdfScale('${noteId}', 1.2)">+</button>
+                      </div>
+                    </div>
+                  </div>
                 `;
+                
+                // Load the PDF after the element is rendered
+                setTimeout(() => loadPdfPreview(noteId, note.fileUrl), 100);
               } else if (note.fileType?.startsWith('image/')) {
                 fileDisplay = `
                   <div>
@@ -534,12 +640,78 @@
         });
     }
 
+    // PDF Preview Functions
+    async function loadPdfPreview(noteId, url) {
+      const container = document.getElementById(`pdf-preview-${noteId}`);
+      try {
+        const loadingTask = pdfjsLib.getDocument(url);
+        const pdf = await loadingTask.promise;
+        
+        pdfCache[noteId] = {
+          pdf,
+          currentPage: 1,
+          totalPages: pdf.numPages,
+          scale: 1.0
+        };
+        
+        renderPdfPage(noteId);
+      } catch (error) {
+        container.innerHTML = `<p class="error">Failed to load PDF preview. <a href="${url}" target="_blank">Download instead</a></p>`;
+      }
+    }
+
+    async function renderPdfPage(noteId) {
+      const { pdf, currentPage, scale } = pdfCache[noteId];
+      const container = document.getElementById(`pdf-preview-${noteId}`);
+      const page = await pdf.getPage(currentPage);
+      const viewport = page.getViewport({ scale });
+      
+      // Prepare canvas
+      container.innerHTML = `<canvas id="pdf-canvas-${noteId}"></canvas>`;
+      const canvas = document.getElementById(`pdf-canvas-${noteId}`);
+      const context = canvas.getContext('2d');
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+      
+      // Render PDF page
+      await page.render({
+        canvasContext: context,
+        viewport
+      }).promise;
+      
+      // Update page indicator
+      document.getElementById(`pdf-page-num-${noteId}`).textContent = 
+        `Page ${currentPage} of ${pdfCache[noteId].totalPages}`;
+    }
+
+    function changePdfPage(noteId, delta) {
+      const data = pdfCache[noteId];
+      const newPage = data.currentPage + delta;
+      
+      if (newPage > 0 && newPage <= data.totalPages) {
+        data.currentPage = newPage;
+        renderPdfPage(noteId);
+      }
+    }
+
+    function changePdfScale(noteId, factor) {
+      const data = pdfCache[noteId];
+      data.scale *= factor;
+      renderPdfPage(noteId);
+    }
+
     function toggleNote(noteId) {
       const details = document.getElementById(`details-${noteId}`);
       if (details.style.display === 'block') {
         details.style.display = 'none';
       } else {
         details.style.display = 'block';
+        // If this note has a PDF, ensure it's loaded when expanded
+        const pdfContainer = details.querySelector('.pdf-preview-container');
+        if (pdfContainer && !pdfCache[noteId]) {
+          const pdfUrl = pdfContainer.querySelector('a.file-link').href;
+          loadPdfPreview(noteId, pdfUrl);
+        }
       }
     }
   </script>
