@@ -319,6 +319,14 @@
       font-style: italic;
     }
 
+    .note-main-title {
+        display: block;
+        font-size: 1.2em;
+        font-weight: 700;
+        color: #fff;
+        margin-top: 10px;
+    }
+
     .download-button {
       display: block;
       margin-top: 15px;
@@ -461,9 +469,14 @@
 
   <footer class="footer">
     <div class="footer-container">
+      <p>Copyright Creative Learning</p>
       <p>Creative Learning is owned by Pope John</p>
       <p>
-        <a href="https://smart-mind1.netlify.app/admin.html" target="_blank" class="footer-link">&copy; Creative Learning</a>
+        <a href="https://smart-mind1.netlify.app/admin.html" target="_blank" class="footer-link">&copy; Sparkminds</a>
+      </p>
+      <p>
+        For schemes and exams <a href="https://junior-sch.netlify.app" target="_blank" class="footer-button">Click
+          Here</a>
       </p>
     </div>
   </footer>
@@ -554,6 +567,7 @@
                   <span class="note-sub-topic">${note.subTopic || ''}</span>
                 </div>
                 <div id="details-${noteId}" class="note-details">
+                  <span class="note-main-title">${note.noteTitle || ''}</span>
                   <div class="note-content">${note.content}</div>
                   ${fileDisplay}
                   <small>Posted: ${date}</small>
@@ -585,10 +599,11 @@
         const noteItem = buttonElement.closest('.note-item');
         const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
         const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
+        const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
         const noteContent = noteItem.querySelector('.note-content').textContent.trim();
 
-        // Create the content for the text file, now including the note's content
-        const fileContent = `Topic: ${topic}\nSubtopic: ${subTopic}\n\nContent:\n${noteContent}`;
+        // Create the content for the text file, now including the note's title and content
+        const fileContent = `Topic: ${topic}\nSubtopic: ${subTopic}\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`;
 
         // Create a Blob with the content
         const blob = new Blob([fileContent], { type: 'text/plain' });
