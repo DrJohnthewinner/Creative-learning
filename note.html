@@ -671,6 +671,7 @@
                 const topic = note.noteTopic?.toLowerCase() || '';
                 const subTopic = note.subTopic?.toLowerCase() || '';
                 const title = note.noteTitle?.toLowerCase() || '';
+                // Check if search query is in the raw HTML content
                 const content = note.content?.toLowerCase() || '';
                 
                 return topic.includes(query) || 
@@ -699,7 +700,7 @@
         const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
         const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
         const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
-        const noteContent = noteItem.querySelector('.note-content').textContent.trim();
+        const noteContentHTML = noteItem.querySelector('.note-content').innerHTML;
 
         // Initialize jsPDF
         const doc = new jsPDF();
@@ -734,13 +735,36 @@
             y += lineHeight * 2; // Add more space after title
         }
 
-        // Add content
+        // Add content - Now with support for colored text from spans
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
-        doc.setTextColor(0, 0, 0); // Reset to black for content
         
-        const contentLines = doc.splitTextToSize(noteContent, pageWidth - 2 * margin);
-        doc.text(contentLines, margin, y);
+        // This regex finds all text, including spans with colors
+        const regex = /<span\s+style="color:(.*?);">(.*?)<\/span>|([^<]+)/g;
+        let match;
+        let lastIndex = 0;
+        
+        // Loop through the content and add text
+        while ((match = regex.exec(noteContentHTML)) !== null) {
+            let color, text;
+            if (match[1] && match[2]) {
+                // We found a colored span
+                color = match[1];
+                text = match[2];
+                doc.setTextColor(color);
+            } else if (match[3]) {
+                // We found uncolored text
+                doc.setTextColor(0, 0, 0); // Reset to black
+                text = match[3];
+            } else {
+                continue;
+            }
+
+            // Split the text into lines
+            const lines = doc.splitTextToSize(text, pageWidth - 2 * margin);
+            doc.text(lines, margin, y);
+            y += lines.length * lineHeight;
+        }
 
         // Save the PDF
         const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
@@ -749,4 +773,4 @@
   </script>
 </body>
 
-</html>
+  </html>
