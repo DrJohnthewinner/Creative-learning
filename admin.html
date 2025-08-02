@@ -13,14 +13,17 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
+    /* Global Resets */
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
+    /* Body Styling - Consistent Background and Layout */
     body {
       font-family: 'Poppins', sans-serif;
+      /* A darker background for the admin panel */
       background: linear-gradient(135deg, #1a2a3a, #0a1a2a);
       color: #ecf0f1;
       min-height: 100vh;
@@ -32,6 +35,7 @@
       position: relative;
     }
 
+    /* Main Content Area */
     #main-content {
       flex-grow: 1;
       display: flex;
@@ -55,6 +59,7 @@
       border: 1px solid rgba(255, 255, 255, 0.18);
     }
 
+    /* Card Styling */
     .card {
       background: rgba(255, 255, 255, 0.08);
       border-radius: 12px;
@@ -66,6 +71,7 @@
       transform: translateY(20px);
       pointer-events: none;
       display: none;
+      /* Hidden by default */
     }
 
     .card.active {
@@ -73,6 +79,7 @@
       transform: translateY(0);
       pointer-events: auto;
       display: block;
+      /* Shown when active */
     }
 
     .card h2 {
@@ -81,6 +88,7 @@
       font-weight: 600;
     }
 
+    /* Form Elements */
     input[type="email"],
     input[type="password"],
     input[type="text"],
@@ -124,6 +132,7 @@
       padding-right: 30px;
     }
 
+    /* Buttons */
     button {
       background: #4CAF50;
       color: white;
@@ -160,12 +169,14 @@
       background: #d32f2f;
     }
 
+    /* Error Message */
     .error {
       color: #ffeb3b;
       margin-top: 15px;
       font-size: 0.9rem;
     }
 
+    /* Note List and Items */
     .note-list {
       margin-top: 30px;
       background: rgba(255, 255, 255, 0.05);
@@ -230,6 +241,7 @@
       background-color: #D32F2F;
     }
 
+    /* Loading state */
     .loading-state {
       text-align: center;
       padding: 30px;
@@ -246,6 +258,7 @@
       font-size: 1.1rem;
     }
 
+    /* File Link */
     .file-link {
       color: #03a9f4;
       text-decoration: none;
@@ -271,6 +284,7 @@
       margin-left: 10px;
     }
 
+    /* Footer */
     .footer {
       margin-top: 30px;
       text-align: center;
@@ -288,6 +302,7 @@
       color: #4CAF50;
     }
 
+    /* Responsive Design */
     @media (max-width: 768px) {
       .container {
         padding: 15px;
@@ -311,9 +326,11 @@
 
       .note-item .actions button {
         margin: 0 0 0 10px;
+        /* Adjust margin for mobile buttons */
       }
     }
 
+    /* Custom Message Styling */
     .custom-message {
       position: fixed;
       top: 20px;
@@ -330,19 +347,23 @@
 
     .custom-message.success {
       background-color: #4CAF50;
+      /* Green */
       color: #fff;
     }
 
     .custom-message.error {
       background-color: #F44336;
+      /* Red */
       color: #fff;
     }
 
     .custom-message.info {
       background-color: #2196F3;
+      /* Blue */
       color: #fff;
     }
 
+    /* Keyframes for custom message */
     @keyframes slideIn {
       from {
         top: 0px;
@@ -365,6 +386,7 @@
       }
     }
 
+    /* Added styles for info and error messages within the note-list */
     p.info-message,
     p.error-message {
       color: rgba(255, 255, 255, 0.8);
@@ -401,6 +423,7 @@
         <form id="note-form">
           <input type="text" id="note-topic" placeholder="Note Topic (e.g., Algebra)" required>
           <input type="text" id="sub-topic" placeholder="Sub Topic (e.g., Quadratic Equations)" required>
+          <input type="text" id="note-title" placeholder="Note Title" required>
           <textarea id="content" rows="4" placeholder="Note Content" required></textarea>
 
           <select id="subject" required>
@@ -439,6 +462,7 @@
   </footer>
 
   <script>
+    // Firebase Config
     const firebaseConfig = {
       apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
       authDomain: "creative-learning-f2252.firebaseapp.com",
@@ -451,10 +475,12 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
+    // Supabase Config
     const SUPABASE_URL = 'https://jjqbpiujwmlfgztpinyp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcWJwaXVqd21sZmd6dHBpbnlwIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTM5MDczOCwiZXhwIjoyMDY0OTY2NzM4fQ.Jo9Mid8gRnhzMBeY_JN58aGwXHsC-0PfD_LwD292wyk';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    // DOM Elements
     const loginSection = document.getElementById('login-section');
     const dashboardSection = document.getElementById('dashboard-section');
     const loginError = document.getElementById('login-error');
@@ -466,11 +492,13 @@
     let editingNoteId = null;
     let currentFileUrl = null;
 
+    // Auth State Listener
     auth.onAuthStateChanged(user => {
       if (user) showDashboard();
       else showLogin();
     });
 
+    // Authentication Functions
     function login() {
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
@@ -502,24 +530,27 @@
       loadNotes();
     }
 
+    // Note Management Functions
     noteForm.addEventListener('submit', async function(e) {
       e.preventDefault();
 
       const noteTopic = document.getElementById('note-topic').value.trim();
       const subTopic = document.getElementById('sub-topic').value.trim();
+      const noteTitle = document.getElementById('note-title').value.trim();
       const content = document.getElementById('content').value.trim();
       const subject = document.getElementById('subject').value;
       const grade = document.getElementById('grade').value;
       const fileInput = document.getElementById('fileInput');
 
-      if (!noteTopic || !subTopic || !content || !subject || !grade) {
-        displayMessage('Please fill all required fields (Note Topic, Sub Topic, Content, Subject, Grade).', 'error');
+      if (!noteTopic || !subTopic || !noteTitle || !content || !subject || !grade) {
+        displayMessage('Please fill all required fields (Note Topic, Sub Topic, Note Title, Content, Subject, Grade).', 'error');
         return;
       }
 
       const noteData = {
         noteTopic,
         subTopic,
+        noteTitle,
         content,
         subject,
         grade,
@@ -613,7 +644,9 @@
             <div class="note-item" data-note-id="${doc.id}">
               <span>
                 <strong>${note.noteTopic}</strong><br>
-                <em>Sub Topic: ${note.subTopic || 'N/A'}</em><br> (${note.grade} - ${note.subject}) ${fileInfo}
+                <em>Sub Topic: ${note.subTopic || 'N/A'}</em><br>
+                <em>Title: ${note.noteTitle || 'N/A'}</em><br>
+                (${note.grade} - ${note.subject}) ${fileInfo}
               </span>
               <div class="actions">
                 <button class="edit-button" onclick="editNote('${doc.id}')">
@@ -640,6 +673,7 @@
         const note = doc.data();
         document.getElementById('note-topic').value = note.noteTopic || '';
         document.getElementById('sub-topic').value = note.subTopic || '';
+        document.getElementById('note-title').value = note.noteTitle || '';
         document.getElementById('content').value = note.content;
         document.getElementById('subject').value = note.subject;
         document.getElementById('grade').value = note.grade;
@@ -731,4 +765,5 @@
     }
   </script>
 </body>
+
 </html>
