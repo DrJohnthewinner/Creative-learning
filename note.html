@@ -290,7 +290,6 @@
       color: #6a82fb;
       transform: translateY(-3px) scale(1.05);
       box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(106, 130, 251, 0.5);
     }
 
     @keyframes slideUp {
@@ -705,7 +704,6 @@
       ] : [0, 0, 0];
     }
     
-    // This is the corrected function
     async function downloadNote(buttonElement) {
         const noteItem = buttonElement.closest('.note-item');
         const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
@@ -745,7 +743,7 @@
             doc.text(`Title: ${noteTitle}`, margin, y);
             y += lineHeight * 2;
         }
-
+        
         // Add Content (with HTML parsing and wrapping)
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(textFontSize);
@@ -760,16 +758,18 @@
         // Iterate through child nodes to correctly handle text and spans
         Array.from(tempDiv.childNodes).forEach(node => {
           if (node.nodeType === Node.TEXT_NODE) {
-            const text = node.nodeValue.trim();
-            if (text) {
-              const lines = doc.splitTextToSize(text, pageWidth - 2 * margin);
-              for (const line of lines) {
-                if (currentX !== margin) { // Handle wrapping from previous segment
-                    currentX = margin;
+            const text = node.nodeValue;
+            if (text.trim()) {
+              const lines = doc.splitTextToSize(text, pageWidth - currentX - margin);
+              if (lines.length > 0) {
+                doc.text(lines[0], currentX, y);
+                currentX += doc.getTextWidth(lines[0]);
+                for(let i = 1; i < lines.length; i++) {
                     y += lineHeight;
+                    currentX = margin;
+                    doc.text(lines[i], currentX, y);
+                    currentX += doc.getTextWidth(lines[i]);
                 }
-                doc.text(line, currentX, y);
-                y += lineHeight;
               }
             }
           } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
@@ -779,37 +779,16 @@
                 const rgb = hexToRgb(color);
                 doc.setTextColor(rgb[0], rgb[1], rgb[2]);
 
-                // Split the colored text to fit within the line and wrap
                 const words = spanText.split(/\s+/);
-                let currentLine = '';
                 for (const word of words) {
-                    if (currentLine) {
-                        const testLine = currentLine + ' ' + word;
-                        const testWidth = doc.getTextWidth(testLine);
-                        if (currentX + testWidth > pageWidth - margin) {
-                            // If the current line with the new word exceeds the width, print the current line
-                            doc.text(currentLine, currentX, y);
-                            currentX = margin; // Reset X for the new line
-                            y += lineHeight;
-                            currentLine = word; // Start a new line with the current word
-                        } else {
-                            currentLine = testLine; // Add the word to the current line
-                        }
-                    } else {
-                        const testWidth = doc.getTextWidth(word);
-                        if (currentX + testWidth > pageWidth - margin) {
-                            // If the first word of a span exceeds the line, start a new line
-                            currentX = margin;
-                            y += lineHeight;
-                            currentLine = word;
-                        } else {
-                            currentLine = word;
-                        }
+                    const wordWithSpace = word + ' ';
+                    const wordWidth = doc.getTextWidth(wordWithSpace);
+                    if (currentX + wordWidth > pageWidth - margin) {
+                        currentX = margin;
+                        y += lineHeight;
                     }
-                }
-                if (currentLine) {
-                    doc.text(currentLine, currentX, y);
-                    currentX += doc.getTextWidth(currentLine);
+                    doc.text(wordWithSpace, currentX, y);
+                    currentX += wordWidth;
                 }
             }
             // Reset color back to black after the span
