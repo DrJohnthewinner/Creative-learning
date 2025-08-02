@@ -694,7 +694,7 @@
         details.style.display = 'block';
       }
     }
-
+    
     // Function to convert hex to RGB
     function hexToRgb(hex) {
       const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -704,7 +704,8 @@
         parseInt(result[3], 16)
       ] : [0, 0, 0];
     }
-
+    
+    // This is the corrected function
     async function downloadNote(buttonElement) {
         const noteItem = buttonElement.closest('.note-item');
         const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
@@ -718,6 +719,7 @@
         const margin = 20;
         const lineHeight = 10;
         const pageWidth = doc.internal.pageSize.getWidth();
+        const textFontSize = 12;
 
         // Add Topic
         doc.setFont('helvetica', 'bold');
@@ -746,43 +748,70 @@
 
         // Add Content (with HTML parsing and wrapping)
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
+        doc.setFontSize(textFontSize);
         doc.setTextColor(0, 0, 0); // Default to black
         
         let currentX = margin;
         
-        // Create a temporary div to parse the HTML content
+        // Use a temporary div to parse the HTML content
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = noteContentHTML;
 
-        // Recursively traverse and print nodes
-        function processNode(node) {
+        // Iterate through child nodes to correctly handle text and spans
+        Array.from(tempDiv.childNodes).forEach(node => {
           if (node.nodeType === Node.TEXT_NODE) {
             const text = node.nodeValue.trim();
             if (text) {
-              const words = text.split(/\s+/);
-              words.forEach(word => {
-                const textWidth = doc.getTextWidth(word);
-                
-                // Check if adding the word will exceed the page width
-                if (currentX + textWidth > pageWidth - margin) {
-                  currentX = margin;
-                  y += lineHeight;
+              const lines = doc.splitTextToSize(text, pageWidth - 2 * margin);
+              for (const line of lines) {
+                if (currentX !== margin) { // Handle wrapping from previous segment
+                    currentX = margin;
+                    y += lineHeight;
                 }
-                
-                // Add the word to the document
-                doc.text(word + ' ', currentX, y);
-                currentX += doc.getTextWidth(word + ' ');
-              });
+                doc.text(line, currentX, y);
+                y += lineHeight;
+              }
             }
           } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
-            const colorMatch = node.style.color;
-            if (colorMatch) {
-              const rgb = hexToRgb(colorMatch);
-              doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+            const spanText = node.textContent;
+            const color = node.style.color;
+            if (spanText && color) {
+                const rgb = hexToRgb(color);
+                doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+
+                // Split the colored text to fit within the line and wrap
+                const words = spanText.split(/\s+/);
+                let currentLine = '';
+                for (const word of words) {
+                    if (currentLine) {
+                        const testLine = currentLine + ' ' + word;
+                        const testWidth = doc.getTextWidth(testLine);
+                        if (currentX + testWidth > pageWidth - margin) {
+                            // If the current line with the new word exceeds the width, print the current line
+                            doc.text(currentLine, currentX, y);
+                            currentX = margin; // Reset X for the new line
+                            y += lineHeight;
+                            currentLine = word; // Start a new line with the current word
+                        } else {
+                            currentLine = testLine; // Add the word to the current line
+                        }
+                    } else {
+                        const testWidth = doc.getTextWidth(word);
+                        if (currentX + testWidth > pageWidth - margin) {
+                            // If the first word of a span exceeds the line, start a new line
+                            currentX = margin;
+                            y += lineHeight;
+                            currentLine = word;
+                        } else {
+                            currentLine = word;
+                        }
+                    }
+                }
+                if (currentLine) {
+                    doc.text(currentLine, currentX, y);
+                    currentX += doc.getTextWidth(currentLine);
+                }
             }
-            processNode(node.firstChild);
-            
             // Reset color back to black after the span
             doc.setTextColor(0, 0, 0);
           } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') {
@@ -790,9 +819,7 @@
             currentX = margin;
             y += lineHeight;
           }
-        }
-        
-        processNode(tempDiv);
+        });
         
         // Save the PDF
         const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
