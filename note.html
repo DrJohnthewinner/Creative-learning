@@ -44,6 +44,7 @@
     #main-content {
       flex-grow: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
       width: 100%;
@@ -348,6 +349,53 @@
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
     }
 
+    .search-container {
+        width: 100%;
+        margin-bottom: 20px;
+        position: relative;
+    }
+    
+    #search-input {
+        width: 100%;
+        padding: 12px 40px 12px 20px;
+        border: none;
+        border-radius: 25px;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(5px);
+        -webkit-backdrop-filter: blur(5px);
+        box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    #search-input::placeholder {
+        color: rgba(255, 255, 255, 0.7);
+    }
+    
+    #search-input:focus {
+        outline: none;
+        background: rgba(255, 255, 255, 0.3);
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+    }
+    
+    .search-container i {
+        position: absolute;
+        right: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: rgba(255, 255, 255, 0.7);
+        pointer-events: none;
+        font-size: 1.1rem;
+    }
+
+    .no-results {
+        color: rgba(255, 255, 255, 0.8);
+        font-style: italic;
+        margin-top: 20px;
+        display: none; /* Hidden by default */
+    }
+
     @media (max-width: 768px) {
       #notes-page {
         padding: 30px 20px;
@@ -460,17 +508,30 @@
       <h2 id="subject-title"><i class="fas fa-book"></i> Notes for <span id="subject-name"></span> (<span
           id="grade-display"></span>)</h2>
 
+      <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search notes...">
+        <i class="fas fa-search"></i>
+      </div>
+
       <div id="subject-notes-area" class="loading-state">
         <i class="fas fa-spinner fa-spin"></i>
         <p>Loading notes...</p>
       </div>
+      
+      <p id="no-results" class="no-results">No notes match your search.</p>
     </section>
   </div>
 
   <footer class="footer">
     <div class="footer-container">
-     <p>&copy; 2025 Creative Learning.</p> 
+      <p>Copyright Creative Learning</p>
       <p>Creative Learning is owned by Pope John</p>
+      <p>
+        <a href="https://smart-mind1.netlify.app/admin.html" target="_blank" class="footer-link">&copy; Sparkminds</a>
+      </p>
+      <p>
+        For schemes and exams <a href="https://junior-sch.netlify.app" target="_blank" class="footer-button">Click
+          Here</a>
       </p>
     </div>
   </footer>
@@ -491,6 +552,8 @@
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcWJwaXVqd21sZmd6dHBpbnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTA3MzgsImV4cCI6MjA2NDk2NjczOH0.YOUR_ACTUAL_ANON_KEY_HERE';
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
+    let allNotes = []; // Store all notes to avoid repeated database calls
+
     document.addEventListener('DOMContentLoaded', () => {
       const urlParams = new URLSearchParams(window.location.search);
       const subjectId = urlParams.get('subject');
@@ -498,6 +561,7 @@
       const subjectNameElement = document.getElementById('subject-name');
       const gradeDisplay = document.getElementById('grade-display');
       const subjectNotesArea = document.getElementById('subject-notes-area');
+      const searchInput = document.getElementById('search-input');
 
       if (subjectId) {
         const displaySubjectName = subjectId.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
@@ -509,6 +573,9 @@
         subjectNameElement.textContent = 'Unknown Subject';
         subjectNotesArea.innerHTML = '<p>No subject selected. Please go back and choose a subject.</p>';
       }
+
+      // Add event listener for the search input
+      searchInput.addEventListener('keyup', searchNotes);
     });
 
     function loadSubjectNotes(subjectId, grade, notesArea) {
@@ -523,60 +590,97 @@
             return;
           }
 
-          let notesHTML = '<ul class="note-list">';
-          querySnapshot.forEach(doc => {
-            const note = doc.data();
-            const noteId = doc.id;
-            const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
-              note.createdAt.toDate().toLocaleDateString() :
-              'Unknown date';
+          allNotes = querySnapshot.docs.map(doc => ({
+              id: doc.id,
+              ...doc.data()
+          }));
 
-            let fileDisplay = '';
-            if (note.fileUrl) {
-              if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
-                fileDisplay = `
-                  <a href="${note.fileUrl}" target="_blank" class="file-link">
-                    <i class="fas fa-file-pdf"></i> View PDF
-                  </a>
-                `;
-              } else if (note.fileType?.startsWith('image/')) {
-                fileDisplay = `
-                  <div>
-                    <img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')">
-                  </div>
-                `;
-              } else {
-                fileDisplay = `
-                  <a href="${note.fileUrl}" target="_blank" class="file-link">
-                    <i class="fas fa-file-download"></i> Download File
-                  </a>
-                `;
-              }
-            }
-
-            notesHTML += `
-              <li class="note-item">
-                <div class="note-title" onclick="toggleNote('${noteId}')">
-                  ${note.noteTopic}
-                  <span class="note-sub-topic">${note.subTopic || ''}</span>
-                </div>
-                <div id="details-${noteId}" class="note-details">
-                  <span class="note-main-title">${note.noteTitle || ''}</span>
-                  <div class="note-content">${note.content}</div>
-                  ${fileDisplay}
-                  <small>Posted: ${date}</small>
-                  <button class="download-button" onclick="downloadNote(this)">Download Note</button>
-                </div>
-              </li>
-            `;
-          });
-          notesHTML += '</ul>';
-          notesArea.innerHTML = notesHTML;
+          renderNotes(allNotes, notesArea);
         })
         .catch(error => {
           console.error("Error loading notes:", error);
           notesArea.innerHTML = `<p>Error loading notes. Please try again later.</p>`;
         });
+    }
+    
+    function renderNotes(notesToRender, notesArea) {
+        if (notesToRender.length === 0) {
+            document.getElementById('no-results').style.display = 'block';
+            notesArea.innerHTML = '';
+            return;
+        }
+
+        document.getElementById('no-results').style.display = 'none';
+        let notesHTML = '<ul class="note-list">';
+        notesToRender.forEach(note => {
+            const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
+                note.createdAt.toDate().toLocaleDateString() :
+                'Unknown date';
+
+            let fileDisplay = '';
+            if (note.fileUrl) {
+                if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
+                    fileDisplay = `
+                        <a href="${note.fileUrl}" target="_blank" class="file-link">
+                            <i class="fas fa-file-pdf"></i> View PDF
+                        </a>
+                    `;
+                } else if (note.fileType?.startsWith('image/')) {
+                    fileDisplay = `
+                        <div>
+                            <img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')">
+                        </div>
+                    `;
+                } else {
+                    fileDisplay = `
+                        <a href="${note.fileUrl}" target="_blank" class="file-link">
+                            <i class="fas fa-file-download"></i> Download File
+                        </a>
+                    `;
+                }
+            }
+
+            notesHTML += `
+                <li class="note-item">
+                    <div class="note-title" onclick="toggleNote('${note.id}')">
+                        ${note.noteTopic}
+                        <span class="note-sub-topic">${note.subTopic || ''}</span>
+                    </div>
+                    <div id="details-${note.id}" class="note-details">
+                        <span class="note-main-title">${note.noteTitle || ''}</span>
+                        <div class="note-content">${note.content}</div>
+                        ${fileDisplay}
+                        <small>Posted: ${date}</small>
+                        <button class="download-button" onclick="downloadNote(this)">Download Note</button>
+                    </div>
+                </li>
+            `;
+        });
+        notesHTML += '</ul>';
+        notesArea.innerHTML = notesHTML;
+    }
+
+    function searchNotes() {
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const notesArea = document.getElementById('subject-notes-area');
+
+        if (query.length > 0) {
+            const filteredNotes = allNotes.filter(note => {
+                const topic = note.noteTopic?.toLowerCase() || '';
+                const subTopic = note.subTopic?.toLowerCase() || '';
+                const title = note.noteTitle?.toLowerCase() || '';
+                const content = note.content?.toLowerCase() || '';
+                
+                return topic.includes(query) || 
+                       subTopic.includes(query) || 
+                       title.includes(query) || 
+                       content.includes(query);
+            });
+            renderNotes(filteredNotes, notesArea);
+        } else {
+            // If the search bar is empty, show all notes
+            renderNotes(allNotes, notesArea);
+        }
     }
 
     function toggleNote(noteId) {
@@ -588,7 +692,6 @@
       }
     }
 
-    // This function will handle the downloading of the note content, including topic, subtopic, and content
     function downloadNote(buttonElement) {
         const noteItem = buttonElement.closest('.note-item');
         const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
@@ -596,18 +699,14 @@
         const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
         const noteContent = noteItem.querySelector('.note-content').textContent.trim();
 
-        // Create the content for the text file, now including the note's title and content
         const fileContent = `Topic: ${topic}\nSubtopic: ${subTopic}\nTitle: ${noteTitle}\n\nContent:\n${noteContent}`;
 
-        // Create a Blob with the content
         const blob = new Blob([fileContent], { type: 'text/plain' });
 
-        // Create a link element to trigger the download
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = `Note_${topic.replace(/\s/g, '_')}.txt`;
 
-        // Append the link to the body and click it to start the download
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -616,8 +715,3 @@
 </body>
 
 </html>
-
-
-
-
-
