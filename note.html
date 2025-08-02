@@ -30,10 +30,8 @@
       padding: 20px;
       background-attachment: fixed;
       position: relative;
-      /* Added for logo positioning */
     }
 
-    /* Logo positioned absolutely at top left */
     .moe-logo {
       position: absolute;
       top: 20px;
@@ -52,7 +50,6 @@
       max-width: 1000px;
       animation: fadeIn 1s ease-in-out;
       padding-top: 80px;
-      /* Added space for the logo */
     }
 
     @keyframes fadeIn {
@@ -60,7 +57,6 @@
         opacity: 0;
         transform: translateY(20px);
       }
-
       to {
         opacity: 1;
         transform: translateY(0);
@@ -297,7 +293,6 @@
         transform: translateY(30px);
         opacity: 0;
       }
-
       to {
         transform: translateY(0);
         opacity: 1;
@@ -393,7 +388,7 @@
       color: rgba(255, 255, 255, 0.8);
       font-style: italic;
       margin-top: 20px;
-      display: none; /* Hidden by default */
+      display: none;
     }
 
     @media (max-width: 768px) {
@@ -545,7 +540,11 @@
       messagingSenderId: "451756350336",
       appId: "1:451756350336:web:19b9255b8834a01f4cff65"
     };
-    firebase.initializeApp(firebaseConfig);
+    
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
     const db = firebase.firestore();
     const { jsPDF } = window.jspdf;
 
@@ -600,7 +599,7 @@
         })
         .catch(error => {
           console.error("Error loading notes:", error);
-          notesArea.innerHTML = `<p>Error loading notes. Please try again later.</p>`;
+          notesArea.innerHTML = `<p>Error loading notes: ${error.message}</p>`;
         });
     }
     
@@ -670,7 +669,6 @@
                 const topic = note.noteTopic?.toLowerCase() || '';
                 const subTopic = note.subTopic?.toLowerCase() || '';
                 const title = note.noteTitle?.toLowerCase() || '';
-                // Check if search query is in the raw HTML content
                 const content = note.content?.toLowerCase() || '';
                 
                 return topic.includes(query) || 
@@ -680,7 +678,6 @@
             });
             renderNotes(filteredNotes, notesArea);
         } else {
-            // If the search bar is empty, show all notes
             renderNotes(allNotes, notesArea);
         }
     }
@@ -694,117 +691,176 @@
       }
     }
     
-    // Function to convert hex to RGB
-    function hexToRgb(hex) {
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16)
-      ] : [0, 0, 0];
-    }
-    
     async function downloadNote(buttonElement) {
-        const noteItem = buttonElement.closest('.note-item');
-        const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
-        const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
-        const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
-        const noteContentHTML = noteItem.querySelector('.note-content').innerHTML;
+        try {
+            const noteItem = buttonElement.closest('.note-item');
+            const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
+            const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
+            const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
+            const noteContentElement = noteItem.querySelector('.note-content');
 
-        const doc = new jsPDF();
-        
-        let y = 20;
-        const margin = 20;
-        const lineHeight = 10;
-        const pageWidth = doc.internal.pageSize.getWidth();
-        const textFontSize = 12;
+            // Clone the element to avoid modifying the original
+            const contentClone = noteContentElement.cloneNode(true);
+            
+            // Replace <br> tags with newline characters
+            const brElements = contentClone.querySelectorAll('br');
+            brElements.forEach(br => {
+                br.replaceWith('\n');
+            });
 
-        // Add Topic
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(16);
-        doc.setTextColor(106, 130, 251); 
-        doc.text(topic, margin, y);
-        y += lineHeight;
-
-        // Add Subtopic
-        if (subTopic) {
-            doc.setFont('helvetica', 'italic');
-            doc.setFontSize(12);
-            doc.setTextColor(0, 242, 254);
-            doc.text(`Subtopic: ${subTopic}`, margin, y);
-            y += lineHeight;
-        }
-
-        // Add Note Title
-        if (noteTitle) {
+            const doc = new jsPDF();
+            let y = 20;
+            const margin = 20;
+            const lineHeight = 7;
+            const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
+            
+            // Add Topic
             doc.setFont('helvetica', 'bold');
-            doc.setFontSize(14);
-            doc.setTextColor(252, 92, 125);
-            doc.text(`Title: ${noteTitle}`, margin, y);
-            y += lineHeight * 2;
+            doc.setFontSize(16);
+            doc.setTextColor(106, 130, 251); // #6a82fb
+            doc.text(topic, margin, y);
+            y += lineHeight * 1.5;
+
+            // Add Subtopic
+            if (subTopic) {
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(12);
+                doc.setTextColor(0, 242, 254); // #00f2fe
+                doc.text(`Subtopic: ${subTopic}`, margin, y);
+                y += lineHeight * 1.5;
+            }
+
+            // Add Note Title
+            if (noteTitle) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor(252, 92, 125); // #fc5c7d
+                doc.text(`Title: ${noteTitle}`, margin, y);
+                y += lineHeight * 2;
+            }
+
+            // Process content with highlights
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
+            
+            // Extract text nodes and styled spans while preserving order
+            const nodes = [];
+            const walker = document.createTreeWalker(
+                contentClone,
+                NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+                null,
+                false
+            );
+
+            let node;
+            while (node = walker.nextNode()) {
+                if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+                    nodes.push({
+                        type: 'text',
+                        value: node.nodeValue
+                    });
+                } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
+                    nodes.push({
+                        type: 'span',
+                        value: node.textContent,
+                        color: node.style.color
+                    });
+                }
+            }
+
+            // Process each node
+            let currentLine = [];
+            let currentLineWidth = 0;
+            
+            for (const node of nodes) {
+                const text = node.value;
+                const words = text.split(/(\s+)/).filter(w => w.trim().length > 0 || w === ' ');
+                
+                for (const word of words) {
+                    // Set color if this is a span node
+                    if (node.type === 'span' && node.color) {
+                        const rgb = hexToRgb(node.color);
+                        doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+                    } else {
+                        doc.setTextColor(0, 0, 0); // Default black
+                    }
+                    
+                    const wordWidth = doc.getTextWidth(word);
+                    
+                    // Check if word fits on current line
+                    if (currentLineWidth + wordWidth <= pageWidth) {
+                        currentLine.push({ word, color: node.color });
+                        currentLineWidth += wordWidth;
+                    } else {
+                        // Draw current line
+                        drawLine(doc, currentLine, margin, y, lineHeight);
+                        y += lineHeight;
+                        
+                        // Start new line
+                        currentLine = [{ word, color: node.color }];
+                        currentLineWidth = wordWidth;
+                        
+                        // Check for page break
+                        if (y > doc.internal.pageSize.getHeight() - 20) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                    }
+                }
+            }
+            
+            // Draw any remaining text in the buffer
+            if (currentLine.length > 0) {
+                drawLine(doc, currentLine, margin, y, lineHeight);
+            }
+
+            // Save the PDF
+            const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
+            doc.save(fileName);
+            
+        } catch (error) {
+            console.error("PDF generation failed:", error);
+            alert("Failed to generate PDF. Please try again.");
+        }
+    }
+
+    // Helper function to draw a line of text with mixed styles
+    function drawLine(doc, lineParts, x, y, lineHeight) {
+        let currentX = x;
+        
+        for (const part of lineParts) {
+            // Set color if specified
+            if (part.color) {
+                const rgb = hexToRgb(part.color);
+                doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            
+            doc.text(part.word, currentX, y);
+            currentX += doc.getTextWidth(part.word);
+        }
+    }
+
+    // Improved hexToRgb function
+    function hexToRgb(hex) {
+        // Handle both #RRGGBB and rgb(r,g,b) formats
+        if (hex.startsWith('rgb')) {
+            const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
+            if (match) {
+                return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+            }
+            return [0, 0, 0];
         }
         
-        // Add Content (with HTML parsing and wrapping)
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(textFontSize);
-        doc.setTextColor(0, 0, 0); // Default to black
-        
-        let currentX = margin;
-        
-        // Use a temporary div to parse the HTML content
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = noteContentHTML;
-
-        // Iterate through child nodes to correctly handle text and spans
-        Array.from(tempDiv.childNodes).forEach(node => {
-          if (node.nodeType === Node.TEXT_NODE) {
-            const text = node.nodeValue;
-            if (text.trim()) {
-              const lines = doc.splitTextToSize(text, pageWidth - currentX - margin);
-              if (lines.length > 0) {
-                doc.text(lines[0], currentX, y);
-                currentX += doc.getTextWidth(lines[0]);
-                for(let i = 1; i < lines.length; i++) {
-                    y += lineHeight;
-                    currentX = margin;
-                    doc.text(lines[i], currentX, y);
-                    currentX += doc.getTextWidth(lines[i]);
-                }
-              }
-            }
-          } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
-            const spanText = node.textContent;
-            const color = node.style.color;
-            if (spanText && color) {
-                const rgb = hexToRgb(color);
-                doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-
-                const words = spanText.split(/\s+/);
-                for (const word of words) {
-                    const wordWithSpace = word + ' ';
-                    const wordWidth = doc.getTextWidth(wordWithSpace);
-                    if (currentX + wordWidth > pageWidth - margin) {
-                        currentX = margin;
-                        y += lineHeight;
-                    }
-                    doc.text(wordWithSpace, currentX, y);
-                    currentX += wordWidth;
-                }
-            }
-            // Reset color back to black after the span
-            doc.setTextColor(0, 0, 0);
-          } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') {
-            // Handle line breaks
-            currentX = margin;
-            y += lineHeight;
-          }
-        });
-        
-        // Save the PDF
-        const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
-        doc.save(fileName);
+        // Handle hex format
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+            parseInt(result[1], 16),
+            parseInt(result[2], 16),
+            parseInt(result[3], 16)
+        ] : [0, 0, 0];
     }
   </script>
 </body>
-
 </html>
