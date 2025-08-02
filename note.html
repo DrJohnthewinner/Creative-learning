@@ -712,6 +712,7 @@
         // Set font and add title
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(16);
+        doc.setTextColor(106, 130, 251); // Blue color for topic
         doc.text(topic, margin, y);
         y += lineHeight;
 
@@ -719,6 +720,7 @@
         if (subTopic) {
             doc.setFont('helvetica', 'italic');
             doc.setFontSize(12);
+            doc.setTextColor(0, 242, 254); // Cyan color for subtopic
             doc.text(`Subtopic: ${subTopic}`, margin, y);
             y += lineHeight;
         }
@@ -727,6 +729,7 @@
         if (noteTitle) {
             doc.setFont('helvetica', 'bold');
             doc.setFontSize(14);
+            doc.setTextColor(252, 92, 125); // Pink color for note title
             doc.text(`Title: ${noteTitle}`, margin, y);
             y += lineHeight * 2; // Add more space after title
         }
@@ -734,6 +737,7 @@
         // Add content
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(12);
+        doc.setTextColor(0, 0, 0); // Reset to black for content
         
         const contentLines = doc.splitTextToSize(noteContent, pageWidth - 2 * margin);
         doc.text(contentLines, margin, y);
