@@ -424,6 +424,15 @@
           <input type="text" id="note-topic" placeholder="Note Topic (e.g., Algebra)" required>
           <input type="text" id="sub-topic" placeholder="Sub Topic (e.g., Quadratic Equations)" required>
           <input type="text" id="note-title" placeholder="Note Title" required>
+          
+          <div style="display: flex; align-items: center; gap: 10px; margin-top: 10px;">
+            <label for="color-picker" style="color: #fff;">Highlight Text:</label>
+            <input type="color" id="color-picker" value="#ffeb3b">
+            <button type="button" onclick="applyColor()" style="background: #2196F3; padding: 8px 15px;">
+                <i class="fas fa-paint-brush"></i> Apply Color
+            </button>
+          </div>
+          
           <textarea id="content" rows="4" placeholder="Note Content" required></textarea>
 
           <select id="subject" required>
@@ -537,7 +546,7 @@
       const noteTopic = document.getElementById('note-topic').value.trim();
       const subTopic = document.getElementById('sub-topic').value.trim();
       const noteTitle = document.getElementById('note-title').value.trim();
-      const content = document.getElementById('content').value.trim();
+      const content = document.getElementById('content').value; // Get the raw HTML content
       const subject = document.getElementById('subject').value;
       const grade = document.getElementById('grade').value;
       const fileInput = document.getElementById('fileInput');
@@ -762,6 +771,23 @@
 
       document.body.appendChild(messageContainer);
       setTimeout(() => { messageContainer.remove(); }, 5000);
+    }
+
+    // Function to apply color to selected text in the textarea
+    function applyColor() {
+        const textarea = document.getElementById('content');
+        const colorPicker = document.getElementById('color-picker');
+        const selectedColor = colorPicker.value;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selectedText = textarea.value.substring(start, end);
+
+        if (selectedText) {
+            const coloredText = `<span style="color:${selectedColor};">${selectedText}</span>`;
+            textarea.value = textarea.value.substring(0, start) + coloredText + textarea.value.substring(end);
+        } else {
+            displayMessage('Please select some text in the content area to apply a color.', 'info');
+        }
     }
   </script>
 </body>
