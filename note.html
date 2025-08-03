@@ -30,7 +30,6 @@
       padding: 20px;
       background-attachment: fixed;
       position: relative;
-      /* Added for logo positioning */
     }
 
     /* Logo positioned absolutely at top left */
@@ -52,7 +51,6 @@
       max-width: 1000px;
       animation: fadeIn 1s ease-in-out;
       padding-top: 80px;
-      /* Added space for the logo */
     }
 
     @keyframes fadeIn {
@@ -394,7 +392,6 @@
       font-style: italic;
       margin-top: 20px;
       display: none;
-      /* Hidden by default */
     }
 
     @media (max-width: 768px) {
@@ -674,7 +671,6 @@
                 const topic = note.noteTopic?.toLowerCase() || '';
                 const subTopic = note.subTopic?.toLowerCase() || '';
                 const title = note.noteTitle?.toLowerCase() || '';
-                // Check if search query is in the raw HTML content
                 const content = note.content?.toLowerCase() || '';
 
                 return topic.includes(query) ||
@@ -684,7 +680,6 @@
             });
             renderNotes(filteredNotes, notesArea);
         } else {
-            // If the search bar is empty, show all notes
             renderNotes(allNotes, notesArea);
         }
     }
@@ -698,7 +693,7 @@
       }
     }
 
-    // Function to convert hex to RGB
+    // Function to convert hex or rgb to RGB array
     function hexToRgb(hex) {
         if (hex.startsWith('rgb')) {
             const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
@@ -715,22 +710,24 @@
             parseInt(result[3], 16)
         ] : [0, 0, 0];
     }
-    
+
     // Helper function to draw a line of text with mixed styles
     function drawLine(doc, lineParts, x, y, lineHeight) {
         let currentX = x;
         for (const part of lineParts) {
+            // Set text color for the current part
             if (part.color) {
                 const rgb = hexToRgb(part.color);
                 doc.setTextColor(rgb[0], rgb[1], rgb[2]);
             } else {
+                // Default to black
                 doc.setTextColor(0, 0, 0);
             }
             doc.text(part.word, currentX, y);
             currentX += doc.getTextWidth(part.word);
         }
     }
-
+    
     async function downloadNote(buttonElement) {
         try {
             const noteItem = buttonElement.closest('.note-item');
@@ -814,29 +811,45 @@
 
             for (const node of nodes) {
                 const text = node.value;
-                const words = text.split(/([\s,.!?;:()]+)/).filter(w => w.trim().length > 0);
+                // Split text by space and punctuation, keeping the delimiters
+                const words = text.split(/([\s,.!?;:()]+)/).filter(w => w.length > 0);
 
                 for (const word of words) {
-                    if (!word.trim()) continue;
-
-                    if (node.type === 'span' && node.color) {
-                        const rgb = hexToRgb(node.color);
-                        doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-                    } else {
-                        doc.setTextColor(0, 0, 0);
+                    if (!word.trim()) {
+                        // Handle spaces and newlines correctly
+                        if (word.includes('\n')) {
+                            drawLine(doc, currentLine, margin, y, lineHeight);
+                            y += lineHeight;
+                            currentLine = [];
+                            currentLineWidth = 0;
+                            if (y > doc.internal.pageSize.getHeight() - 20) {
+                                doc.addPage();
+                                y = 20;
+                            }
+                        } else {
+                            currentLine.push({ word: ' ', color: null });
+                            currentLineWidth += doc.getTextWidth(' ');
+                        }
+                        continue;
                     }
 
                     const wordWithSpace = word + ' ';
                     const wordWidth = doc.getTextWidth(wordWithSpace);
+                    let wordColor = null;
+
+                    if (node.type === 'span' && node.color) {
+                        wordColor = node.color;
+                    }
 
                     if (currentLineWidth + wordWidth <= pageWidth) {
-                        currentLine.push({ word: wordWithSpace, color: node.color });
+                        currentLine.push({ word: wordWithSpace, color: wordColor });
                         currentLineWidth += wordWidth;
                     } else {
+                        // New line needed
                         drawLine(doc, currentLine, margin, y, lineHeight);
                         y += lineHeight;
 
-                        currentLine = [{ word: wordWithSpace, color: node.color }];
+                        currentLine = [{ word: wordWithSpace, color: wordColor }];
                         currentLineWidth = wordWidth;
 
                         if (y > doc.internal.pageSize.getHeight() - 20) {
@@ -846,6 +859,7 @@
                     }
                 }
             }
+            // Draw the last line
             if (currentLine.length > 0) {
                 drawLine(doc, currentLine, margin, y, lineHeight);
             }
