@@ -30,6 +30,7 @@
       padding: 20px;
       background-attachment: fixed;
       position: relative;
+      /* Added for logo positioning */
     }
 
     /* Logo positioned absolutely at top left */
@@ -51,6 +52,7 @@
       max-width: 1000px;
       animation: fadeIn 1s ease-in-out;
       padding-top: 80px;
+      /* Added space for the logo */
     }
 
     @keyframes fadeIn {
@@ -392,6 +394,7 @@
       font-style: italic;
       margin-top: 20px;
       display: none;
+      /* Hidden by default */
     }
 
     @media (max-width: 768px) {
@@ -548,9 +551,7 @@
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
-    const {
-      jsPDF
-    } = window.jspdf;
+    const { jsPDF } = window.jspdf;
 
     const SUPABASE_URL = 'https://jjqbpiujwmlfgztpinyp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcWJwaXVqd21sZmd6dHBpbnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTA3MzgsImV4cCI6MjA2NDk2NjczOH0.YOUR_ACTUAL_ANON_KEY_HERE';
@@ -595,8 +596,8 @@
           }
 
           allNotes = querySnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
+              id: doc.id,
+              ...doc.data()
           }));
 
           renderNotes(allNotes, notesArea);
@@ -608,43 +609,43 @@
     }
 
     function renderNotes(notesToRender, notesArea) {
-      if (notesToRender.length === 0) {
-        document.getElementById('no-results').style.display = 'block';
-        notesArea.innerHTML = '';
-        return;
-      }
+        if (notesToRender.length === 0) {
+            document.getElementById('no-results').style.display = 'block';
+            notesArea.innerHTML = '';
+            return;
+        }
 
-      document.getElementById('no-results').style.display = 'none';
-      let notesHTML = '<ul class="note-list">';
-      notesToRender.forEach(note => {
-        const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
-          note.createdAt.toDate().toLocaleDateString() :
-          'Unknown date';
+        document.getElementById('no-results').style.display = 'none';
+        let notesHTML = '<ul class="note-list">';
+        notesToRender.forEach(note => {
+            const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
+                note.createdAt.toDate().toLocaleDateString() :
+                'Unknown date';
 
-        let fileDisplay = '';
-        if (note.fileUrl) {
-          if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
-            fileDisplay = `
+            let fileDisplay = '';
+            if (note.fileUrl) {
+                if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
+                    fileDisplay = `
                         <a href="${note.fileUrl}" target="_blank" class="file-link">
                             <i class="fas fa-file-pdf"></i> View PDF
                         </a>
                     `;
-          } else if (note.fileType?.startsWith('image/')) {
-            fileDisplay = `
+                } else if (note.fileType?.startsWith('image/')) {
+                    fileDisplay = `
                         <div>
                             <img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')">
                         </div>
                     `;
-          } else {
-            fileDisplay = `
+                } else {
+                    fileDisplay = `
                         <a href="${note.fileUrl}" target="_blank" class="file-link">
                             <i class="fas fa-file-download"></i> Download File
                         </a>
                     `;
-          }
-        }
+                }
+            }
 
-        notesHTML += `
+            notesHTML += `
                 <li class="note-item">
                     <div class="note-title" onclick="toggleNote('${note.id}')">
                         ${note.noteTopic}
@@ -659,33 +660,33 @@
                     </div>
                 </li>
             `;
-      });
-      notesHTML += '</ul>';
-      notesArea.innerHTML = notesHTML;
+        });
+        notesHTML += '</ul>';
+        notesArea.innerHTML = notesHTML;
     }
 
     function searchNotes() {
-      const query = document.getElementById('search-input').value.toLowerCase();
-      const notesArea = document.getElementById('subject-notes-area');
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const notesArea = document.getElementById('subject-notes-area');
 
-      if (query.length > 0) {
-        const filteredNotes = allNotes.filter(note => {
-          const topic = note.noteTopic?.toLowerCase() || '';
-          const subTopic = note.subTopic?.toLowerCase() || '';
-          const title = note.noteTitle?.toLowerCase() || '';
-          // Check if search query is in the raw HTML content
-          const content = note.content?.toLowerCase() || '';
+        if (query.length > 0) {
+            const filteredNotes = allNotes.filter(note => {
+                const topic = note.noteTopic?.toLowerCase() || '';
+                const subTopic = note.subTopic?.toLowerCase() || '';
+                const title = note.noteTitle?.toLowerCase() || '';
+                // Check if search query is in the raw HTML content
+                const content = note.content?.toLowerCase() || '';
 
-          return topic.includes(query) ||
-            subTopic.includes(query) ||
-            title.includes(query) ||
-            content.includes(query);
-        });
-        renderNotes(filteredNotes, notesArea);
-      } else {
-        // If the search bar is empty, show all notes
-        renderNotes(allNotes, notesArea);
-      }
+                return topic.includes(query) ||
+                       subTopic.includes(query) ||
+                       title.includes(query) ||
+                       content.includes(query);
+            });
+            renderNotes(filteredNotes, notesArea);
+        } else {
+            // If the search bar is empty, show all notes
+            renderNotes(allNotes, notesArea);
+        }
     }
 
     function toggleNote(noteId) {
@@ -699,167 +700,163 @@
 
     // Function to convert hex to RGB
     function hexToRgb(hex) {
-      if (hex.startsWith('rgb')) {
-        const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
-        if (match) {
-          return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+        if (hex.startsWith('rgb')) {
+            const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
+            if (match) {
+                return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
+            }
+            return [0, 0, 0];
         }
-        return [0, 0, 0];
-      }
 
-      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? [
-        parseInt(result[1], 16),
-        parseInt(result[2], 16),
-        parseInt(result[3], 16)
-      ] : [0, 0, 0];
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? [
+            parseInt(result[1], 16),
+            parseInt(result[2], 16),
+            parseInt(result[3], 16)
+        ] : [0, 0, 0];
     }
-
+    
     // Helper function to draw a line of text with mixed styles
     function drawLine(doc, lineParts, x, y, lineHeight) {
-      let currentX = x;
-      for (const part of lineParts) {
-        if (part.color) {
-          const rgb = hexToRgb(part.color);
-          doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-        } else {
-          doc.setTextColor(0, 0, 0);
+        let currentX = x;
+        for (const part of lineParts) {
+            if (part.color) {
+                const rgb = hexToRgb(part.color);
+                doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+            } else {
+                doc.setTextColor(0, 0, 0);
+            }
+            doc.text(part.word, currentX, y);
+            currentX += doc.getTextWidth(part.word);
         }
-        doc.text(part.word, currentX, y);
-        currentX += doc.getTextWidth(part.word);
-      }
     }
 
     async function downloadNote(buttonElement) {
-      try {
-        const noteItem = buttonElement.closest('.note-item');
-        const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
-        const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
-        const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
-        const noteContentElement = noteItem.querySelector('.note-content');
+        try {
+            const noteItem = buttonElement.closest('.note-item');
+            const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
+            const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
+            const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
+            const noteContentElement = noteItem.querySelector('.note-content');
 
-        const contentClone = noteContentElement.cloneNode(true);
+            const doc = new jsPDF();
+            let y = 20;
+            const margin = 20;
+            const lineHeight = 7;
+            const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
 
-        const brElements = contentClone.querySelectorAll('br');
-        brElements.forEach(br => {
-          const textNode = document.createTextNode('\n');
-          br.replaceWith(textNode);
-        });
+            // Add Topic
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(16);
+            doc.setTextColor(106, 130, 251);
+            doc.text(topic, margin, y);
+            y += lineHeight * 1.5;
 
-        const doc = new jsPDF();
-        let y = 20;
-        const margin = 20;
-        const lineHeight = 7;
-        const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
-
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(16);
-        doc.setTextColor(106, 130, 251);
-        doc.text(topic, margin, y);
-        y += lineHeight * 1.5;
-
-        if (subTopic) {
-          doc.setFont('helvetica', 'italic');
-          doc.setFontSize(12);
-          doc.setTextColor(0, 242, 254);
-          doc.text(`Subtopic: ${subTopic}`, margin, y);
-          y += lineHeight * 1.5;
-        }
-
-        if (noteTitle) {
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(14);
-          doc.setTextColor(252, 92, 125);
-          doc.text(`Title: ${noteTitle}`, margin, y);
-          y += lineHeight * 2;
-        }
-
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(12);
-
-        const nodes = [];
-        const walker = document.createTreeWalker(
-          contentClone,
-          NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-          null,
-          false
-        );
-
-        let node;
-        while (node = walker.nextNode()) {
-          if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-            nodes.push({
-              type: 'text',
-              value: node.nodeValue
-            });
-          } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
-            nodes.push({
-              type: 'span',
-              value: node.textContent,
-              color: node.style.color
-            });
-          }
-        }
-
-        let currentLine = [];
-        let currentLineWidth = 0;
-
-        for (const node of nodes) {
-          const text = node.value;
-          const words = text.split(/(\s+)/).filter(w => w.length > 0);
-
-          for (const word of words) {
-            if (word.includes('\n')) {
-              if (currentLine.length > 0) {
-                drawLine(doc, currentLine, margin, y, lineHeight);
-                y += lineHeight;
-                currentLine = [];
-                currentLineWidth = 0;
-              }
-              y += lineHeight;
-              if (y > doc.internal.pageSize.getHeight() - 20) {
-                doc.addPage();
-                y = 20;
-              }
-              continue;
+            // Add Subtopic
+            if (subTopic) {
+                doc.setFont('helvetica', 'italic');
+                doc.setFontSize(12);
+                doc.setTextColor(0, 242, 254);
+                doc.text(`Subtopic: ${subTopic}`, margin, y);
+                y += lineHeight * 1.5;
             }
 
-            const wordWidth = doc.getTextWidth(word);
-            if (currentLineWidth + wordWidth > pageWidth) {
-              drawLine(doc, currentLine, margin, y, lineHeight);
-              y += lineHeight;
-              currentLine = [];
-              currentLineWidth = 0;
-              if (y > doc.internal.pageSize.getHeight() - 20) {
-                doc.addPage();
-                y = 20;
-              }
+            // Add Note Title
+            if (noteTitle) {
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor(252, 92, 125);
+                doc.text(`Title: ${noteTitle}`, margin, y);
+                y += lineHeight * 2;
             }
 
-            let wordColor = null;
-            if (node.type === 'span' && node.color) {
-              wordColor = node.color;
+            // --- CORRECTED CONTENT PROCESSING LOGIC ---
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(12);
+            
+            // Get the entire HTML content and handle line breaks
+            let contentHTML = noteContentElement.innerHTML;
+            contentHTML = contentHTML.replace(/<br\s*\/?>/g, '\n');
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = contentHTML;
+
+            const paragraphs = tempDiv.innerHTML.split('\n');
+            
+            for (const paragraph of paragraphs) {
+                if (paragraph.trim() === '') {
+                    y += lineHeight; // Add an empty line for paragraph breaks
+                    continue;
+                }
+
+                const lineParts = [];
+                let currentText = '';
+                let currentColor = 'rgb(0,0,0)'; // Default color
+
+                const paragraphTemp = document.createElement('div');
+                paragraphTemp.innerHTML = paragraph;
+
+                paragraphTemp.childNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        if (currentText) {
+                            lineParts.push({ text: currentText, color: currentColor });
+                        }
+                        currentText = node.nodeValue;
+                        currentColor = 'rgb(0,0,0)';
+                    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
+                        if (currentText) {
+                            lineParts.push({ text: currentText, color: currentColor });
+                        }
+                        currentText = node.textContent;
+                        currentColor = node.style.color;
+                    }
+                });
+
+                if (currentText) {
+                    lineParts.push({ text: currentText, color: currentColor });
+                }
+
+                let line = '';
+                let lastColor = 'rgb(0,0,0)';
+                for (const part of lineParts) {
+                    const words = part.text.split(' ');
+                    
+                    doc.setTextColor(hexToRgb(part.color)[0], hexToRgb(part.color)[1], hexToRgb(part.color)[2]);
+
+                    for (const word of words) {
+                        if (doc.getTextWidth(line + (line ? ' ' : '') + word) > pageWidth) {
+                            // Print the current line and start a new one
+                            doc.text(line, margin, y);
+                            y += lineHeight;
+                            if (y > doc.internal.pageSize.getHeight() - 20) {
+                                doc.addPage();
+                                y = 20;
+                            }
+                            line = word;
+                        } else {
+                            // Add word to the current line
+                            line += (line ? ' ' : '') + word;
+                        }
+                    }
+                }
+                // Print the last remaining line
+                if (line) {
+                    doc.text(line, margin, y);
+                    y += lineHeight;
+                    if (y > doc.internal.pageSize.getHeight() - 20) {
+                        doc.addPage();
+                        y = 20;
+                    }
+                }
             }
+            
+            const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
+            doc.save(fileName);
 
-            currentLine.push({
-              word: word,
-              color: wordColor
-            });
-            currentLineWidth += wordWidth;
-
-          }
+        } catch (error) {
+            console.error("PDF generation failed:", error);
+            alert("Failed to generate PDF. Please try again.");
         }
-        if (currentLine.length > 0) {
-          drawLine(doc, currentLine, margin, y, lineHeight);
-        }
-
-        const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
-        doc.save(fileName);
-
-      } catch (error) {
-        console.error("PDF generation failed:", error);
-        alert("Failed to generate PDF. Please try again.");
-      }
     }
   </script>
 </body>
