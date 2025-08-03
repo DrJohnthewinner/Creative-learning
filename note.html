@@ -548,7 +548,9 @@
       firebase.initializeApp(firebaseConfig);
     }
     const db = firebase.firestore();
-    const { jsPDF } = window.jspdf;
+    const {
+      jsPDF
+    } = window.jspdf;
 
     const SUPABASE_URL = 'https://jjqbpiujwmlfgztpinyp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqcWJwaXVqd21sZmd6dHBpbnlwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDkzOTA3MzgsImV4cCI6MjA2NDk2NjczOH0.YOUR_ACTUAL_ANON_KEY_HERE';
@@ -593,8 +595,8 @@
           }
 
           allNotes = querySnapshot.docs.map(doc => ({
-              id: doc.id,
-              ...doc.data()
+            id: doc.id,
+            ...doc.data()
           }));
 
           renderNotes(allNotes, notesArea);
@@ -606,43 +608,43 @@
     }
 
     function renderNotes(notesToRender, notesArea) {
-        if (notesToRender.length === 0) {
-            document.getElementById('no-results').style.display = 'block';
-            notesArea.innerHTML = '';
-            return;
-        }
+      if (notesToRender.length === 0) {
+        document.getElementById('no-results').style.display = 'block';
+        notesArea.innerHTML = '';
+        return;
+      }
 
-        document.getElementById('no-results').style.display = 'none';
-        let notesHTML = '<ul class="note-list">';
-        notesToRender.forEach(note => {
-            const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
-                note.createdAt.toDate().toLocaleDateString() :
-                'Unknown date';
+      document.getElementById('no-results').style.display = 'none';
+      let notesHTML = '<ul class="note-list">';
+      notesToRender.forEach(note => {
+        const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
+          note.createdAt.toDate().toLocaleDateString() :
+          'Unknown date';
 
-            let fileDisplay = '';
-            if (note.fileUrl) {
-                if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
-                    fileDisplay = `
+        let fileDisplay = '';
+        if (note.fileUrl) {
+          if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
+            fileDisplay = `
                         <a href="${note.fileUrl}" target="_blank" class="file-link">
                             <i class="fas fa-file-pdf"></i> View PDF
                         </a>
                     `;
-                } else if (note.fileType?.startsWith('image/')) {
-                    fileDisplay = `
+          } else if (note.fileType?.startsWith('image/')) {
+            fileDisplay = `
                         <div>
                             <img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')">
                         </div>
                     `;
-                } else {
-                    fileDisplay = `
+          } else {
+            fileDisplay = `
                         <a href="${note.fileUrl}" target="_blank" class="file-link">
                             <i class="fas fa-file-download"></i> Download File
                         </a>
                     `;
-                }
-            }
+          }
+        }
 
-            notesHTML += `
+        notesHTML += `
                 <li class="note-item">
                     <div class="note-title" onclick="toggleNote('${note.id}')">
                         ${note.noteTopic}
@@ -657,31 +659,33 @@
                     </div>
                 </li>
             `;
-        });
-        notesHTML += '</ul>';
-        notesArea.innerHTML = notesHTML;
+      });
+      notesHTML += '</ul>';
+      notesArea.innerHTML = notesHTML;
     }
 
     function searchNotes() {
-        const query = document.getElementById('search-input').value.toLowerCase();
-        const notesArea = document.getElementById('subject-notes-area');
+      const query = document.getElementById('search-input').value.toLowerCase();
+      const notesArea = document.getElementById('subject-notes-area');
 
-        if (query.length > 0) {
-            const filteredNotes = allNotes.filter(note => {
-                const topic = note.noteTopic?.toLowerCase() || '';
-                const subTopic = note.subTopic?.toLowerCase() || '';
-                const title = note.noteTitle?.toLowerCase() || '';
-                const content = note.content?.toLowerCase() || '';
+      if (query.length > 0) {
+        const filteredNotes = allNotes.filter(note => {
+          const topic = note.noteTopic?.toLowerCase() || '';
+          const subTopic = note.subTopic?.toLowerCase() || '';
+          const title = note.noteTitle?.toLowerCase() || '';
+          // Check if search query is in the raw HTML content
+          const content = note.content?.toLowerCase() || '';
 
-                return topic.includes(query) ||
-                       subTopic.includes(query) ||
-                       title.includes(query) ||
-                       content.includes(query);
-            });
-            renderNotes(filteredNotes, notesArea);
-        } else {
-            renderNotes(allNotes, notesArea);
-        }
+          return topic.includes(query) ||
+            subTopic.includes(query) ||
+            title.includes(query) ||
+            content.includes(query);
+        });
+        renderNotes(filteredNotes, notesArea);
+      } else {
+        // If the search bar is empty, show all notes
+        renderNotes(allNotes, notesArea);
+      }
     }
 
     function toggleNote(noteId) {
@@ -693,184 +697,169 @@
       }
     }
 
-    // Function to convert hex or rgb to RGB array
+    // Function to convert hex to RGB
     function hexToRgb(hex) {
-        if (hex.startsWith('rgb')) {
-            const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
-            if (match) {
-                return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
-            }
-            return [0, 0, 0];
+      if (hex.startsWith('rgb')) {
+        const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
+        if (match) {
+          return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
         }
+        return [0, 0, 0];
+      }
 
-        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-        return result ? [
-            parseInt(result[1], 16),
-            parseInt(result[2], 16),
-            parseInt(result[3], 16)
-        ] : [0, 0, 0];
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? [
+        parseInt(result[1], 16),
+        parseInt(result[2], 16),
+        parseInt(result[3], 16)
+      ] : [0, 0, 0];
     }
 
     // Helper function to draw a line of text with mixed styles
     function drawLine(doc, lineParts, x, y, lineHeight) {
-        let currentX = x;
-        for (const part of lineParts) {
-            // Set text color for the current part
-            if (part.color) {
-                const rgb = hexToRgb(part.color);
-                doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-            } else {
-                // Default to black
-                doc.setTextColor(0, 0, 0);
-            }
-            doc.text(part.word, currentX, y);
-            currentX += doc.getTextWidth(part.word);
+      let currentX = x;
+      for (const part of lineParts) {
+        if (part.color) {
+          const rgb = hexToRgb(part.color);
+          doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+        } else {
+          doc.setTextColor(0, 0, 0);
         }
+        doc.text(part.word, currentX, y);
+        currentX += doc.getTextWidth(part.word);
+      }
     }
-    
+
     async function downloadNote(buttonElement) {
-        try {
-            const noteItem = buttonElement.closest('.note-item');
-            const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
-            const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
-            const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
-            const noteContentElement = noteItem.querySelector('.note-content');
+      try {
+        const noteItem = buttonElement.closest('.note-item');
+        const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
+        const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
+        const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
+        const noteContentElement = noteItem.querySelector('.note-content');
 
-            // Clone the element to avoid modifying the original
-            const contentClone = noteContentElement.cloneNode(true);
+        const contentClone = noteContentElement.cloneNode(true);
 
-            // Replace <br> tags with newline characters
-            const brElements = contentClone.querySelectorAll('br');
-            brElements.forEach(br => {
-                const textNode = document.createTextNode('\n');
-                br.replaceWith(textNode);
-            });
+        const brElements = contentClone.querySelectorAll('br');
+        brElements.forEach(br => {
+          const textNode = document.createTextNode('\n');
+          br.replaceWith(textNode);
+        });
 
-            const doc = new jsPDF();
-            let y = 20;
-            const margin = 20;
-            const lineHeight = 7;
-            const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
+        const doc = new jsPDF();
+        let y = 20;
+        const margin = 20;
+        const lineHeight = 7;
+        const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
 
-            // Add Topic
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(16);
-            doc.setTextColor(106, 130, 251);
-            doc.text(topic, margin, y);
-            y += lineHeight * 1.5;
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(106, 130, 251);
+        doc.text(topic, margin, y);
+        y += lineHeight * 1.5;
 
-            // Add Subtopic
-            if (subTopic) {
-                doc.setFont('helvetica', 'italic');
-                doc.setFontSize(12);
-                doc.setTextColor(0, 242, 254);
-                doc.text(`Subtopic: ${subTopic}`, margin, y);
-                y += lineHeight * 1.5;
-            }
-
-            // Add Note Title
-            if (noteTitle) {
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(14);
-                doc.setTextColor(252, 92, 125);
-                doc.text(`Title: ${noteTitle}`, margin, y);
-                y += lineHeight * 2;
-            }
-
-            // Process content with highlights
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(12);
-
-            // Extract text nodes and styled spans while preserving order
-            const nodes = [];
-            const walker = document.createTreeWalker(
-                contentClone,
-                NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-                null,
-                false
-            );
-
-            let node;
-            while (node = walker.nextNode()) {
-                if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-                    nodes.push({
-                        type: 'text',
-                        value: node.nodeValue
-                    });
-                } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
-                    nodes.push({
-                        type: 'span',
-                        value: node.textContent,
-                        color: node.style.color
-                    });
-                }
-            }
-
-            let currentLine = [];
-            let currentLineWidth = 0;
-
-            for (const node of nodes) {
-                const text = node.value;
-                // Split text by space and punctuation, keeping the delimiters
-                const words = text.split(/([\s,.!?;:()]+)/).filter(w => w.length > 0);
-
-                for (const word of words) {
-                    if (!word.trim()) {
-                        // Handle spaces and newlines correctly
-                        if (word.includes('\n')) {
-                            drawLine(doc, currentLine, margin, y, lineHeight);
-                            y += lineHeight;
-                            currentLine = [];
-                            currentLineWidth = 0;
-                            if (y > doc.internal.pageSize.getHeight() - 20) {
-                                doc.addPage();
-                                y = 20;
-                            }
-                        } else {
-                            currentLine.push({ word: ' ', color: null });
-                            currentLineWidth += doc.getTextWidth(' ');
-                        }
-                        continue;
-                    }
-
-                    const wordWithSpace = word + ' ';
-                    const wordWidth = doc.getTextWidth(wordWithSpace);
-                    let wordColor = null;
-
-                    if (node.type === 'span' && node.color) {
-                        wordColor = node.color;
-                    }
-
-                    if (currentLineWidth + wordWidth <= pageWidth) {
-                        currentLine.push({ word: wordWithSpace, color: wordColor });
-                        currentLineWidth += wordWidth;
-                    } else {
-                        // New line needed
-                        drawLine(doc, currentLine, margin, y, lineHeight);
-                        y += lineHeight;
-
-                        currentLine = [{ word: wordWithSpace, color: wordColor }];
-                        currentLineWidth = wordWidth;
-
-                        if (y > doc.internal.pageSize.getHeight() - 20) {
-                            doc.addPage();
-                            y = 20;
-                        }
-                    }
-                }
-            }
-            // Draw the last line
-            if (currentLine.length > 0) {
-                drawLine(doc, currentLine, margin, y, lineHeight);
-            }
-
-            const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
-            doc.save(fileName);
-
-        } catch (error) {
-            console.error("PDF generation failed:", error);
-            alert("Failed to generate PDF. Please try again.");
+        if (subTopic) {
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(12);
+          doc.setTextColor(0, 242, 254);
+          doc.text(`Subtopic: ${subTopic}`, margin, y);
+          y += lineHeight * 1.5;
         }
+
+        if (noteTitle) {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(14);
+          doc.setTextColor(252, 92, 125);
+          doc.text(`Title: ${noteTitle}`, margin, y);
+          y += lineHeight * 2;
+        }
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(12);
+
+        const nodes = [];
+        const walker = document.createTreeWalker(
+          contentClone,
+          NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+          null,
+          false
+        );
+
+        let node;
+        while (node = walker.nextNode()) {
+          if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
+            nodes.push({
+              type: 'text',
+              value: node.nodeValue
+            });
+          } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
+            nodes.push({
+              type: 'span',
+              value: node.textContent,
+              color: node.style.color
+            });
+          }
+        }
+
+        let currentLine = [];
+        let currentLineWidth = 0;
+
+        for (const node of nodes) {
+          const text = node.value;
+          const words = text.split(/(\s+)/).filter(w => w.length > 0);
+
+          for (const word of words) {
+            if (word.includes('\n')) {
+              if (currentLine.length > 0) {
+                drawLine(doc, currentLine, margin, y, lineHeight);
+                y += lineHeight;
+                currentLine = [];
+                currentLineWidth = 0;
+              }
+              y += lineHeight;
+              if (y > doc.internal.pageSize.getHeight() - 20) {
+                doc.addPage();
+                y = 20;
+              }
+              continue;
+            }
+
+            const wordWidth = doc.getTextWidth(word);
+            if (currentLineWidth + wordWidth > pageWidth) {
+              drawLine(doc, currentLine, margin, y, lineHeight);
+              y += lineHeight;
+              currentLine = [];
+              currentLineWidth = 0;
+              if (y > doc.internal.pageSize.getHeight() - 20) {
+                doc.addPage();
+                y = 20;
+              }
+            }
+
+            let wordColor = null;
+            if (node.type === 'span' && node.color) {
+              wordColor = node.color;
+            }
+
+            currentLine.push({
+              word: word,
+              color: wordColor
+            });
+            currentLineWidth += wordWidth;
+
+          }
+        }
+        if (currentLine.length > 0) {
+          drawLine(doc, currentLine, margin, y, lineHeight);
+        }
+
+        const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
+        doc.save(fileName);
+
+      } catch (error) {
+        console.error("PDF generation failed:", error);
+        alert("Failed to generate PDF. Please try again.");
+      }
     }
   </script>
 </body>
