@@ -363,40 +363,7 @@
             detailsArea.innerHTML = detailsHTML;
         }
 
-        // Function to convert hex to RGB
-        function hexToRgb(hex) {
-            if (hex.startsWith('rgb')) {
-                const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
-                if (match) {
-                    return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
-                }
-                return [0, 0, 0];
-            }
-
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? [
-                parseInt(result[1], 16),
-                parseInt(result[2], 16),
-                parseInt(result[3], 16)
-            ] : [0, 0, 0];
-        }
-
-        // Helper function to draw a line of text with mixed styles
-        function drawLine(doc, lineParts, x, y, lineHeight) {
-            let currentX = x;
-            for (const part of lineParts) {
-                if (part.color) {
-                    const rgb = hexToRgb(part.color);
-                    doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-                } else {
-                    doc.setTextColor(0, 0, 0);
-                }
-                doc.text(part.word, currentX, y);
-                currentX += doc.getTextWidth(part.word);
-            }
-        }
-
-        async function downloadNote() {
+        function downloadNote() {
             try {
                 const noteDetailArea = document.getElementById('note-detail-area');
                 const topic = noteDetailArea.querySelector('.note-topic').textContent.trim();
@@ -405,12 +372,11 @@
                 const noteContentElement = noteDetailArea.querySelector('.note-content');
 
                 const contentClone = noteContentElement.cloneNode(true);
-                const brElements = contentClone.querySelectorAll('br');
-                brElements.forEach(br => {
-                    const textNode = document.createTextNode('\n');
-                    br.replaceWith(textNode);
-                });
-
+                // Get the raw text content, replacing <br> with a space
+                let textContent = contentClone.textContent.replace(/<br>/g, ' ');
+                // Replace periods with a period and a newline for better readability
+                textContent = textContent.replace(/\./g, '.\n');
+                
                 const doc = new jsPDF();
                 let y = 20;
                 const margin = 20;
@@ -443,88 +409,16 @@
                 doc.setFontSize(12);
                 doc.setTextColor(0, 0, 0);
 
-                const nodes = [];
-                const walker = document.createTreeWalker(
-                    contentClone,
-                    NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-                    null,
-                    false
-                );
+                const lines = doc.splitTextToSize(textContent, pageWidth);
 
-                let node;
-                while (node = walker.nextNode()) {
-                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-                        const parentElement = node.parentElement;
-                        const computedStyle = window.getComputedStyle(parentElement);
-                        const color = computedStyle.getPropertyValue('color');
-                        nodes.push({
-                            type: 'text',
-                            value: node.nodeValue,
-                            color: color
-                        });
-                    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
-                        const computedStyle = window.getComputedStyle(node);
-                        const color = computedStyle.getPropertyValue('color');
-                        nodes.push({
-                            type: 'span',
-                            value: node.textContent,
-                            color: color
-                        });
+                lines.forEach(line => {
+                    if (y > doc.internal.pageSize.getHeight() - 20) {
+                        doc.addPage();
+                        y = 20;
                     }
-                }
-
-                let currentLine = [];
-                let currentLineWidth = 0;
-
-                for (const node of nodes) {
-                    const text = node.value;
-                    const words = text.split(/([\s,.!?;:()]+)/).filter(w => w.length > 0);
-
-                    for (const word of words) {
-                        const wordWithSpace = word + ' ';
-                        const wordWidth = doc.getTextWidth(wordWithSpace);
-                        
-                        if (currentLineWidth + wordWidth <= pageWidth) {
-                            currentLine.push({
-                                word: wordWithSpace,
-                                color: node.color
-                            });
-                            currentLineWidth += wordWidth;
-
-                            if (word.endsWith('.')) {
-                                drawLine(doc, currentLine, margin, y, lineHeight);
-                                y += lineHeight;
-                                currentLine = [];
-                                currentLineWidth = 0;
-                            }
-                        } else {
-                            drawLine(doc, currentLine, margin, y, lineHeight);
-                            y += lineHeight;
-
-                            currentLine = [{
-                                word: wordWithSpace,
-                                color: node.color
-                            }];
-                            currentLineWidth = wordWidth;
-
-                            if (y > doc.internal.pageSize.getHeight() - 20) {
-                                doc.addPage();
-                                y = 20;
-                            }
-
-                            if (word.endsWith('.')) {
-                                drawLine(doc, currentLine, margin, y, lineHeight);
-                                y += lineHeight;
-                                currentLine = [];
-                                currentLineWidth = 0;
-                            }
-                        }
-                    }
-                }
-
-                if (currentLine.length > 0) {
-                    drawLine(doc, currentLine, margin, y, lineHeight);
-                }
+                    doc.text(line, margin, y);
+                    y += lineHeight;
+                });
 
                 const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
                 doc.save(fileName);
