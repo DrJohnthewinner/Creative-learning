@@ -30,10 +30,8 @@
             padding: 20px;
             background-attachment: fixed;
             position: relative;
-            /* Added for logo positioning */
         }
 
-        /* Logo positioned absolutely at top left */
         .moe-logo {
             position: absolute;
             top: 20px;
@@ -52,7 +50,6 @@
             max-width: 1000px;
             animation: fadeIn 1s ease-in-out;
             padding-top: 80px;
-            /* Added space for the logo */
         }
 
         @keyframes fadeIn {
@@ -154,25 +151,12 @@
             font-size: 1.4rem;
             color: #fff;
             font-weight: 700;
-            cursor: pointer;
             margin-bottom: 12px;
             padding-bottom: 8px;
             border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-            transition: color 0.3s ease;
         }
 
-        .note-title:hover {
-            color: #00f2fe;
-        }
-
-        .note-content {
-            font-size: 1.05rem;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 18px;
-            line-height: 1.7;
-        }
-
-        .file-link {
+        .more-details-link {
             display: inline-block;
             margin-top: 10px;
             color: #00f2fe;
@@ -185,7 +169,7 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
-        .file-link:hover {
+        .more-details-link:hover {
             color: #fff;
             background: #00f2fe;
             text-decoration: none;
@@ -193,31 +177,18 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
-        .file-link i {
-            margin-right: 8px;
-        }
-
-        .note-image {
-            max-width: 100%;
-            height: auto;
-            border-radius: 10px;
-            margin-top: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            cursor: zoom-in;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .note-image:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-
-        .note-details {
-            display: none;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed rgba(255, 255, 255, 0.4);
+        .note-content {
+            font-size: 1.05rem;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 18px;
+            line-height: 1.7;
+            /* Added for better readability */
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            /* Show only 3 lines */
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         small {
@@ -394,7 +365,6 @@
             font-style: italic;
             margin-top: 20px;
             display: none;
-            /* Hidden by default */
         }
 
         @media (max-width: 768px) {
@@ -574,7 +544,6 @@
                 subjectNotesArea.innerHTML = '<p>No subject selected. Please go back and choose a subject.</p>';
             }
 
-            // Add event listener for the search input
             searchInput.addEventListener('keyup', searchNotes);
         });
 
@@ -616,43 +585,20 @@
                 const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
                     note.createdAt.toDate().toLocaleDateString() :
                     'Unknown date';
-
-                let fileDisplay = '';
-                if (note.fileUrl) {
-                    if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
-                        fileDisplay = `
-                        <a href="${note.fileUrl}" target="_blank" class="file-link">
-                            <i class="fas fa-file-pdf"></i> View PDF
-                        </a>
-                    `;
-                    } else if (note.fileType?.startsWith('image/')) {
-                        fileDisplay = `
-                        <div>
-                            <img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')">
-                        </div>
-                    `;
-                    } else {
-                        fileDisplay = `
-                        <a href="${note.fileUrl}" target="_blank" class="file-link">
-                            <i class="fas fa-file-download"></i> Download File
-                        </a>
-                    `;
-                    }
-                }
-
+                
                 notesHTML += `
                 <li class="note-item">
-                    <div class="note-title" onclick="toggleNote('${note.id}')">
+                    <div class="note-title">
                         ${note.noteTopic}
                         <span class="note-sub-topic">${note.subTopic || ''}</span>
                     </div>
-                    <div id="details-${note.id}" class="note-details">
-                        <span class="note-main-title">${note.noteTitle || ''}</span>
-                        <div class="note-content">${note.content}</div>
-                        ${fileDisplay}
-                        <small>Posted: ${date}</small>
-                        <button class="download-button" onclick="downloadNote(this)">Download Note as PDF</button>
+                    <div class="note-content">
+                        ${note.content}
                     </div>
+                    <a href="detail.html?noteId=${note.id}" class="more-details-link">
+                        <i class="fas fa-external-link-alt"></i> More Details
+                    </a>
+                    <small>Posted: ${date}</small>
                 </li>
             `;
             });
@@ -669,7 +615,6 @@
                     const topic = note.noteTopic?.toLowerCase() || '';
                     const subTopic = note.subTopic?.toLowerCase() || '';
                     const title = note.noteTitle?.toLowerCase() || '';
-                    // Check if search query is in the raw HTML content
                     const content = note.content?.toLowerCase() || '';
 
                     return topic.includes(query) ||
@@ -679,189 +624,10 @@
                 });
                 renderNotes(filteredNotes, notesArea);
             } else {
-                // If the search bar is empty, show all notes
                 renderNotes(allNotes, notesArea);
-            }
-        }
-
-        function toggleNote(noteId) {
-            const details = document.getElementById(`details-${noteId}`);
-            if (details.style.display === 'block') {
-                details.style.display = 'none';
-            } else {
-                details.style.display = 'block';
-            }
-        }
-
-        // Function to convert hex to RGB
-        function hexToRgb(hex) {
-            if (hex.startsWith('rgb')) {
-                const match = hex.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d+\.?\d*)?\)/);
-                if (match) {
-                    return [parseInt(match[1]), parseInt(match[2]), parseInt(match[3])];
-                }
-                return [0, 0, 0];
-            }
-
-            const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-            return result ? [
-                parseInt(result[1], 16),
-                parseInt(result[2], 16),
-                parseInt(result[3], 16)
-            ] : [0, 0, 0];
-        }
-
-        // Helper function to draw a line of text with mixed styles
-        function drawLine(doc, lineParts, x, y, lineHeight) {
-            let currentX = x;
-            for (const part of lineParts) {
-                if (part.color) {
-                    const rgb = hexToRgb(part.color);
-                    doc.setTextColor(rgb[0], rgb[1], rgb[2]);
-                } else {
-                    // Set to black if no color is specified
-                    doc.setTextColor(0, 0, 0);
-                }
-                doc.text(part.word, currentX, y);
-                currentX += doc.getTextWidth(part.word);
-            }
-        }
-
-        async function downloadNote(buttonElement) {
-            try {
-                const noteItem = buttonElement.closest('.note-item');
-                const topic = noteItem.querySelector('.note-title').textContent.trim().split('\n')[0];
-                const subTopic = noteItem.querySelector('.note-sub-topic')?.textContent.trim() || '';
-                const noteTitle = noteItem.querySelector('.note-main-title')?.textContent.trim() || '';
-                const noteContentElement = noteItem.querySelector('.note-content');
-
-                // Clone the element to avoid modifying the original
-                const contentClone = noteContentElement.cloneNode(true);
-
-                // Replace <br> tags with newline characters
-                const brElements = contentClone.querySelectorAll('br');
-                brElements.forEach(br => {
-                    const textNode = document.createTextNode('\n');
-                    br.replaceWith(textNode);
-                });
-
-                const doc = new jsPDF();
-                let y = 20;
-                const margin = 20;
-                const lineHeight = 7;
-                const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
-
-                // Add Topic
-                doc.setFont('helvetica', 'bold');
-                doc.setFontSize(16);
-                doc.setTextColor(106, 130, 251);
-                doc.text(topic, margin, y);
-                y += lineHeight * 1.5;
-
-                // Add Subtopic
-                if (subTopic) {
-                    doc.setFont('helvetica', 'italic');
-                    doc.setFontSize(12);
-                    doc.setTextColor(0, 242, 254);
-                    doc.text(`Subtopic: ${subTopic}`, margin, y);
-                    y += lineHeight * 1.5;
-                }
-
-                // Add Note Title
-                if (noteTitle) {
-                    doc.setFont('helvetica', 'bold');
-                    doc.setFontSize(14);
-                    doc.setTextColor(252, 92, 125);
-                    doc.text(`Title: ${noteTitle}`, margin, y);
-                    y += lineHeight * 2;
-                }
-
-                // Process content with highlights
-                doc.setFont('helvetica', 'normal');
-                doc.setFontSize(12);
-                doc.setTextColor(0, 0, 0); // Reset color to black for general text
-
-                // Extract text nodes and styled spans while preserving order
-                const nodes = [];
-                const walker = document.createTreeWalker(
-                    contentClone,
-                    NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-                    null,
-                    false
-                );
-
-                let node;
-                while (node = walker.nextNode()) {
-                    if (node.nodeType === Node.TEXT_NODE && node.nodeValue.trim()) {
-                        const parentElement = node.parentElement;
-                        const computedStyle = window.getComputedStyle(parentElement);
-                        const color = computedStyle.getPropertyValue('color');
-                        nodes.push({
-                            type: 'text',
-                            value: node.nodeValue,
-                            color: color
-                        });
-                    } else if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'span') {
-                        const computedStyle = window.getComputedStyle(node);
-                        const color = computedStyle.getPropertyValue('color');
-                        nodes.push({
-                            type: 'span',
-                            value: node.textContent,
-                            color: color
-                        });
-                    }
-                }
-
-                let currentLine = [];
-                let currentLineWidth = 0;
-
-                for (const node of nodes) {
-                    const text = node.value;
-                    const words = text.split(/([\s,.!?;:()]+)/).filter(w => w.length > 0);
-
-                    for (const word of words) {
-                        const wordWithSpace = word + ' ';
-                        const wordWidth = doc.getTextWidth(wordWithSpace);
-                        
-                        if (currentLineWidth + wordWidth <= pageWidth) {
-                            currentLine.push({
-                                word: wordWithSpace,
-                                color: node.color
-                            });
-                            currentLineWidth += wordWidth;
-                        } else {
-                            drawLine(doc, currentLine, margin, y, lineHeight);
-                            y += lineHeight;
-
-                            currentLine = [{
-                                word: wordWithSpace,
-                                color: node.color
-                            }];
-                            currentLineWidth = wordWidth;
-
-                            if (y > doc.internal.pageSize.getHeight() - 20) {
-                                doc.addPage();
-                                y = 20;
-                            }
-                        }
-                    }
-                }
-
-                if (currentLine.length > 0) {
-                    drawLine(doc, currentLine, margin, y, lineHeight);
-                }
-
-                const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
-                doc.save(fileName);
-
-            } catch (error) {
-                console.error("PDF generation failed:", error);
-                alert("Failed to generate PDF. Please try again.");
             }
         }
     </script>
 </body>
 
 </html>
-
-
