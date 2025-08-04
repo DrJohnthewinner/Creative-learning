@@ -154,9 +154,9 @@
             color: rgba(255, 255, 255, 0.9);
             line-height: 1.8;
             margin-top: 15px;
-            white-space: pre-wrap; /* Preserve newlines and spaces */
+            white-space: pre-wrap;
         }
-        
+
         .note-content img {
             max-width: 100%;
             height: auto;
@@ -190,7 +190,7 @@
             backdrop-filter: blur(5px);
             -webkit-backdrop-filter: blur(5px);
         }
-        
+
         .download-button i {
             margin-right: 10px;
         }
@@ -201,7 +201,7 @@
             transform: scale(1.05);
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
-        
+
         .footer {
             width: 100%;
             padding: 20px;
@@ -220,18 +220,23 @@
             #detail-page {
                 padding: 30px 20px;
             }
+
             h2 {
                 font-size: 2.2rem;
             }
+
             .note-topic {
                 font-size: 1.6rem;
             }
+
             .note-sub-topic {
                 font-size: 1.1rem;
             }
+
             .note-main-title {
                 font-size: 1.4rem;
             }
+
             .note-content {
                 font-size: 1rem;
             }
@@ -277,7 +282,9 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
-        const { jsPDF } = window.jspdf;
+        const {
+            jsPDF
+        } = window.jspdf;
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -334,7 +341,7 @@
                     `;
                 }
             }
-            
+
             const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
                 note.createdAt.toDate().toLocaleDateString() :
                 'Unknown date';
@@ -348,7 +355,7 @@
                 </div>
                 ${fileDisplay}
                 <small>Posted: ${date}</small>
-                <button class="download-button" onclick="downloadNote(this)">
+                <button class="download-button" onclick="downloadNote()">
                     <i class="fas fa-download"></i> Download as PDF
                 </button>
             `;
@@ -483,6 +490,13 @@
                                 color: node.color
                             });
                             currentLineWidth += wordWidth;
+
+                            if (word.endsWith('.')) {
+                                drawLine(doc, currentLine, margin, y, lineHeight);
+                                y += lineHeight;
+                                currentLine = [];
+                                currentLineWidth = 0;
+                            }
                         } else {
                             drawLine(doc, currentLine, margin, y, lineHeight);
                             y += lineHeight;
@@ -496,6 +510,13 @@
                             if (y > doc.internal.pageSize.getHeight() - 20) {
                                 doc.addPage();
                                 y = 20;
+                            }
+
+                            if (word.endsWith('.')) {
+                                drawLine(doc, currentLine, margin, y, lineHeight);
+                                y += lineHeight;
+                                currentLine = [];
+                                currentLineWidth = 0;
                             }
                         }
                     }
