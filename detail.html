@@ -372,11 +372,11 @@
                 const noteContentElement = noteDetailArea.querySelector('.note-content');
 
                 const contentClone = noteContentElement.cloneNode(true);
-                // Get the raw text content, replacing <br> with a space
                 let textContent = contentClone.textContent.replace(/<br>/g, ' ');
-                // Replace periods with a period and a newline for better readability
-                textContent = textContent.replace(/\./g, '.\n');
-                
+
+                // Replace periods with a period and two newlines for a new paragraph
+                textContent = textContent.replace(/\./g, '.\n\n');
+
                 const doc = new jsPDF();
                 let y = 20;
                 const margin = 20;
