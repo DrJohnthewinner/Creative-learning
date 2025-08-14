@@ -215,32 +215,6 @@
             animation: slideUp 1s ease-in-out;
             margin-top: 40px;
         }
-
-        @media (max-width: 768px) {
-            #detail-page {
-                padding: 30px 20px;
-            }
-
-            h2 {
-                font-size: 2.2rem;
-            }
-
-            .note-topic {
-                font-size: 1.6rem;
-            }
-
-            .note-sub-topic {
-                font-size: 1.1rem;
-            }
-
-            .note-main-title {
-                font-size: 1.4rem;
-            }
-
-            .note-content {
-                font-size: 1rem;
-            }
-        }
     </style>
 </head>
 
@@ -263,7 +237,7 @@
 
     <footer class="footer">
         <div class="footer-container">
-            <p> &copy; Creative Learning</p>
+            <p>&copy; Creative Learning</p>
             <p>Creative Learning is owned by Pope John</p>
         </div>
     </footer>
@@ -282,9 +256,7 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
-        const {
-            jsPDF
-        } = window.jspdf;
+        const { jsPDF } = window.jspdf;
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -318,46 +290,25 @@
             let fileDisplay = '';
             if (note.fileUrl) {
                 if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
-                    fileDisplay = `
-                        <p class="file-link-container">
-                            <a href="${note.fileUrl}" target="_blank" class="file-link">
-                                <i class="fas fa-file-pdf"></i> View PDF
-                            </a>
-                        </p>
-                    `;
+                    fileDisplay = `<p class="file-link-container"><a href="${note.fileUrl}" target="_blank" class="file-link"><i class="fas fa-file-pdf"></i> View PDF</a></p>`;
                 } else if (note.fileType?.startsWith('image/')) {
-                    fileDisplay = `
-                        <div>
-                            <img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')">
-                        </div>
-                    `;
+                    fileDisplay = `<div><img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')"></div>`;
                 } else {
-                    fileDisplay = `
-                        <p class="file-link-container">
-                            <a href="${note.fileUrl}" target="_blank" class="file-link">
-                                <i class="fas fa-file-download"></i> Download File
-                            </a>
-                        </p>
-                    `;
+                    fileDisplay = `<p class="file-link-container"><a href="${note.fileUrl}" target="_blank" class="file-link"><i class="fas fa-file-download"></i> Download File</a></p>`;
                 }
             }
 
             const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
-                note.createdAt.toDate().toLocaleDateString() :
-                'Unknown date';
+                note.createdAt.toDate().toLocaleDateString() : 'Unknown date';
 
             const detailsHTML = `
                 <h2 class="note-topic">${note.noteTopic}</h2>
                 ${note.subTopic ? `<h3 class="note-sub-topic">${note.subTopic}</h3>` : ''}
                 ${note.noteTitle ? `<h4 class="note-main-title">${note.noteTitle}</h4>` : ''}
-                <div class="note-content">
-                    ${note.content}
-                </div>
+                <div class="note-content">${note.content}</div>
                 ${fileDisplay}
                 <small>Posted: ${date}</small>
-                <button class="download-button" onclick="downloadNote()">
-                    <i class="fas fa-download"></i> Download as PDF
-                </button>
+                <button class="download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
             `;
 
             detailsArea.innerHTML = detailsHTML;
@@ -371,29 +322,22 @@
                 const noteTitle = noteDetailArea.querySelector('.note-main-title')?.textContent.trim() || '';
                 const noteContentElement = noteDetailArea.querySelector('.note-content');
 
-                const contentClone = noteContentElement.cloneNode(true);
-                let textContent = contentClone.textContent.replace(/<br>/g, ' ');
-
-                // Replace periods with a period and two newlines for a new paragraph
-                textContent = textContent.replace(/\./g, '.\n\n');
-
                 const doc = new jsPDF();
                 let y = 20;
                 const margin = 20;
                 const lineHeight = 7;
                 const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
 
-                // Set soft, dim colors for better reading
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(16);
-                doc.setTextColor(150, 165, 255); // Soft blue for Topic
+                doc.setTextColor(150, 165, 255);
                 doc.text(topic, margin, y);
                 y += lineHeight * 1.5;
 
                 if (subTopic) {
                     doc.setFont('helvetica', 'italic');
                     doc.setFontSize(12);
-                    doc.setTextColor(100, 200, 200); // Soft cyan for Subtopic
+                    doc.setTextColor(100, 200, 200);
                     doc.text(`Subtopic: ${subTopic}`, margin, y);
                     y += lineHeight * 1.5;
                 }
@@ -401,24 +345,45 @@
                 if (noteTitle) {
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(14);
-                    doc.setTextColor(255, 150, 175); // Soft pink for Title
+                    doc.setTextColor(255, 150, 175);
                     doc.text(`Title: ${noteTitle}`, margin, y);
                     y += lineHeight * 2;
                 }
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(12);
-                doc.setTextColor(70, 70, 70); // Soft dark gray for content text
+                doc.setTextColor(70, 70, 70);
 
-                const lines = doc.splitTextToSize(textContent, pageWidth);
-
-                lines.forEach(line => {
-                    if (y > doc.internal.pageSize.getHeight() - 20) {
-                        doc.addPage();
-                        y = 20;
+                noteContentElement.childNodes.forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        let lines = doc.splitTextToSize(node.textContent, pageWidth);
+                        lines.forEach(line => {
+                            if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
+                            doc.text(line, margin, y);
+                            y += lineHeight;
+                        });
+                    } else if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.tagName === 'MARK') {
+                            doc.setFillColor(255, 255, 0);
+                            let highlightText = node.textContent;
+                            let lines = doc.splitTextToSize(highlightText, pageWidth);
+                            lines.forEach(line => {
+                                if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
+                                doc.rect(margin - 1, y - 5, doc.getTextWidth(line) + 2, lineHeight, 'F');
+                                doc.setTextColor(0, 0, 0);
+                                doc.text(line, margin, y);
+                                y += lineHeight;
+                            });
+                            doc.setTextColor(70, 70, 70);
+                        } else {
+                            let lines = doc.splitTextToSize(node.textContent, pageWidth);
+                            lines.forEach(line => {
+                                if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
+                                doc.text(line, margin, y);
+                                y += lineHeight;
+                            });
+                        }
                     }
-                    doc.text(line, margin, y);
-                    y += lineHeight;
                 });
 
                 const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
@@ -431,5 +396,4 @@
         }
     </script>
 </body>
-
 </html>
