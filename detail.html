@@ -255,61 +255,10 @@
     </div>
 
     <footer class="footer">
-        <div class="footer-container">
-            <p>&copy; Creative Learning</p>
-            <p>Creative Learning is owned by Pope John</p>
-        </div>
+        <p>&copy; 2025 Learn with Fun. All rights reserved.</p>
     </footer>
 
     <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
-            authDomain: "creative-learning-f2252.firebaseapp.com",
-            projectId: "creative-learning-f2252",
-            storageBucket: "creative-learning-f2252.appspot.com",
-            messagingSenderId: "727263593717",
-            appId: "1:727263593717:web:8d907a7edcc97374edb1b5"
-        };
-
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
-
-        async function getNoteDetails() {
-            try {
-                const noteId = new URLSearchParams(window.location.search).get('noteId');
-                if (!noteId) {
-                    document.getElementById('note-detail-content').innerHTML = 
-                        '<p class="error-message">Note ID not provided in URL.</p>';
-                    return;
-                }
-                
-                const docRef = db.collection('notes').doc(noteId);
-                const doc = await docRef.get();
-
-                if (doc.exists) {
-                    const data = doc.data();
-                    const topic = data.topic || 'Untitled Note';
-                    const subTopic = data.subTopic || '';
-                    const title = data.title || '';
-                    const content = data.content || 'No content available.';
-
-                    document.querySelector('.note-topic').textContent = topic;
-                    document.querySelector('.note-sub-topic').textContent = subTopic;
-                    document.querySelector('.note-main-title').textContent = title;
-                    document.querySelector('.note-content').innerHTML = content;
-                } else {
-                    document.getElementById('note-detail-content').innerHTML = 
-                        '<p class="error-message">Note not found.</p>';
-                }
-            } catch (error) {
-                console.error("Error loading note details:", error);
-                document.getElementById('note-detail-content').innerHTML = 
-                    '<p class="error-message">Error loading note details. Please try again.</p>';
-            }
-        }
-
-        window.onload = getNoteDetails;
-
         function downloadNote() {
             try {
                 const { jsPDF } = window.jspdf;
@@ -355,10 +304,13 @@
                 doc.setFontSize(12);
                 doc.setTextColor(70, 70, 70);
 
-                // Function to handle text with proper line breaks
-                function addTextToPDF(text) {
+                // Function to handle text with proper line breaks and style preservation
+                function addTextToPDF(text, fontStyle = 'normal', fontSize = 12, textColor = [70, 70, 70]) {
+                    doc.setFont('helvetica', fontStyle);
+                    doc.setFontSize(fontSize);
+                    doc.setTextColor(...textColor);
                     const lines = doc.splitTextToSize(text, pageWidth);
-                    
+
                     for (let i = 0; i < lines.length; i++) {
                         if (y > doc.internal.pageSize.getHeight() - 20) {
                             doc.addPage();
@@ -367,33 +319,34 @@
                         doc.text(lines[i], margin, y);
                         y += lineHeight;
                     }
-                    
+
                     // Add extra space after paragraphs ending with a period
                     if (text.trim().endsWith('.')) {
                         y += lineHeight;
                     }
                 }
 
-                // Extract text content from HTML elements
+                // Extract and process text from HTML elements, preserving styles
                 function extractTextFromNode(node) {
                     if (node.nodeType === Node.TEXT_NODE) {
+                        // Handle plain text
                         addTextToPDF(node.textContent);
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Handle different HTML elements
+                        // Handle different HTML elements with specific styles
                         if (node.tagName === 'BR') {
-                            y += lineHeight;
+                            y += lineHeight; // Line break
                         } else if (node.tagName === 'P') {
                             if (y > lineHeight * 2) y += lineHeight; // Add space before paragraphs
                             Array.from(node.childNodes).forEach(extractTextFromNode);
                             y += lineHeight; // Add space after paragraphs
                         } else if (node.tagName === 'STRONG' || node.tagName === 'B') {
-                            doc.setFont('helvetica', 'bold');
-                            Array.from(node.childNodes).forEach(extractTextFromNode);
-                            doc.setFont('helvetica', 'normal');
+                            addTextToPDF(node.textContent, 'bold');
                         } else if (node.tagName === 'EM' || node.tagName === 'I') {
-                            doc.setFont('helvetica', 'italic');
-                            Array.from(node.childNodes).forEach(extractTextFromNode);
-                            doc.setFont('helvetica', 'normal');
+                            addTextToPDF(node.textContent, 'italic');
+                        } else if (node.tagName === 'SPAN' && node.style.color) {
+                            const color = node.style.color;
+                            const textColor = colorToRGB(color);
+                            addTextToPDF(node.textContent, 'normal', 12, textColor);
                         } else if (node.tagName === 'UL' || node.tagName === 'OL') {
                             y += lineHeight;
                             Array.from(node.children).forEach((li, index) => {
@@ -405,10 +358,10 @@
                                 doc.text(bullet, margin, y);
                                 const text = li.textContent;
                                 const lines = doc.splitTextToSize(text, pageWidth - 10);
-                                
+
                                 doc.text(lines[0], margin + 8, y);
                                 y += lineHeight;
-                                
+
                                 for (let i = 1; i < lines.length; i++) {
                                     if (y > doc.internal.pageSize.getHeight() - 20) {
                                         doc.addPage();
@@ -424,6 +377,15 @@
                             Array.from(node.childNodes).forEach(extractTextFromNode);
                         }
                     }
+                }
+
+                // Convert a color (e.g., 'red' or '#ff0000') to RGB array
+                function colorToRGB(color) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = color;
+                    const rgb = ctx.fillStyle.match(/\d+/g);
+                    return rgb ? rgb.map(Number) : [70, 70, 70]; // Default gray color
                 }
 
                 // Process all child nodes of the content element
