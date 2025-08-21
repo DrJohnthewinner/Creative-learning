@@ -248,72 +248,38 @@
             authDomain: "creative-learning-f2252.firebaseapp.com",
             projectId: "creative-learning-f2252",
             storageBucket: "creative-learning-f2252.appspot.com",
-            messagingSenderId: "451756350336",
-            appId: "1:451756350336:web:19b9255b8834a01f4cff65"
+            messagingSenderId: "647824748420",
+            appId: "1:647824748420:web:0f2a4ef10d67448b859238",
+            measurementId: "G-4TRFG2HMSD"
         };
-
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        const app = firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const { jsPDF } = window.jspdf;
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const noteId = urlParams.get('noteId');
-            const noteDetailArea = document.getElementById('note-detail-area');
+        // Placeholder for content
+        function loadNoteDetails(noteId) {
+            const docRef = db.collection("notes").doc(noteId);
 
-            if (noteId) {
-                loadNoteDetails(noteId, noteDetailArea);
-            } else {
-                noteDetailArea.innerHTML = '<p>No note selected. Please go back and choose a note.</p>';
-            }
-        });
-
-        function loadNoteDetails(noteId, detailsArea) {
-            db.collection('notes').doc(noteId).get()
-                .then(doc => {
-                    if (doc.exists) {
-                        const note = doc.data();
-                        renderNoteDetails(note, detailsArea);
-                    } else {
-                        detailsArea.innerHTML = '<p>Note not found.</p>';
-                    }
-                })
-                .catch(error => {
-                    console.error("Error loading note details:", error);
-                    detailsArea.innerHTML = `<p>Error loading note details. Please try again later.</p>`;
-                });
-        }
-
-        function renderNoteDetails(note, detailsArea) {
-            let fileDisplay = '';
-            if (note.fileUrl) {
-                if (note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf')) {
-                    fileDisplay = `<p class="file-link-container"><a href="${note.fileUrl}" target="_blank" class="file-link"><i class="fas fa-file-pdf"></i> View PDF</a></p>`;
-                } else if (note.fileType?.startsWith('image/')) {
-                    fileDisplay = `<div><img src="${note.fileUrl}" alt="Note image" class="note-image" onclick="window.open('${note.fileUrl}', '_blank')"></div>`;
+            docRef.get().then(doc => {
+                if (doc.exists) {
+                    const noteData = doc.data();
+                    document.querySelector("#note-detail-area").innerHTML = `
+                        <h2 class="note-topic">${noteData.topic}</h2>
+                        <div class="note-sub-topic">${noteData.subtopic}</div>
+                        <div class="note-main-title">${noteData.title}</div>
+                        <div class="note-content">${noteData.content}</div>
+                    `;
                 } else {
-                    fileDisplay = `<p class="file-link-container"><a href="${note.fileUrl}" target="_blank" class="file-link"><i class="fas fa-file-download"></i> Download File</a></p>`;
+                    console.log("No such document!");
                 }
-            }
-
-            const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
-                note.createdAt.toDate().toLocaleDateString() : 'Unknown date';
-
-            const detailsHTML = `
-                <h2 class="note-topic">${note.noteTopic}</h2>
-                ${note.subTopic ? `<h3 class="note-sub-topic">${note.subTopic}</h3>` : ''}
-                ${note.noteTitle ? `<h4 class="note-main-title">${note.noteTitle}</h4>` : ''}
-                <div class="note-content">${note.content}</div>
-                ${fileDisplay}
-                <small>Posted: ${date}</small>
-                <button class="download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
-            `;
-
-            detailsArea.innerHTML = detailsHTML;
+            }).catch(error => {
+                console.log("Error getting document:", error);
+            });
         }
 
+        // Initialize with a specific noteId
+        loadNoteDetails('your-note-id-here');
+
+        // Function to handle PDF download
         function downloadNote() {
             try {
                 const noteDetailArea = document.getElementById('note-detail-area');
@@ -354,6 +320,7 @@
                 doc.setFontSize(12);
                 doc.setTextColor(70, 70, 70);
 
+                // Iterate over each node in the content
                 noteContentElement.childNodes.forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE) {
                         let lines = doc.splitTextToSize(node.textContent, pageWidth);
@@ -364,18 +331,20 @@
                         });
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
                         if (node.tagName === 'MARK') {
-                            doc.setFillColor(255, 255, 0);
+                            // Handle highlighted text (marked with <mark> tag)
+                            doc.setFillColor(255, 255, 0); // Yellow highlight
                             let highlightText = node.textContent;
                             let lines = doc.splitTextToSize(highlightText, pageWidth);
                             lines.forEach(line => {
                                 if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
                                 doc.rect(margin - 1, y - 5, doc.getTextWidth(line) + 2, lineHeight, 'F');
-                                doc.setTextColor(0, 0, 0);
+                                doc.setTextColor(0, 0, 0); // Set text color to black
                                 doc.text(line, margin, y);
                                 y += lineHeight;
                             });
-                            doc.setTextColor(70, 70, 70);
+                            doc.setTextColor(70, 70, 70); // Reset to normal text color
                         } else {
+                            // Handle non-marked elements (regular text)
                             let lines = doc.splitTextToSize(node.textContent, pageWidth);
                             lines.forEach(line => {
                                 if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
@@ -396,4 +365,5 @@
         }
     </script>
 </body>
+
 </html>
