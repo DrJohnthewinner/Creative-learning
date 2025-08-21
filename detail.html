@@ -215,6 +215,16 @@
             animation: slideUp 1s ease-in-out;
             margin-top: 40px;
         }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 
@@ -229,7 +239,16 @@
 
             <div id="note-detail-area">
                 <div id="note-detail-content">
-                    <p>Loading note details...</p>
+                    <h2 class="note-topic">Loading note details...</h2>
+                    <p class="note-sub-topic"></p>
+                    <h3 class="note-main-title"></h3>
+                    <div class="note-content"></div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="download-button" onclick="downloadNote()">
+                        <i class="fas fa-download"></i> Download as PDF
+                    </button>
                 </div>
             </div>
         </section>
@@ -256,21 +275,36 @@
         const db = firebase.firestore(app);
 
         async function getNoteDetails() {
-            const noteId = new URLSearchParams(window.location.search).get('noteId');
-            const docRef = db.collection('notes').doc(noteId);
-            const doc = await docRef.get();
+            try {
+                const noteId = new URLSearchParams(window.location.search).get('noteId');
+                if (!noteId) {
+                    document.getElementById('note-detail-content').innerHTML = 
+                        '<p class="error-message">Note ID not provided in URL.</p>';
+                    return;
+                }
+                
+                const docRef = db.collection('notes').doc(noteId);
+                const doc = await docRef.get();
 
-            if (doc.exists) {
-                const data = doc.data();
-                const topic = data.topic;
-                const subTopic = data.subTopic || '';
-                const title = data.title || '';
-                const content = data.content || '';
+                if (doc.exists) {
+                    const data = doc.data();
+                    const topic = data.topic || 'Untitled Note';
+                    const subTopic = data.subTopic || '';
+                    const title = data.title || '';
+                    const content = data.content || 'No content available.';
 
-                document.querySelector('.note-topic').textContent = topic;
-                document.querySelector('.note-sub-topic').textContent = subTopic;
-                document.querySelector('.note-main-title').textContent = title;
-                document.querySelector('.note-content').innerHTML = content;
+                    document.querySelector('.note-topic').textContent = topic;
+                    document.querySelector('.note-sub-topic').textContent = subTopic;
+                    document.querySelector('.note-main-title').textContent = title;
+                    document.querySelector('.note-content').innerHTML = content;
+                } else {
+                    document.getElementById('note-detail-content').innerHTML = 
+                        '<p class="error-message">Note not found.</p>';
+                }
+            } catch (error) {
+                console.error("Error loading note details:", error);
+                document.getElementById('note-detail-content').innerHTML = 
+                    '<p class="error-message">Error loading note details. Please try again.</p>';
             }
         }
 
@@ -278,6 +312,7 @@
 
         function downloadNote() {
             try {
+                const { jsPDF } = window.jspdf;
                 const noteDetailArea = document.getElementById('note-detail-area');
                 const topic = noteDetailArea.querySelector('.note-topic').textContent.trim();
                 const subTopic = noteDetailArea.querySelector('.note-sub-topic')?.textContent.trim() || '';
@@ -290,67 +325,112 @@
                 const lineHeight = 7;
                 const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
 
+                // Add topic
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(16);
-                doc.setTextColor(150, 165, 255);
+                doc.setTextColor(106, 130, 251);
                 doc.text(topic, margin, y);
                 y += lineHeight * 1.5;
 
+                // Add subtopic if exists
                 if (subTopic) {
                     doc.setFont('helvetica', 'italic');
                     doc.setFontSize(12);
-                    doc.setTextColor(100, 200, 200);
+                    doc.setTextColor(100, 100, 100);
                     doc.text(`Subtopic: ${subTopic}`, margin, y);
                     y += lineHeight * 1.5;
                 }
 
+                // Add title if exists
                 if (noteTitle) {
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(14);
-                    doc.setTextColor(255, 150, 175);
+                    doc.setTextColor(252, 92, 125);
                     doc.text(`Title: ${noteTitle}`, margin, y);
                     y += lineHeight * 2;
                 }
 
+                // Process content
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(12);
                 doc.setTextColor(70, 70, 70);
 
-                function handleParagraphBreak(text, pageWidth) {
+                // Function to handle text with proper line breaks
+                function addTextToPDF(text) {
                     const lines = doc.splitTextToSize(text, pageWidth);
-                    let lastLine = lines[lines.length - 1];
-                    const hasFullStop = lastLine.trim().endsWith('.');
-
-                    lines.forEach(line => {
+                    
+                    for (let i = 0; i < lines.length; i++) {
                         if (y > doc.internal.pageSize.getHeight() - 20) {
                             doc.addPage();
                             y = 20;
                         }
-                        doc.text(line, margin, y);
+                        doc.text(lines[i], margin, y);
                         y += lineHeight;
-                    });
-
-                    if (hasFullStop) {
-                        y += lineHeight * 1.5;
+                    }
+                    
+                    // Add extra space after paragraphs ending with a period
+                    if (text.trim().endsWith('.')) {
+                        y += lineHeight;
                     }
                 }
 
-                noteContentElement.childNodes.forEach(node => {
+                // Extract text content from HTML elements
+                function extractTextFromNode(node) {
                     if (node.nodeType === Node.TEXT_NODE) {
-                        handleParagraphBreak(node.textContent, pageWidth);
+                        addTextToPDF(node.textContent);
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.tagName === 'MARK') {
-                            doc.setFillColor(255, 255, 0); 
-                            let highlightText = node.textContent;
-                            handleParagraphBreak(highlightText, pageWidth);
-                            doc.setTextColor(70, 70, 70);
+                        // Handle different HTML elements
+                        if (node.tagName === 'BR') {
+                            y += lineHeight;
+                        } else if (node.tagName === 'P') {
+                            if (y > lineHeight * 2) y += lineHeight; // Add space before paragraphs
+                            Array.from(node.childNodes).forEach(extractTextFromNode);
+                            y += lineHeight; // Add space after paragraphs
+                        } else if (node.tagName === 'STRONG' || node.tagName === 'B') {
+                            doc.setFont('helvetica', 'bold');
+                            Array.from(node.childNodes).forEach(extractTextFromNode);
+                            doc.setFont('helvetica', 'normal');
+                        } else if (node.tagName === 'EM' || node.tagName === 'I') {
+                            doc.setFont('helvetica', 'italic');
+                            Array.from(node.childNodes).forEach(extractTextFromNode);
+                            doc.setFont('helvetica', 'normal');
+                        } else if (node.tagName === 'UL' || node.tagName === 'OL') {
+                            y += lineHeight;
+                            Array.from(node.children).forEach((li, index) => {
+                                const bullet = node.tagName === 'UL' ? '• ' : `${index + 1}. `;
+                                if (y > doc.internal.pageSize.getHeight() - 20) {
+                                    doc.addPage();
+                                    y = 20;
+                                }
+                                doc.text(bullet, margin, y);
+                                const text = li.textContent;
+                                const lines = doc.splitTextToSize(text, pageWidth - 10);
+                                
+                                doc.text(lines[0], margin + 8, y);
+                                y += lineHeight;
+                                
+                                for (let i = 1; i < lines.length; i++) {
+                                    if (y > doc.internal.pageSize.getHeight() - 20) {
+                                        doc.addPage();
+                                        y = 20;
+                                    }
+                                    doc.text(lines[i], margin + 8, y);
+                                    y += lineHeight;
+                                }
+                            });
+                            y += lineHeight;
                         } else {
-                            handleParagraphBreak(node.textContent, pageWidth);
+                            // For other elements, just extract the text
+                            Array.from(node.childNodes).forEach(extractTextFromNode);
                         }
                     }
-                });
+                }
 
-                const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
+                // Process all child nodes of the content element
+                Array.from(noteContentElement.childNodes).forEach(extractTextFromNode);
+
+                // Save the PDF
+                const fileName = `Note_${topic.replace(/\s+/g, '_')}.pdf`;
                 doc.save(fileName);
 
             } catch (error) {
