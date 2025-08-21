@@ -37,6 +37,9 @@
             left: 20px;
             height: 50px;
             z-index: 10;
+            background: white;
+            padding: 5px;
+            border-radius: 5px;
         }
 
         #main-content {
@@ -202,6 +205,16 @@
             box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
         }
 
+        .error-message {
+            color: #ff6b6b;
+            font-weight: 600;
+            text-align: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
         .footer {
             width: 100%;
             padding: 20px;
@@ -215,11 +228,19 @@
             animation: slideUp 1s ease-in-out;
             margin-top: 40px;
         }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 25px;
+        }
     </style>
 </head>
 
 <body>
-    <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
+    <div class="moe-logo-placeholder">
+        <img src="https://placehold.co/150x50/white/black?text=MOE+Logo" alt="Ministry of Education Logo" class="moe-logo">
+    </div>
 
     <div id="main-content">
         <section id="detail-page">
@@ -230,6 +251,12 @@
             <div id="note-detail-area">
                 <div id="note-detail-content">
                     <p>Loading note details...</p>
+                </div>
+                
+                <div class="button-group">
+                    <button class="download-button" onclick="downloadNote()">
+                        <i class="fas fa-download"></i> Download as PDF
+                    </button>
                 </div>
             </div>
         </section>
@@ -243,6 +270,7 @@
     </footer>
 
     <script>
+        // Initialize Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
             authDomain: "creative-learning-f2252.firebaseapp.com",
@@ -252,105 +280,130 @@
             appId: "1:727263593717:web:8d907a7edcc97374edb1b5"
         };
 
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
+        // Initialize Firebase
+        let db;
+        try {
+            const app = firebase.initializeApp(firebaseConfig);
+            db = firebase.firestore(app);
+        } catch (error) {
+            console.error("Firebase initialization error:", error);
+            document.getElementById('note-detail-content').innerHTML = 
+                '<p class="error-message">Error connecting to database. Please check your connection.</p>';
+        }
 
         async function getNoteDetails() {
             const noteId = new URLSearchParams(window.location.search).get('noteId');
-            const docRef = db.collection('notes').doc(noteId);
-            const doc = await docRef.get();
+            
+            if (!noteId) {
+                document.getElementById('note-detail-content').innerHTML = 
+                    '<p class="error-message">No note ID provided in URL.</p>';
+                return;
+            }
+            
+            try {
+                const docRef = db.collection('notes').doc(noteId);
+                const doc = await docRef.get();
 
-            if (doc.exists) {
-                const data = doc.data();
-                const topic = data.topic;
-                const subTopic = data.subTopic || '';
-                const title = data.title || '';
-                const content = data.content || '';
+                if (doc.exists) {
+                    const data = doc.data();
+                    const topic = data.topic || 'Untitled';
+                    const subTopic = data.subTopic || '';
+                    const title = data.title || '';
+                    const content = data.content || 'No content available.';
 
-                document.querySelector('.note-topic').textContent = topic;
-                document.querySelector('.note-sub-topic').textContent = subTopic;
-                document.querySelector('.note-main-title').textContent = title;
-                document.querySelector('.note-content').innerHTML = content;
+                    // Create the HTML structure for the note details
+                    const noteHTML = `
+                        <div class="note-topic">${topic}</div>
+                        ${subTopic ? `<div class="note-sub-topic">${subTopic}</div>` : ''}
+                        ${title ? `<div class="note-main-title">${title}</div>` : ''}
+                        <div class="note-content">${content}</div>
+                    `;
+                    
+                    document.getElementById('note-detail-content').innerHTML = noteHTML;
+                } else {
+                    document.getElementById('note-detail-content').innerHTML = 
+                        '<p class="error-message">Note not found. It may have been deleted.</p>';
+                }
+            } catch (error) {
+                console.error("Error getting note details:", error);
+                document.getElementById('note-detail-content').innerHTML = 
+                    '<p class="error-message">Error loading note details. Please try again later.</p>';
             }
         }
 
-        window.onload = getNoteDetails;
-
         function downloadNote() {
             try {
-                const noteDetailArea = document.getElementById('note-detail-area');
-                const topic = noteDetailArea.querySelector('.note-topic').textContent.trim();
-                const subTopic = noteDetailArea.querySelector('.note-sub-topic')?.textContent.trim() || '';
-                const noteTitle = noteDetailArea.querySelector('.note-main-title')?.textContent.trim() || '';
-                const noteContentElement = noteDetailArea.querySelector('.note-content');
-
+                // Check if jsPDF is available
+                if (typeof jsPDF === 'undefined') {
+                    alert("PDF library not loaded. Please check your connection.");
+                    return;
+                }
+                
+                const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
+                
+                const noteDetailContent = document.getElementById('note-detail-content');
+                
+                // Get text content (fallback values if elements don't exist)
+                const topicElement = noteDetailContent.querySelector('.note-topic');
+                const subTopicElement = noteDetailContent.querySelector('.note-sub-topic');
+                const titleElement = noteDetailContent.querySelector('.note-main-title');
+                const contentElement = noteDetailContent.querySelector('.note-content');
+                
+                const topic = topicElement ? topicElement.textContent.trim() : 'Untitled Note';
+                const subTopic = subTopicElement ? subTopicElement.textContent.trim() : '';
+                const noteTitle = titleElement ? titleElement.textContent.trim() : '';
+                const noteContent = contentElement ? contentElement.textContent.trim() : 'No content available.';
+                
                 let y = 20;
                 const margin = 20;
                 const lineHeight = 7;
                 const pageWidth = doc.internal.pageSize.getWidth() - (margin * 2);
 
+                // Add topic
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(16);
-                doc.setTextColor(150, 165, 255);
+                doc.setTextColor(106, 130, 251);
                 doc.text(topic, margin, y);
                 y += lineHeight * 1.5;
 
+                // Add subtopic if exists
                 if (subTopic) {
                     doc.setFont('helvetica', 'italic');
                     doc.setFontSize(12);
-                    doc.setTextColor(100, 200, 200);
+                    doc.setTextColor(100, 100, 100);
                     doc.text(`Subtopic: ${subTopic}`, margin, y);
                     y += lineHeight * 1.5;
                 }
 
+                // Add title if exists
                 if (noteTitle) {
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(14);
-                    doc.setTextColor(255, 150, 175);
+                    doc.setTextColor(252, 92, 125);
                     doc.text(`Title: ${noteTitle}`, margin, y);
                     y += lineHeight * 2;
                 }
 
+                // Add content
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(12);
                 doc.setTextColor(70, 70, 70);
 
-                function handleParagraphBreak(text, pageWidth) {
-                    const lines = doc.splitTextToSize(text, pageWidth);
-                    let lastLine = lines[lines.length - 1];
-                    const hasFullStop = lastLine.trim().endsWith('.');
-
-                    lines.forEach(line => {
-                        if (y > doc.internal.pageSize.getHeight() - 20) {
-                            doc.addPage();
-                            y = 20;
-                        }
-                        doc.text(line, margin, y);
-                        y += lineHeight;
-                    });
-
-                    if (hasFullStop) {
-                        y += lineHeight * 1.5;
+                // Split the content into lines that fit the page width
+                const lines = doc.splitTextToSize(noteContent, pageWidth);
+                
+                for (let i = 0; i < lines.length; i++) {
+                    if (y > doc.internal.pageSize.getHeight() - 20) {
+                        doc.addPage();
+                        y = 20;
                     }
+                    doc.text(lines[i], margin, y);
+                    y += lineHeight;
                 }
 
-                noteContentElement.childNodes.forEach(node => {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        handleParagraphBreak(node.textContent, pageWidth);
-                    } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.tagName === 'MARK') {
-                            doc.setFillColor(255, 255, 0); 
-                            let highlightText = node.textContent;
-                            handleParagraphBreak(highlightText, pageWidth);
-                            doc.setTextColor(70, 70, 70);
-                        } else {
-                            handleParagraphBreak(node.textContent, pageWidth);
-                        }
-                    }
-                });
-
-                const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
+                // Save the PDF
+                const fileName = `Note_${topic.replace(/\s+/g, '_')}.pdf`;
                 doc.save(fileName);
 
             } catch (error) {
@@ -358,6 +411,13 @@
                 alert("Failed to generate PDF. Please try again.");
             }
         }
+
+        window.onload = function() {
+            // Initialize and get note details after page loads
+            if (db) {
+                getNoteDetails();
+            }
+        };
     </script>
 </body>
 
