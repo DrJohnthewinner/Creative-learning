@@ -248,38 +248,34 @@
             authDomain: "creative-learning-f2252.firebaseapp.com",
             projectId: "creative-learning-f2252",
             storageBucket: "creative-learning-f2252.appspot.com",
-            messagingSenderId: "647824748420",
-            appId: "1:647824748420:web:0f2a4ef10d67448b859238",
-            measurementId: "G-4TRFG2HMSD"
+            messagingSenderId: "727263593717",
+            appId: "1:727263593717:web:8d907a7edcc97374edb1b5"
         };
+
         const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const db = firebase.firestore(app);
 
-        // Placeholder for content
-        function loadNoteDetails(noteId) {
-            const docRef = db.collection("notes").doc(noteId);
+        async function getNoteDetails() {
+            const noteId = new URLSearchParams(window.location.search).get('noteId');
+            const docRef = db.collection('notes').doc(noteId);
+            const doc = await docRef.get();
 
-            docRef.get().then(doc => {
-                if (doc.exists) {
-                    const noteData = doc.data();
-                    document.querySelector("#note-detail-area").innerHTML = `
-                        <h2 class="note-topic">${noteData.topic}</h2>
-                        <div class="note-sub-topic">${noteData.subtopic}</div>
-                        <div class="note-main-title">${noteData.title}</div>
-                        <div class="note-content">${noteData.content}</div>
-                    `;
-                } else {
-                    console.log("No such document!");
-                }
-            }).catch(error => {
-                console.log("Error getting document:", error);
-            });
+            if (doc.exists) {
+                const data = doc.data();
+                const topic = data.topic;
+                const subTopic = data.subTopic || '';
+                const title = data.title || '';
+                const content = data.content || '';
+
+                document.querySelector('.note-topic').textContent = topic;
+                document.querySelector('.note-sub-topic').textContent = subTopic;
+                document.querySelector('.note-main-title').textContent = title;
+                document.querySelector('.note-content').innerHTML = content;
+            }
         }
 
-        // Initialize with a specific noteId
-        loadNoteDetails('your-note-id-here');
+        window.onload = getNoteDetails;
 
-        // Function to handle PDF download
         function downloadNote() {
             try {
                 const noteDetailArea = document.getElementById('note-detail-area');
@@ -320,37 +316,36 @@
                 doc.setFontSize(12);
                 doc.setTextColor(70, 70, 70);
 
-                // Iterate over each node in the content
+                function handleParagraphBreak(text, pageWidth) {
+                    const lines = doc.splitTextToSize(text, pageWidth);
+                    let lastLine = lines[lines.length - 1];
+                    const hasFullStop = lastLine.trim().endsWith('.');
+
+                    lines.forEach(line => {
+                        if (y > doc.internal.pageSize.getHeight() - 20) {
+                            doc.addPage();
+                            y = 20;
+                        }
+                        doc.text(line, margin, y);
+                        y += lineHeight;
+                    });
+
+                    if (hasFullStop) {
+                        y += lineHeight * 1.5;
+                    }
+                }
+
                 noteContentElement.childNodes.forEach(node => {
                     if (node.nodeType === Node.TEXT_NODE) {
-                        let lines = doc.splitTextToSize(node.textContent, pageWidth);
-                        lines.forEach(line => {
-                            if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
-                            doc.text(line, margin, y);
-                            y += lineHeight;
-                        });
+                        handleParagraphBreak(node.textContent, pageWidth);
                     } else if (node.nodeType === Node.ELEMENT_NODE) {
                         if (node.tagName === 'MARK') {
-                            // Handle highlighted text (marked with <mark> tag)
-                            doc.setFillColor(255, 255, 0); // Yellow highlight
+                            doc.setFillColor(255, 255, 0); 
                             let highlightText = node.textContent;
-                            let lines = doc.splitTextToSize(highlightText, pageWidth);
-                            lines.forEach(line => {
-                                if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
-                                doc.rect(margin - 1, y - 5, doc.getTextWidth(line) + 2, lineHeight, 'F');
-                                doc.setTextColor(0, 0, 0); // Set text color to black
-                                doc.text(line, margin, y);
-                                y += lineHeight;
-                            });
-                            doc.setTextColor(70, 70, 70); // Reset to normal text color
+                            handleParagraphBreak(highlightText, pageWidth);
+                            doc.setTextColor(70, 70, 70);
                         } else {
-                            // Handle non-marked elements (regular text)
-                            let lines = doc.splitTextToSize(node.textContent, pageWidth);
-                            lines.forEach(line => {
-                                if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
-                                doc.text(line, margin, y);
-                                y += lineHeight;
-                            });
+                            handleParagraphBreak(node.textContent, pageWidth);
                         }
                     }
                 });
