@@ -34,7 +34,6 @@
             --aurora-color-1: #58A6FF;
             --aurora-color-2: #A371F7;
             --aurora-color-3: #F778BA;
-
         }
 
         body[data-theme="light"] {
@@ -109,7 +108,7 @@
             z-index: -1;
             overflow: hidden;
         }
-        
+
         .aurora-shape {
             position: absolute;
             border-radius: 50%;
@@ -119,35 +118,60 @@
         }
 
         .shape1 {
-            width: 400px; height: 400px;
+            width: 400px;
+            height: 400px;
             background: var(--aurora-color-1);
-            top: 10%; left: 10%;
+            top: 10%;
+            left: 10%;
             animation: move-aurora1 20s infinite alternate ease-in-out;
         }
+
         .shape2 {
-            width: 350px; height: 350px;
+            width: 350px;
+            height: 350px;
             background: var(--aurora-color-2);
-            top: 50%; left: 60%;
+            top: 50%;
+            left: 60%;
             animation: move-aurora2 25s infinite alternate ease-in-out;
         }
+
         .shape3 {
-            width: 300px; height: 300px;
+            width: 300px;
+            height: 300px;
             background: var(--aurora-color-3);
-            top: 80%; left: 20%;
+            top: 80%;
+            left: 20%;
             animation: move-aurora3 18s infinite alternate ease-in-out;
         }
 
         @keyframes move-aurora1 {
-            from { transform: translate(0, 0) rotate(0deg); }
-            to { transform: translate(100px, 50px) rotate(45deg); }
+            from {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            to {
+                transform: translate(100px, 50px) rotate(45deg);
+            }
         }
+
         @keyframes move-aurora2 {
-            from { transform: translate(0, 0) rotate(0deg); }
-            to { transform: translate(-80px, -60px) rotate(-60deg); }
+            from {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            to {
+                transform: translate(-80px, -60px) rotate(-60deg);
+            }
         }
+
         @keyframes move-aurora3 {
-            from { transform: translate(0, 0) rotate(0deg); }
-            to { transform: translate(60px, -100px) rotate(70deg); }
+            from {
+                transform: translate(0, 0) rotate(0deg);
+            }
+
+            to {
+                transform: translate(60px, -100px) rotate(70deg);
+            }
         }
 
         /*
@@ -231,10 +255,17 @@
         }
 
         @keyframes float-in {
-            from { opacity: 0; transform: translateY(30px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.98);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
         }
-        
+
         #detail-page {
             background: var(--primary-card-bg);
             border-radius: 24px;
@@ -292,6 +323,7 @@
             transform: translateY(-4px) scale(1.03);
             box-shadow: 0 10px 30px var(--shadow-color);
         }
+
         .action-button:hover i {
             transform: rotate(-10deg) scale(1.1);
         }
@@ -316,7 +348,7 @@
             border: 1px solid var(--border-color);
             transition: all 0.5s ease;
         }
-        
+
         .note-sub-topic {
             font-size: 1.3rem;
             color: var(--text-color);
@@ -359,7 +391,7 @@
             padding: 5px 10px;
             border-radius: 8px;
         }
-        
+
         small {
             display: block;
             margin-top: 25px;
@@ -385,10 +417,17 @@
             transition: all 0.5s ease;
             backdrop-filter: blur(12px);
         }
-        
+
         @keyframes slideUp {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
@@ -401,8 +440,9 @@
         <div class="aurora-shape shape3"></div>
     </div>
 
-   <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
-
+    <header class="header-container">
+        <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
+        <div class="theme-switcher">
             <button class="theme-button active" id="theme-dark" data-theme="dark" aria-label="Switch to dark theme"><i class="fas fa-moon"></i></button>
             <button class="theme-button" id="theme-light" data-theme="light" aria-label="Switch to light theme"><i class="fas fa-sun"></i></button>
             <button class="theme-button" id="theme-sepia" data-theme="sepia" aria-label="Switch to sepia theme"><i class="fas fa-book-open"></i></button>
@@ -416,7 +456,6 @@
             </button>
 
             <div id="note-detail-area">
-                <!-- Content injected by JS -->
                 <div id="note-detail-content">
                     <p>Loading note details...</p>
                 </div>
@@ -445,7 +484,9 @@
             firebase.initializeApp(firebaseConfig);
         }
         const db = firebase.firestore();
-        const { jsPDF } = window.jspdf;
+        const {
+            jsPDF
+        } = window.jspdf;
 
         function setTheme(themeName) {
             localStorage.setItem('theme', themeName);
@@ -508,14 +549,13 @@
                 ${note.subTopic ? `<h3 class="note-sub-topic">${escapeHTML(note.subTopic)}</h3>` : ''}
                 ${note.noteTitle ? `<h4 class="note-main-title">${escapeHTML(note.noteTitle)}</h4>` : ''}
                 <div id="note-detail-content">
-                    <div class="note-content">${note.content}</div> <!-- Assuming content is safe HTML. If not, escape it. -->
-                    ${fileDisplay}
+                    <div class="note-content">${note.content}</div> ${fileDisplay}
                     <small>Posted: ${date}</small>
                     <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
                 </div>
             `;
         }
-        
+
         function escapeHTML(str) {
             const p = document.createElement('p');
             p.textContent = str;
@@ -579,5 +619,5 @@
         }
     </script>
 </body>
-</html>
 
+</html>
