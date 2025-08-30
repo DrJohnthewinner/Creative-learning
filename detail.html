@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+this one <!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -8,10 +8,78 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
     <style>
+        /*
+        ============================================
+        THEME & COLOR PALETTE SETUP (CSS VARIABLES)
+        ============================================
+        */
+        :root {
+            --bg-color: #0D1117;
+            --primary-card-bg: rgba(22, 27, 34, 0.6);
+            --secondary-card-bg: rgba(13, 17, 23, 0.7);
+            --text-color: #C9D1D9;
+            --heading-color: #FFFFFF;
+            --accent-color-1: #58A6FF;
+            --accent-color-2: #3FB950;
+            --border-color: rgba(255, 255, 255, 0.15);
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --button-bg: rgba(255, 255, 255, 0.08);
+            --button-text: #FFFFFF;
+            --button-hover-bg: #58A6FF;
+            --button-hover-text: #FFFFFF;
+            --aurora-color-1: #58A6FF;
+            --aurora-color-2: #A371F7;
+            --aurora-color-3: #F778BA;
+
+        }
+
+        body[data-theme="light"] {
+            --bg-color: #F4F7FC;
+            --primary-card-bg: rgba(255, 255, 255, 0.6);
+            --secondary-card-bg: rgba(249, 250, 255, 0.8);
+            --text-color: #4A5568;
+            --heading-color: #1A202C;
+            --accent-color-1: #4C51BF;
+            --accent-color-2: #38B2AC;
+            --border-color: rgba(0, 0, 0, 0.1);
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --button-bg: rgba(0, 0, 0, 0.05);
+            --button-text: #2D3748;
+            --button-hover-bg: #2D3748;
+            --button-hover-text: #FFFFFF;
+            --aurora-color-1: #82aaff;
+            --aurora-color-2: #c792ea;
+            --aurora-color-3: #ffc482;
+        }
+
+        body[data-theme="sepia"] {
+            --bg-color: #FBF0D9;
+            --primary-card-bg: rgba(248, 234, 214, 0.6);
+            --secondary-card-bg: rgba(253, 246, 232, 0.7);
+            --text-color: #5B4636;
+            --heading-color: #3D2C1D;
+            --accent-color-1: #8D6E63;
+            --accent-color-2: #B18F6A;
+            --border-color: rgba(61, 44, 29, 0.15);
+            --shadow-color: rgba(91, 70, 54, 0.15);
+            --button-bg: rgba(93, 64, 55, 0.08);
+            --button-text: #5D4037;
+            --button-hover-bg: #5D4037;
+            --button-hover-text: #FFFFFF;
+            --aurora-color-1: #d1a377;
+            --aurora-color-2: #a87b53;
+            --aurora-color-3: #c28e8e;
+        }
+
+        /*
+        ============================================
+        GENERAL STYLES & DYNAMIC BACKGROUND
+        ============================================
+        */
         * {
             margin: 0;
             padding: 0;
@@ -19,26 +87,137 @@
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #6a82fb, #fc5c7d);
-            color: #fff;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
-            background-attachment: fixed;
+            transition: background-color 0.5s ease, color 0.5s ease;
             position: relative;
+            overflow-x: hidden;
         }
 
-        .moe-logo {
+        .background-aurora {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .aurora-shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(100px);
+            opacity: 0.4;
+            transition: background-color 0.5s ease;
+        }
+
+        .shape1 {
+            width: 400px; height: 400px;
+            background: var(--aurora-color-1);
+            top: 10%; left: 10%;
+            animation: move-aurora1 20s infinite alternate ease-in-out;
+        }
+        .shape2 {
+            width: 350px; height: 350px;
+            background: var(--aurora-color-2);
+            top: 50%; left: 60%;
+            animation: move-aurora2 25s infinite alternate ease-in-out;
+        }
+        .shape3 {
+            width: 300px; height: 300px;
+            background: var(--aurora-color-3);
+            top: 80%; left: 20%;
+            animation: move-aurora3 18s infinite alternate ease-in-out;
+        }
+
+        @keyframes move-aurora1 {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(100px, 50px) rotate(45deg); }
+        }
+        @keyframes move-aurora2 {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(-80px, -60px) rotate(-60deg); }
+        }
+        @keyframes move-aurora3 {
+            from { transform: translate(0, 0) rotate(0deg); }
+            to { transform: translate(60px, -100px) rotate(70deg); }
+        }
+
+        /*
+        ============================================
+        HEADER & LOGO STYLES
+        ============================================
+        */
+        .header-container {
             position: absolute;
             top: 20px;
             left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .moe-logo {
             height: 50px;
             z-index: 10;
         }
 
+        /*
+        ============================================
+        THEME SWITCHER STYLES
+        ============================================
+        */
+        .theme-switcher {
+            display: flex;
+            gap: 10px;
+            background: var(--primary-card-bg);
+            padding: 8px;
+            border-radius: 50px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 20px var(--shadow-color);
+            backdrop-filter: blur(10px);
+        }
+
+        .theme-button {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-color);
+            background-color: transparent;
+            font-size: 14px;
+        }
+
+        .theme-button:hover {
+            transform: scale(1.1) rotate(15deg);
+            background-color: var(--button-bg);
+        }
+
+        .theme-button.active {
+            border-color: var(--accent-color-1);
+            color: var(--accent-color-1);
+            transform: scale(1.1);
+        }
+
+        /*
+        ============================================
+        MAIN CONTENT & LAYOUT
+        ============================================
+        */
         #main-content {
             flex-grow: 1;
             display: flex;
@@ -47,112 +226,118 @@
             justify-content: center;
             width: 100%;
             max-width: 1000px;
-            animation: fadeIn 1s ease-in-out;
-            padding-top: 80px;
+            animation: float-in 1.2s ease-out;
+            padding-top: 100px;
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        @keyframes float-in {
+            from { opacity: 0; transform: translateY(30px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
         }
-
+        
         #detail-page {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
+            background: var(--primary-card-bg);
+            border-radius: 24px;
             padding: 40px;
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 15px 50px var(--shadow-color);
             text-align: left;
             width: 100%;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            border: 1px solid var(--border-color);
+            transition: all 0.5s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
         }
 
-        h2 {
+        h2.note-topic {
             font-weight: 700;
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             margin-bottom: 20px;
-            color: #fff;
+            color: var(--heading-color);
             display: flex;
             align-items: center;
             gap: 15px;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .back-button {
-            padding: 12px 25px;
+        /*
+        ============================================
+        BUTTONS & INTERACTIVE ELEMENTS
+        ============================================
+        */
+        .action-button {
+            padding: 14px 28px;
             border: none;
             border-radius: 50px;
-            background: rgba(255, 255, 255, 0.25);
-            color: #fff;
+            background: var(--button-bg);
+            color: var(--button-text);
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            backdrop-filter: blur(5px);
+        }
+
+        .action-button i {
+            margin-right: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .action-button:hover {
+            background: var(--button-hover-bg);
+            color: var(--button-hover-text);
+            transform: translateY(-4px) scale(1.03);
+            box-shadow: 0 10px 30px var(--shadow-color);
+        }
+        .action-button:hover i {
+            transform: rotate(-10deg) scale(1.1);
+        }
+
+        .back-button {
             margin-bottom: 30px;
         }
 
-        .back-button i {
-            margin-right: 10px;
+        .download-button {
+            margin-top: 25px;
         }
 
-        .back-button:hover {
-            background: #fff;
-            color: #6a82fb;
-            transform: translateY(-5px) scale(1.03);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(106, 130, 251, 0.5);
-        }
-
+        /*
+        ============================================
+        NOTE CONTENT STYLES
+        ============================================
+        */
         #note-detail-content {
-            padding: 20px;
-            border-radius: 15px;
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 30px;
+            border-radius: 18px;
+            background: var(--secondary-card-bg);
+            border: 1px solid var(--border-color);
+            transition: all 0.5s ease;
         }
-
-        .note-topic {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 5px;
-        }
-
+        
         .note-sub-topic {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.3rem;
+            color: var(--text-color);
             font-style: italic;
-            margin-bottom: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
-            padding-bottom: 10px;
+            opacity: 0.9;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
         }
 
         .note-main-title {
-            font-size: 1.5rem;
+            font-size: 1.6rem;
             font-weight: 600;
-            color: #00f2fe;
-            margin-top: 20px;
+            color: var(--accent-color-2);
+            margin-top: 25px;
         }
 
         .note-content {
             font-size: 1.1rem;
-            color: rgba(255, 255, 255, 0.9);
-            line-height: 1.8;
+            color: var(--text-color);
+            line-height: 1.9;
             margin-top: 15px;
             white-space: pre-wrap;
         }
@@ -160,80 +345,85 @@
         .note-content img {
             max-width: 100%;
             height: auto;
-            border-radius: 10px;
+            border-radius: 12px;
             margin-top: 20px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 25px var(--shadow-color);
+            border: 2px solid var(--border-color);
         }
 
         .note-content a {
-            color: #00f2fe;
+            color: var(--accent-color-2);
             text-decoration: none;
             font-weight: 600;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--button-bg);
             padding: 5px 10px;
-            border-radius: 5px;
+            border-radius: 8px;
         }
-
-        .download-button {
-            display: inline-block;
+        
+        small {
+            display: block;
             margin-top: 25px;
-            padding: 12px 25px;
-            border: none;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.25);
-            color: #fff;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
+            opacity: 0.7;
         }
 
-        .download-button i {
-            margin-right: 10px;
-        }
-
-        .download-button:hover {
-            background: #fff;
-            color: #6a82fb;
-            transform: scale(1.05);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-        }
-
+        /*
+        ============================================
+        FOOTER STYLES
+        ============================================
+        */
         .footer {
             width: 100%;
+            max-width: 1000px;
             padding: 20px;
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(15px);
-            -webkit-backdrop-filter: blur(15px);
-            border-top: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
+            background: var(--primary-card-bg);
+            border-top: 1px solid var(--border-color);
+            box-shadow: 0 -4px 20px var(--shadow-color);
             text-align: center;
             border-radius: 20px 20px 0 0;
-            animation: slideUp 1s ease-in-out;
+            animation: slideUp 1s ease-in-out 0.5s backwards;
             margin-top: 40px;
+            transition: all 0.5s ease;
+            backdrop-filter: blur(12px);
+        }
+        
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 
-<body>
-    <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
+<body data-theme="dark">
 
-    <div id="main-content">
+    <div class="background-aurora">
+        <div class="aurora-shape shape1"></div>
+        <div class="aurora-shape shape2"></div>
+        <div class="aurora-shape shape3"></div>
+    </div>
+
+    <header class="header-container">
+        <img src="https://placehold.co/200x60/ffffff/121828?text=Logo" alt="Ministry of Education Logo" class="moe-logo" onerror="this.onerror=null;this.src='https://placehold.co/200x60/1a1a2e/ffffff?text=Logo+Error';">
+        <div class="theme-switcher">
+            <button class="theme-button active" id="theme-dark" data-theme="dark" aria-label="Switch to dark theme"><i class="fas fa-moon"></i></button>
+            <button class="theme-button" id="theme-light" data-theme="light" aria-label="Switch to light theme"><i class="fas fa-sun"></i></button>
+            <button class="theme-button" id="theme-sepia" data-theme="sepia" aria-label="Switch to sepia theme"><i class="fas fa-book-open"></i></button>
+        </div>
+    </header>
+
+    <main id="main-content">
         <section id="detail-page">
-            <button class="back-button" onclick="history.back()">
+            <button class="action-button back-button" onclick="history.back()">
                 <i class="fas fa-arrow-left"></i> Back to Notes
             </button>
 
             <div id="note-detail-area">
+                <!-- Content injected by JS -->
                 <div id="note-detail-content">
                     <p>Loading note details...</p>
                 </div>
             </div>
         </section>
-    </div>
+    </main>
 
     <footer class="footer">
         <div class="footer-container">
@@ -258,7 +448,21 @@
         const db = firebase.firestore();
         const { jsPDF } = window.jspdf;
 
+        function setTheme(themeName) {
+            localStorage.setItem('theme', themeName);
+            document.body.setAttribute('data-theme', themeName);
+            document.querySelectorAll('.theme-button').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`theme-${themeName}`).classList.add('active');
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'dark';
+            setTheme(savedTheme);
+
+            document.querySelectorAll('.theme-button').forEach(button => {
+                button.addEventListener('click', () => setTheme(button.dataset.theme));
+            });
+
             const urlParams = new URLSearchParams(window.location.search);
             const noteId = urlParams.get('noteId');
             const noteDetailArea = document.getElementById('note-detail-area');
@@ -266,7 +470,7 @@
             if (noteId) {
                 loadNoteDetails(noteId, noteDetailArea);
             } else {
-                noteDetailArea.innerHTML = '<p>No note selected. Please go back and choose a note.</p>';
+                noteDetailArea.innerHTML = '<div id="note-detail-content"><p>No note selected. Please go back and choose a note.</p></div>';
             }
         });
 
@@ -274,15 +478,14 @@
             db.collection('notes').doc(noteId).get()
                 .then(doc => {
                     if (doc.exists) {
-                        const note = doc.data();
-                        renderNoteDetails(note, detailsArea);
+                        renderNoteDetails(doc.data(), detailsArea);
                     } else {
-                        detailsArea.innerHTML = '<p>Note not found.</p>';
+                        detailsArea.innerHTML = '<div id="note-detail-content"><p>Note not found.</p></div>';
                     }
                 })
                 .catch(error => {
                     console.error("Error loading note details:", error);
-                    detailsArea.innerHTML = `<p>Error loading note details. Please try again later.</p>`;
+                    detailsArea.innerHTML = `<div id="note-detail-content"><p>Error loading note details. Please try again later.</p></div>`;
                 });
         }
 
@@ -301,23 +504,29 @@
             const date = note.createdAt && typeof note.createdAt.toDate === 'function' ?
                 note.createdAt.toDate().toLocaleDateString() : 'Unknown date';
 
-            const detailsHTML = `
-                <h2 class="note-topic">${note.noteTopic}</h2>
-                ${note.subTopic ? `<h3 class="note-sub-topic">${note.subTopic}</h3>` : ''}
-                ${note.noteTitle ? `<h4 class="note-main-title">${note.noteTitle}</h4>` : ''}
-                <div class="note-content">${note.content}</div>
-                ${fileDisplay}
-                <small>Posted: ${date}</small>
-                <button class="download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
+            detailsArea.innerHTML = `
+                <h2 class="note-topic">${escapeHTML(note.noteTopic)}</h2>
+                ${note.subTopic ? `<h3 class="note-sub-topic">${escapeHTML(note.subTopic)}</h3>` : ''}
+                ${note.noteTitle ? `<h4 class="note-main-title">${escapeHTML(note.noteTitle)}</h4>` : ''}
+                <div id="note-detail-content">
+                    <div class="note-content">${note.content}</div> <!-- Assuming content is safe HTML. If not, escape it. -->
+                    ${fileDisplay}
+                    <small>Posted: ${date}</small>
+                    <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
+                </div>
             `;
-
-            detailsArea.innerHTML = detailsHTML;
+        }
+        
+        function escapeHTML(str) {
+            const p = document.createElement('p');
+            p.textContent = str;
+            return p.innerHTML;
         }
 
         function downloadNote() {
             try {
                 const noteDetailArea = document.getElementById('note-detail-area');
-                const topic = noteDetailArea.querySelector('.note-topic').textContent.trim();
+                const topic = noteDetailArea.querySelector('.note-topic')?.textContent.trim() || 'Note';
                 const subTopic = noteDetailArea.querySelector('.note-sub-topic')?.textContent.trim() || '';
                 const noteTitle = noteDetailArea.querySelector('.note-main-title')?.textContent.trim() || '';
                 const noteContentElement = noteDetailArea.querySelector('.note-content');
@@ -330,14 +539,12 @@
 
                 doc.setFont('helvetica', 'bold');
                 doc.setFontSize(16);
-                doc.setTextColor(150, 165, 255);
                 doc.text(topic, margin, y);
                 y += lineHeight * 1.5;
 
                 if (subTopic) {
                     doc.setFont('helvetica', 'italic');
                     doc.setFontSize(12);
-                    doc.setTextColor(100, 200, 200);
                     doc.text(`Subtopic: ${subTopic}`, margin, y);
                     y += lineHeight * 1.5;
                 }
@@ -345,45 +552,23 @@
                 if (noteTitle) {
                     doc.setFont('helvetica', 'bold');
                     doc.setFontSize(14);
-                    doc.setTextColor(255, 150, 175);
                     doc.text(`Title: ${noteTitle}`, margin, y);
                     y += lineHeight * 2;
                 }
 
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(12);
-                doc.setTextColor(70, 70, 70);
+                doc.setTextColor(50, 50, 50);
 
-                noteContentElement.childNodes.forEach(node => {
-                    if (node.nodeType === Node.TEXT_NODE) {
-                        let lines = doc.splitTextToSize(node.textContent, pageWidth);
-                        lines.forEach(line => {
-                            if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
-                            doc.text(line, margin, y);
-                            y += lineHeight;
-                        });
-                    } else if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.tagName === 'MARK') {
-                            doc.setFillColor(255, 255, 0);
-                            let highlightText = node.textContent;
-                            let lines = doc.splitTextToSize(highlightText, pageWidth);
-                            lines.forEach(line => {
-                                if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
-                                doc.rect(margin - 1, y - 5, doc.getTextWidth(line) + 2, lineHeight, 'F');
-                                doc.setTextColor(0, 0, 0);
-                                doc.text(line, margin, y);
-                                y += lineHeight;
-                            });
-                            doc.setTextColor(70, 70, 70);
-                        } else {
-                            let lines = doc.splitTextToSize(node.textContent, pageWidth);
-                            lines.forEach(line => {
-                                if (y > doc.internal.pageSize.getHeight() - 20) { doc.addPage(); y = 20; }
-                                doc.text(line, margin, y);
-                                y += lineHeight;
-                            });
-                        }
+                let contentText = noteContentElement.innerText || noteContentElement.textContent;
+                let lines = doc.splitTextToSize(contentText, pageWidth);
+                lines.forEach(line => {
+                    if (y > doc.internal.pageSize.getHeight() - 20) {
+                        doc.addPage();
+                        y = 20;
                     }
+                    doc.text(line, margin, y);
+                    y += lineHeight;
                 });
 
                 const fileName = `Note_${topic.replace(/\s/g, '_')}.pdf`;
@@ -391,9 +576,9 @@
 
             } catch (error) {
                 console.error("PDF generation failed:", error);
-                alert("Failed to generate PDF. Please try again.");
             }
         }
     </script>
 </body>
 </html>
+
