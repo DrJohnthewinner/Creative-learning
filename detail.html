@@ -94,69 +94,168 @@
         <p>Creative Learning is owned by Pope John</p>
     </footer>
 
-    <script src="theme.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
-            authDomain: "creative-learning-f2252.firebaseapp.com",
-            projectId: "creative-learning-f2252",
-            storageBucket: "creative-learning-f2252.appspot.com",
-            messagingSenderId: "451756350336",
-            appId: "1:451756350336:web:19b9255b8834a01f4cff65"
-        };
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.firestore();
-        const { jsPDF } = window.jspdf;
+<script>
+    // NEW HELPER FUNCTIONS for Favorites and Toast
+    function getFavorites() {
+        const favorites = localStorage.getItem('favoriteNotes');
+        return favorites ? JSON.parse(favorites) : [];
+    }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const noteId = urlParams.get('noteId');
-            if (noteId) {
-                loadNoteDetails(noteId, document.getElementById('note-detail-area'));
-            } else {
-                document.getElementById('note-detail-area').innerHTML = '<div id="note-detail-content"><p>No note selected.</p></div>';
-            }
-        });
+    function isFavorite(noteId) {
+        return getFavorites().includes(noteId);
+    }
 
-        function loadNoteDetails(noteId, detailsArea) {
-            db.collection('notes').doc(noteId).get().then(doc => {
-                if (doc.exists) {
-                    renderNoteDetails(doc.data(), detailsArea);
-                } else {
-                    detailsArea.innerHTML = '<div id="note-detail-content"><p>Note not found.</p></div>';
-                }
-            }).catch(error => {
-                console.error("Error loading note details:", error);
-                detailsArea.innerHTML = `<div id="note-detail-content"><p>Error loading details.</p></div>`;
-            });
+    function updateFavoriteButtonState(noteId) {
+        const button = document.getElementById('favorite-button');
+        if (!button) return;
+
+        if (isFavorite(noteId)) {
+            button.classList.add('favorited');
+            button.innerHTML = '<i class="fas fa-heart"></i> Favorited';
+        } else {
+            button.classList.remove('favorited');
+            button.innerHTML = '<i class="far fa-heart"></i> Add to Favorites';
+        }
+    }
+
+    function toggleFavorite(noteId) {
+        let favorites = getFavorites();
+        const isCurrentlyFavorite = favorites.includes(noteId);
+        let message = '';
+        let type = '';
+
+        if (isCurrentlyFavorite) {
+            // Remove from favorites
+            favorites = favorites.filter(id => id !== noteId);
+            message = 'Note removed from favorites!';
+            type = 'info';
+        } else {
+            // Add to favorites
+            favorites.push(noteId);
+            message = 'Note added to favorites!';
+            type = 'success';
         }
 
-        function renderNoteDetails(note, detailsArea) {
-            const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
-            detailsArea.innerHTML = `
-                <h2 class="note-topic">${escapeHTML(note.noteTopic)}</h2>
-                ${note.subTopic ? `<h3 class="note-sub-topic">${escapeHTML(note.subTopic)}</h3>` : ''}
-                <div id="note-detail-content">
-                    <div class="note-content">${note.content}</div>
-                    <small>Posted: ${date}</small>
+        localStorage.setItem('favoriteNotes', JSON.stringify(favorites));
+        updateFavoriteButtonState(noteId);
+        showToast(message, type);
+    }
+
+    function showToast(message, type = 'info') {
+        const existingToast = document.querySelector('.favorite-toast');
+        if (existingToast) existingToast.remove();
+
+        const toast = document.createElement('div');
+        toast.textContent = message;
+        toast.className = 'favorite-toast';
+        let bgColor = type === 'success' ? '#4CAF50' : type === 'info' ? '#2196F3' : '#F44336';
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            color: #fff;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            opacity: 0.9;
+            background-color: ${bgColor};
+        `;
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 3000);
+    }
+    
+    // MODIFIED EXISTING FUNCTION to include the Favorite Button
+    function renderNoteDetails(note, detailsArea) {
+        const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
+        detailsArea.innerHTML = `
+            <h2 class="note-topic">${escapeHTML(note.noteTopic)}</h2>
+            ${note.subTopic ? `<h3 class="note-sub-topic">${escapeHTML(note.subTopic)}</h3>` : ''}
+            <div id="note-detail-content">
+                <div class="note-content">${note.content}</div>
+                <small>Posted: ${date}</small>
+                <div class="action-buttons-group">
+                    <button id="favorite-button" class="action-button favorite-button" onclick="toggleFavorite('${note.id}')">
+                        <i class="far fa-heart"></i> Add to Favorites
+                    </button>
                     <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
-                </div>`;
+                </div>
+            </div>`;
+        // Update the button state immediately after rendering
+        updateFavoriteButtonState(note.id);
+    }
+
+    function escapeHTML(str) {
+        const p = document.createElement('p');
+        p.textContent = str;
+        return p.innerHTML;
+    }
+
+    function downloadNote() {
+        // Ensure you have loaded the jsPDF library in your head section
+        const noteDetailArea = document.getElementById('note-detail-area');
+        const topic = noteDetailArea.querySelector('.note-topic')?.textContent.trim() || 'Note';
+        const contentText = noteDetailArea.querySelector('.note-content')?.innerText || '';
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        doc.setFontSize(18);
+        doc.text(topic, 20, 20);
+        
+        doc.setFontSize(12);
+        const splitText = doc.splitTextToSize(contentText, 170); // Max width 170
+        doc.text(splitText, 20, 30);
+        
+        doc.save(`Note_${topic.replace(/\s/g, '_')}.pdf`);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const noteDetailArea = document.getElementById('note-detail-area');
+        const loadingMessage = document.getElementById('loading-message');
+
+        // Initialize Firebase
+        const firebaseConfig = {
+            // ... (Your existing Firebase config goes here)
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
         }
-        function escapeHTML(str) {
-            const p = document.createElement('p');
-            p.textContent = str;
-            return p.innerHTML;
+        const db = firebase.firestore();
+
+        // Get note ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const noteId = urlParams.get('noteId');
+
+        if (!noteId) {
+            noteDetailArea.innerHTML = '<h2>Error: No Note Selected</h2><p>Please go back and select a note.</p>';
+            loadingMessage.style.display = 'none';
+            return;
         }
-        function downloadNote() {
-          // Download logic remains the same
-          const noteDetailArea = document.getElementById('note-detail-area');
-          const topic = noteDetailArea.querySelector('.note-topic')?.textContent.trim() || 'Note';
-          const contentText = noteDetailArea.querySelector('.note-content')?.innerText || '';
-          const doc = new jsPDF();
-          doc.text(topic, 20, 20);
-          doc.text(doc.splitTextToSize(contentText, 170), 20, 30);
-          doc.save(`Note_${topic.replace(/\s/g, '_')}.pdf`);
-        }
-    </script>
+
+        // Fetch the specific note
+        db.collection('notes').doc(noteId).get()
+            .then(doc => {
+                loadingMessage.style.display = 'none';
+                if (doc.exists) {
+                    renderNoteDetails({ id: doc.id, ...doc.data() }, noteDetailArea);
+                } else {
+                    noteDetailArea.innerHTML = '<h2>Note Not Found</h2><p>The selected note could not be retrieved.</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching note:', error);
+                loadingMessage.textContent = 'Failed to load note details.';
+                loadingMessage.style.display = 'block';
+            });
+    });
+</script>
 </body>
 </html>
