@@ -41,7 +41,7 @@
         }
         .action-button i { margin-right: 10px; }
         .back-button { margin-bottom: 30px; }
-        .download-button { margin-top: 25px; }
+        .download-button { margin-top: 25px; } /* This style might be overridden by .action-buttons-group */
         #note-detail-content {
             padding: 30px; border-radius: 18px;
         }
@@ -96,6 +96,7 @@
 
     <script src="theme.js"></script>
     <script>
+        // --- START: MODIFIED/NEW SCRIPT ---
         const firebaseConfig = {
             apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
             authDomain: "creative-learning-f2252.firebaseapp.com",
@@ -108,10 +109,88 @@
         const db = firebase.firestore();
         const { jsPDF } = window.jspdf;
 
+        // --- NEW FAVORITES & TOAST FUNCTIONS ---
+        function getFavorites() {
+            const favorites = localStorage.getItem('favoriteNotes');
+            return favorites ? JSON.parse(favorites) : [];
+        }
+
+        function isFavorite(noteId) {
+            return getFavorites().includes(noteId);
+        }
+
+        function updateFavoriteButtonState(noteId) {
+            const button = document.getElementById('favorite-button');
+            if (!button) return;
+
+            if (isFavorite(noteId)) {
+                button.classList.add('favorited');
+                button.innerHTML = '<i class="fas fa-heart"></i> Favorited';
+            } else {
+                button.classList.remove('favorited');
+                button.innerHTML = '<i class="far fa-heart"></i> Add to Favorites';
+            }
+        }
+
+        function toggleFavorite(noteId) {
+            let favorites = getFavorites();
+            const isCurrentlyFavorite = favorites.includes(noteId);
+            let message = '';
+            let type = '';
+
+            if (isCurrentlyFavorite) {
+                // Remove from favorites
+                favorites = favorites.filter(id => id !== noteId);
+                message = 'Note removed from favorites!';
+                type = 'info';
+            } else {
+                // Add to favorites
+                favorites.push(noteId);
+                message = 'Note added to favorites!';
+                type = 'success';
+            }
+
+            localStorage.setItem('favoriteNotes', JSON.stringify(favorites));
+            updateFavoriteButtonState(noteId);
+            showToast(message, type);
+        }
+
+        function showToast(message, type = 'info') {
+            const existingToast = document.querySelector('.favorite-toast');
+            if (existingToast) existingToast.remove();
+
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.className = 'favorite-toast';
+            let bgColor = type === 'success' ? '#4CAF50' : type === 'info' ? '#2196F3' : '#F44336';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 25px;
+                border-radius: 8px;
+                font-size: 1rem;
+                color: #fff;
+                z-index: 2000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                opacity: 0.9;
+                background-color: ${bgColor};
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+        // --- END NEW FUNCTIONS ---
+
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const noteId = urlParams.get('noteId');
             if (noteId) {
+                // Pass noteId to loadNoteDetails
                 loadNoteDetails(noteId, document.getElementById('note-detail-area'));
             } else {
                 document.getElementById('note-detail-area').innerHTML = '<div id="note-detail-content"><p>No note selected.</p></div>';
@@ -121,7 +200,8 @@
         function loadNoteDetails(noteId, detailsArea) {
             db.collection('notes').doc(noteId).get().then(doc => {
                 if (doc.exists) {
-                    renderNoteDetails(doc.data(), detailsArea);
+                    // Pass the noteId to renderNoteDetails
+                    renderNoteDetails(doc.data(), detailsArea, noteId);
                 } else {
                     detailsArea.innerHTML = '<div id="note-detail-content"><p>Note not found.</p></div>';
                 }
@@ -131,7 +211,8 @@
             });
         }
 
-        function renderNoteDetails(note, detailsArea) {
+        // --- MODIFIED RENDER FUNCTION ---
+        function renderNoteDetails(note, detailsArea, noteId) {
             const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
             detailsArea.innerHTML = `
                 <h2 class="note-topic">${escapeHTML(note.noteTopic)}</h2>
@@ -139,14 +220,26 @@
                 <div id="note-detail-content">
                     <div class="note-content">${note.content}</div>
                     <small>Posted: ${date}</small>
-                    <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
+                    
+                    <div class="action-buttons-group">
+                        <button id="favorite-button" class="action-button favorite-button" onclick="toggleFavorite('${noteId}')">
+                            <i class="far fa-heart"></i> Add to Favorites
+                        </button>
+                        <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
+                    </div>
                 </div>`;
+            
+            // NEW: Update button state after rendering
+            updateFavoriteButtonState(noteId);
         }
+        
+        // --- UNCHANGED ORIGINAL FUNCTIONS ---
         function escapeHTML(str) {
             const p = document.createElement('p');
             p.textContent = str;
             return p.innerHTML;
         }
+        
         function downloadNote() {
           // Download logic remains the same
           const noteDetailArea = document.getElementById('note-detail-area');
@@ -157,6 +250,7 @@
           doc.text(doc.splitTextToSize(contentText, 170), 20, 30);
           doc.save(`Note_${topic.replace(/\s/g, '_')}.pdf`);
         }
+        // --- END: MODIFIED/NEW SCRIPT ---
     </script>
 </body>
 </html>
