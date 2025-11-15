@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Favorites | Learn with Fun!</title>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="theme.css">
+    <style>
+        /* These styles are copied from note.html for consistency */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif; min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
+            padding: 20px; position: relative;
+        }
+        .moe-logo { position: absolute; top: 20px; left: 20px; height: 50px; z-index: 10; }
+        #main-content {
+            flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            width: 100%; max-width: 1000px; animation: fadeIn 1s ease-in-out; padding-top: 80px;
+        }
+        #notes-page {
+            border-radius: 20px; padding: 40px; text-align: center; width: 100%;
+        }
+        h2 {
+            font-weight: 700; font-size: 2.5rem; margin-bottom: 30px; display: flex;
+            align-items: center; justify-content: center; gap: 15px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        h2 .fas { font-size: 2.2rem; }
+        .back-button {
+            padding: 18px 35px; border-radius: 50px; font-size: 1.2rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 30px;
+        }
+        .back-button i { margin-right: 10px; }
+        .note-list { list-style: none; padding: 0; margin-top: 30px; }
+        .note-item {
+            padding: 25px; margin-bottom: 20px; border-radius: 15px; text-align: left;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            position: relative;
+        }
+        .note-item:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); }
+        .note-title {
+            font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+            padding-right: 40px; /* Space for icon */
+        }
+        .more-details-link {
+            display: inline-block; margin-top: 10px; text-decoration: none; font-weight: 600;
+            padding: 8px 15px; border-radius: 8px;
+        }
+        .note-content {
+            font-size: 1.05rem; margin-bottom: 18px; line-height: 1.7; display: -webkit-box;
+            -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
+        }
+        small { display: block; margin-top: 15px; font-size: 0.9rem; font-style: italic; }
+        .loading-state { text-align: center; padding: 50px; font-size: 1.1rem; }
+        .loading-state i { font-size: 2rem; margin-bottom: 10px; }
+        .footer { width: 100%; padding: 20px; border-radius: 20px 20px 0 0; margin-top: 40px; text-align: center; }
+        .note-sub-topic { display: block; font-size: 0.9em; margin-top: 3px; font-style: italic; }
+        .no-results { font-style: italic; margin-top: 20px; display: none; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class="background-aurora">
+        <div class="aurora-shape shape1"></div>
+        <div class="aurora-shape shape2"></div>
+        <div class="aurora-shape shape3"></div>
+    </div>
+    <div class="theme-switcher">
+        <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
+        <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
+        <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
+        <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star-of-david"></i></button>
+        <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
+        <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
+        <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
+    </div>
+    <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
+
+    <div id="main-content">
+        <section id="notes-page">
+            <button class="back-button" onclick="window.location.href='subjects.html'">
+                <i class="fas fa-arrow-left"></i> Back to Subjects
+            </button>
+
+            <h2 id="subject-title"><i class="fas fa-heart" style="color: #e83e8c;"></i> My Favorite Notes</h2>
+
+            <div id="favorite-notes-area" class="loading-state">
+                <i class="fas fa-spinner fa-spin" id="loading-spinner"></i>
+                <p id="loading-text">Loading your favorites...</p>
+            </div>
+
+            <p id="no-results" class="no-results">You haven't added any notes to your favorites yet.</p>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p> &copy; Creative Learning</p>
+        <p>Creative Learning is owned by Pope John</p>
+    </footer>
+
+    <script src="script.js"></script>
+    <script src="theme.js"></script>
+    <script>
+        // --- START: FAVORITES PAGE SCRIPT ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
+            authDomain: "creative-learning-f2252.firebaseapp.com",
+            projectId: "creative-learning-f2252",
+            storageBucket: "creative-learning-f2252.appspot.com",
+            messagingSenderId: "451756350336",
+            appId: "1:451756350336:web:19b9255b8834a01f4cff65"
+        };
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+        const db = firebase.firestore();
+
+        // --- HELPER FUNCTIONS (Copied from note.html) ---
+
+        function getFavorites() {
+            const favorites = localStorage.getItem('favoriteNotes');
+            return favorites ? JSON.parse(favorites) : [];
+        }
+
+        function showToast(message, type = 'info') {
+            const existingToast = document.querySelector('.favorite-toast');
+            if (existingToast) existingToast.remove();
+
+            const toast = document.createElement('div');
+            toast.textContent = message;
+            toast.className = 'favorite-toast';
+            let bgColor = type === 'success' ? '#4CAF50' : type === 'info' ? '#2196F3' : '#F44336';
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                padding: 12px 25px;
+                border-radius: 8px;
+                font-size: 1rem;
+                color: #fff;
+                z-index: 2000;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+                opacity: 0.9;
+                background-color: ${bgColor};
+            `;
+            document.body.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- MODIFIED: This function now re-loads the list when a note is removed
+        function toggleFavoriteOnList(noteId) {
+            let favorites = getFavorites();
+            const isCurrentlyFavorite = favorites.includes(noteId);
+            let message = '';
+
+            if (isCurrentlyFavorite) {
+                favorites = favorites.filter(id => id !== noteId);
+                message = 'Note removed from favorites!';
+            } else {
+                // This will re-add it, though it shouldn't be possible to click
+                favorites.push(noteId);
+                message = 'Note added to favorites!';
+            }
+
+            localStorage.setItem('favoriteNotes', JSON.stringify(favorites));
+            showToast(message, isCurrentlyFavorite ? 'info' : 'success');
+            
+            // KEY CHANGE: Reload the entire list so the unfavorited note disappears
+            loadFavoriteNotes();
+        }
+
+        // --- MODIFIED: Renders notes without search/filter logic
+        function renderNotes(notesToRender, notesArea) {
+            if (notesToRender.length === 0) {
+                document.getElementById('no-results').style.display = 'block';
+                notesArea.innerHTML = '';
+                return;
+            }
+            
+            document.getElementById('no-results').style.display = 'none';
+            notesArea.classList.remove('loading-state'); // Remove loading styles
+
+            let notesHTML = '<ul class="note-list">';
+            const favoriteIds = getFavorites(); // Get current list to ensure icons are correct
+
+            notesToRender.forEach(note => {
+                const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
+                const isNoteFavorited = favoriteIds.includes(note.id) ? 'favorited' : '';
+                const favoriteIconClass = favoriteIds.includes(note.id) ? 'fas' : 'far';
+
+                notesHTML += `
+                <li class="note-item" data-note-id="${note.id}">
+                    <div class="favorite-icon-container" onclick="event.stopPropagation(); toggleFavoriteOnList('${note.id}')">
+                        <i class="${favoriteIconClass} fa-heart favorite-icon ${isNoteFavorited}"></i>
+                    </div>
+                    <div class="note-title">${note.noteTopic}<span class="note-sub-topic">${note.subTopic || ''}</span></div>
+                    <div class="note-content">${note.content}</div>
+                    <a href="detail.html?noteId=${note.id}" class="more-details-link"><i class="fas fa-external-link-alt"></i> More Details</a>
+                    <small>Posted: ${date}</small>
+                </li>`;
+            });
+            notesHTML += '</ul>';
+            notesArea.innerHTML = notesHTML;
+        }
+
+        // --- NEW: Core logic for this page ---
+        function loadFavoriteNotes() {
+            const notesArea = document.getElementById('favorite-notes-area');
+            const loadingSpinner = document.getElementById('loading-spinner');
+            const loadingText = document.getElementById('loading-text');
+            const noResults = document.getElementById('no-results');
+            
+            const favoriteIds = getFavorites();
+
+            if (favoriteIds.length === 0) {
+                loadingSpinner.style.display = 'none';
+                loadingText.style.display = 'none';
+                noResults.style.display = 'block';
+                notesArea.classList.remove('loading-state');
+                notesArea.innerHTML = '';
+                return;
+            }
+
+            loadingSpinner.style.display = 'block';
+            loadingText.style.display = 'block';
+            noResults.style.display = 'none';
+            notesArea.classList.add('loading-state');
+            
+            // Create an array of promises to fetch each document
+            const promises = favoriteIds.map(id => db.collection('notes').doc(id).get());
+
+            Promise.all(promises)
+                .then(docSnapshots => {
+                    const allNotes = docSnapshots
+                        .filter(doc => doc.exists) // Filter out any notes that might have been deleted
+                        .map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    loadingSpinner.style.display = 'none';
+                    loadingText.style.display = 'none';
+                    
+                    // Sort notes by creation date (newest first)
+                    allNotes.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+                    
+                    renderNotes(allNotes, notesArea);
+                })
+                .catch(error => {
+                    console.error("Error fetching favorite notes:", error);
+                    loadingSpinner.style.display = 'none';
+                    loadingText.textContent = 'Failed to load your favorite notes. Please try again.';
+                });
+        }
+
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', loadFavoriteNotes);
+        // --- END: FAVORITES PAGE SCRIPT ---
+    </script>
+</body>
+</html>
