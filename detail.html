@@ -4,14 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Note Details | Learn with Fun!</title>
+    
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+    
     <link rel="stylesheet" href="theme.css">
+
     <style>
-        /* Non-theme related layout styles */
+        /* Core Layout Styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Inter', sans-serif;
@@ -38,21 +45,26 @@
             padding: 14px 28px; border-radius: 50px; font-size: 1rem;
             font-weight: 600; cursor: pointer; display: inline-flex;
             align-items: center; justify-content: center;
+            transition: transform 0.2s ease;
         }
+        .action-button:hover { transform: scale(1.05); }
         .action-button i { margin-right: 10px; }
         .back-button { margin-bottom: 30px; }
-        .download-button { margin-top: 25px; } /* This style might be overridden by .action-buttons-group */
+        .download-button { margin-top: 25px; }
+        
         #note-detail-content {
-            padding: 30px; border-radius: 18px;
+            padding: 30px; border-radius: 18px; background: rgba(255,255,255,0.05);
         }
         .note-sub-topic {
             font-size: 1.3rem; font-style: italic; opacity: 0.9;
-            margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
+            margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;
         }
         .note-content { font-size: 1.1rem; line-height: 1.9; margin-top: 15px; white-space: pre-wrap; }
-        .note-content img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 20px; }
+        .note-content img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 20px; display: block; }
         small { display: block; margin-top: 25px; opacity: 0.7; }
-        .footer { width: 100%; max-width: 1000px; padding: 20px; border-radius: 20px 20px 0 0; margin-top: 40px; text-align: center; }
+        
+        .footer { width: 100%; max-width: 1000px; padding: 20px; margin-top: 40px; text-align: center; }
+        
         @keyframes float-in { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
     </style>
 </head>
@@ -62,6 +74,7 @@
         <div class="aurora-shape shape2"></div>
         <div class="aurora-shape shape3"></div>
     </div>
+    
     <div class="theme-switcher">
         <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
         <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
@@ -71,6 +84,7 @@
         <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
         <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
     </div>
+
     <header class="header-container">
         <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
     </header>
@@ -83,7 +97,7 @@
 
             <div id="note-detail-area">
                 <div id="note-detail-content">
-                    <p>Loading note details...</p>
+                    <p><i class="fas fa-spinner fa-spin"></i> Loading note details...</p>
                 </div>
             </div>
         </section>
@@ -96,7 +110,7 @@
 
     <script src="theme.js"></script>
     <script>
-        // --- START: MODIFIED/NEW SCRIPT ---
+        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
             authDomain: "creative-learning-f2252.firebaseapp.com",
@@ -105,92 +119,14 @@
             messagingSenderId: "451756350336",
             appId: "1:451756350336:web:19b9255b8834a01f4cff65"
         };
+        
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
-        const { jsPDF } = window.jspdf;
-
-        // --- NEW FAVORITES & TOAST FUNCTIONS ---
-        function getFavorites() {
-            const favorites = localStorage.getItem('favoriteNotes');
-            return favorites ? JSON.parse(favorites) : [];
-        }
-
-        function isFavorite(noteId) {
-            return getFavorites().includes(noteId);
-        }
-
-        function updateFavoriteButtonState(noteId) {
-            const button = document.getElementById('favorite-button');
-            if (!button) return;
-
-            if (isFavorite(noteId)) {
-                button.classList.add('favorited');
-                button.innerHTML = '<i class="fas fa-heart"></i> Favorited';
-            } else {
-                button.classList.remove('favorited');
-                button.innerHTML = '<i class="far fa-heart"></i> Add to Favorites';
-            }
-        }
-
-        function toggleFavorite(noteId) {
-            let favorites = getFavorites();
-            const isCurrentlyFavorite = favorites.includes(noteId);
-            let message = '';
-            let type = '';
-
-            if (isCurrentlyFavorite) {
-                // Remove from favorites
-                favorites = favorites.filter(id => id !== noteId);
-                message = 'Note removed from favorites!';
-                type = 'info';
-            } else {
-                // Add to favorites
-                favorites.push(noteId);
-                message = 'Note added to favorites!';
-                type = 'success';
-            }
-
-            localStorage.setItem('favoriteNotes', JSON.stringify(favorites));
-            updateFavoriteButtonState(noteId);
-            showToast(message, type);
-        }
-
-        function showToast(message, type = 'info') {
-            const existingToast = document.querySelector('.favorite-toast');
-            if (existingToast) existingToast.remove();
-
-            const toast = document.createElement('div');
-            toast.textContent = message;
-            toast.className = 'favorite-toast';
-            let bgColor = type === 'success' ? '#4CAF50' : type === 'info' ? '#2196F3' : '#F44336';
-            toast.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                padding: 12px 25px;
-                border-radius: 8px;
-                font-size: 1rem;
-                color: #fff;
-                z-index: 2000;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                opacity: 0.9;
-                background-color: ${bgColor};
-            `;
-            document.body.appendChild(toast);
-
-            setTimeout(() => {
-                toast.style.opacity = '0';
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
-        }
-        // --- END NEW FUNCTIONS ---
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const noteId = urlParams.get('noteId');
             if (noteId) {
-                // Pass noteId to loadNoteDetails
                 loadNoteDetails(noteId, document.getElementById('note-detail-area'));
             } else {
                 document.getElementById('note-detail-area').innerHTML = '<div id="note-detail-content"><p>No note selected.</p></div>';
@@ -200,8 +136,7 @@
         function loadNoteDetails(noteId, detailsArea) {
             db.collection('notes').doc(noteId).get().then(doc => {
                 if (doc.exists) {
-                    // Pass the noteId to renderNoteDetails
-                    renderNoteDetails(doc.data(), detailsArea, noteId);
+                    renderNoteDetails(doc.data(), detailsArea);
                 } else {
                     detailsArea.innerHTML = '<div id="note-detail-content"><p>Note not found.</p></div>';
                 }
@@ -211,46 +146,58 @@
             });
         }
 
-        // --- MODIFIED RENDER FUNCTION ---
-        function renderNoteDetails(note, detailsArea, noteId) {
+        function renderNoteDetails(note, detailsArea) {
             const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
-            detailsArea.innerHTML = `
-                <h2 class="note-topic">${escapeHTML(note.noteTopic)}</h2>
-                ${note.subTopic ? `<h3 class="note-sub-topic">${escapeHTML(note.subTopic)}</h3>` : ''}
-                <div id="note-detail-content">
-                    <div class="note-content">${note.content}</div>
-                    <small>Posted: ${date}</small>
-                    
-                    <div class="action-buttons-group">
-                        <button id="favorite-button" class="action-button favorite-button" onclick="toggleFavorite('${noteId}')">
-                            <i class="far fa-heart"></i> Add to Favorites
-                        </button>
-                        <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
-                    </div>
-                </div>`;
             
-            // NEW: Update button state after rendering
-            updateFavoriteButtonState(noteId);
+            // SECURITY: Sanitize the content to prevent XSS attacks
+            const cleanContent = DOMPurify.sanitize(note.content);
+            const safeTopic = escapeHTML(note.noteTopic);
+            const safeSubTopic = note.subTopic ? escapeHTML(note.subTopic) : '';
+
+            detailsArea.innerHTML = `
+                <h2 class="note-topic">${safeTopic}</h2>
+                ${safeSubTopic ? `<h3 class="note-sub-topic">${safeSubTopic}</h3>` : ''}
+                <div id="note-detail-content">
+                    <div class="note-content">${cleanContent}</div>
+                    <small>Posted: ${date}</small>
+                    <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
+                </div>`;
         }
-        
-        // --- UNCHANGED ORIGINAL FUNCTIONS ---
+
+        // Helper to escape simple text
         function escapeHTML(str) {
             const p = document.createElement('p');
             p.textContent = str;
             return p.innerHTML;
         }
-        
+
+        // UPDATED: High-Quality PDF Download Function
         function downloadNote() {
-          // Download logic remains the same
-          const noteDetailArea = document.getElementById('note-detail-area');
-          const topic = noteDetailArea.querySelector('.note-topic')?.textContent.trim() || 'Note';
-          const contentText = noteDetailArea.querySelector('.note-content')?.innerText || '';
-          const doc = new jsPDF();
-          doc.text(topic, 20, 20);
-          doc.text(doc.splitTextToSize(contentText, 170), 20, 30);
-          doc.save(`Note_${topic.replace(/\s/g, '_')}.pdf`);
+            const element = document.getElementById('note-detail-area');
+            // Hide the download button momentarily so it doesn't appear in the PDF
+            const btn = document.querySelector('.download-button');
+            btn.style.display = 'none';
+            
+            const topic = document.querySelector('.note-topic')?.textContent.trim() || 'Note';
+            
+            const opt = {
+              margin:       [15, 15, 15, 15],
+              filename:     `Note_${topic.replace(/[^a-z0-9]/gi, '_')}.pdf`,
+              image:        { type: 'jpeg', quality: 0.98 },
+              html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            // Generate PDF
+            html2pdf().set(opt).from(element).save().then(() => {
+                // Bring the button back after download starts
+                btn.style.display = 'inline-flex';
+            }).catch(err => {
+                console.error(err);
+                btn.style.display = 'inline-flex';
+                alert("Error generating PDF. Please try again.");
+            });
         }
-        // --- END: MODIFIED/NEW SCRIPT ---
     </script>
 </body>
 </html>
