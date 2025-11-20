@@ -106,6 +106,17 @@
   </style>
 </head>
 <body>
+  <div class="font-controls">
+    <button class="font-button" onclick="adjustFontSize(1)" aria-label="Increase Font Size">
+        <i class="fas fa-plus"></i>
+    </button>
+    <button class="font-button" onclick="adjustFontSize(-1)" aria-label="Decrease Font Size">
+        <i class="fas fa-minus"></i>
+    </button>
+    <button class="font-button" onclick="adjustFontSize(0); localStorage.removeItem('userFontSize'); location.reload();" aria-label="Reset Font">
+        <i class="fas fa-redo"></i>
+    </button>
+  </div>
   <div class="background-aurora">
       <div class="aurora-shape shape1"></div>
       <div class="aurora-shape shape2"></div>
@@ -149,3 +160,4 @@
   <script src="theme.js"></script>
 </body>
 </html>
+
