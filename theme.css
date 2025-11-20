@@ -266,3 +266,52 @@ h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
     opacity: 0.9;
     font-weight: 600;
 }
+/* Font Control Container */
+.font-controls {
+    position: fixed;
+    top: 80px; /* Positioned slightly below the theme switcher */
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background: rgba(255, 255, 255, 0.1); /* Glass effect */
+    padding: 10px;
+    border-radius: 50px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Font Buttons */
+.font-button {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    font-weight: bold;
+    font-size: 1.2rem; /* Fixed size for the icon itself */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.font-button:hover {
+    transform: scale(1.1);
+    background: #4CAF50; /* Green highlight on hover */
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .font-controls {
+        top: auto;
+        bottom: 20px; /* Move to bottom on mobile */
+        left: 20px;
+        right: auto;
+        flex-direction: row; /* Horizontal on mobile */
+    }
+}
