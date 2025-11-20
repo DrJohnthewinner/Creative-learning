@@ -58,4 +58,36 @@ document.addEventListener('DOMContentLoaded', () => {
         // Fallback for any other page if no theme is set (defaults to dark via CSS)
         setTheme('dark');
     }
+
 });
+// --- Existing Theme Logic (Keep your existing theme code above this) ---
+
+// --- NEW: Font Size Logic ---
+
+// 1. On Page Load: Apply the saved font size immediately
+(function() {
+    const savedSize = localStorage.getItem('userFontSize');
+    if (savedSize) {
+        document.documentElement.style.fontSize = savedSize + 'px';
+    } else {
+        // Default base size
+        document.documentElement.style.fontSize = '16px';
+    }
+})();
+
+// 2. Function to change font size
+function adjustFontSize(amount) {
+    // Get current size from the root element, or default to 16
+    const htmlEl = document.documentElement;
+    let currentSize = parseFloat(window.getComputedStyle(htmlEl, null).getPropertyValue('font-size'));
+    
+    let newSize = currentSize + amount;
+
+    // Limits: Don't let it get too small (12px) or too huge (26px)
+    if (newSize < 12) newSize = 12;
+    if (newSize > 26) newSize = 26;
+
+    // Apply and Save
+    htmlEl.style.fontSize = newSize + 'px';
+    localStorage.setItem('userFontSize', newSize);
+} 
