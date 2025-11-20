@@ -1,197 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Select Subject | Learn with Fun!</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="theme.css">
-    <style>
-        /* Non-theme related layout styles */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Inter', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            position: relative;
-        }
-        .header-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            z-index: 100;
-        }
-        .moe-logo { height: 50px; }
-        .back-button {
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-        }
-        .back-button i { margin-right: 8px; }
-
-        #main-content {
-            flex-grow: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            width: 100%;
-            max-width: 1000px;
-            animation: float-in 1.2s ease-out;
-        }
-        #subject-selection {
-            border-radius: 24px;
-            padding: 40px;
-            text-align: center;
-            width: 100%;
-        }
-        h2 {
-            font-weight: 700;
-            font-size: 2.8rem;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 15px;
-        }
-        h2 .fas { font-size: 2.5rem; }
-        #subject-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
-            width: 100%;
-        }
-        .subject-card {
-            padding: 30px;
-            border-radius: 18px;
-            text-align: center;
-            text-decoration: none;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 180px;
-        }
-        .subject-card:hover {
-            transform: translateY(-8px) scale(1.03);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-        }
-        .subject-card i {
-            font-size: 3rem;
-            margin-bottom: 20px;
-        }
-        .subject-card span {
-            font-size: 1.25rem;
-            font-weight: 600;
-        }
-        .footer {
-            width: 100%;
-            max-width: 1000px;
-            padding: 20px;
-            border-radius: 20px 20px 0 0;
-            margin-top: 40px;
-            text-align: center;
-        }
-        @keyframes float-in {
-            from { opacity: 0; transform: translateY(30px) scale(0.98); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Select Subject | Learn with Fun!</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="theme.css">
+  <style>
+    /* Non-theme related layout styles */
+    body {
+      font-family: 'Poppins', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .logo-container {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      z-index: 10;
+    }
+    .logo-container img {
+      height: 60px;
+      width: auto;
+      max-width: 200px;
+    }
+    #main-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 50px 20px;
+      animation: fadeIn 1s ease-in-out;
+      margin-top: 40px;
+      flex-grow: 1;
+    }
+    #subjects-page {
+      border-radius: 25px;
+      padding: 40px 30px;
+      max-width: 850px;
+      width: 100%;
+      text-align: center;
+    }
+    h2 {
+      font-weight: 600;
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+    }
+    .subject-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+    }
+    .subject-list button {
+      padding: 15px 25px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 15px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .subject-list button i {
+      margin-right: 12px;
+      font-size: 1.3rem;
+    }
+    .back-button {
+      padding: 12px 25px;
+      border-radius: 12px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    footer {
+      text-align: center;
+      padding: 15px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
 </head>
 <body>
-    <div class="background-aurora">
-        <div class="aurora-shape shape1"></div>
-        <div class="aurora-shape shape2"></div>
-        <div class="aurora-shape shape3"></div>
-    </div>
+  <div class="background-aurora">
+      <div class="aurora-shape shape1"></div>
+      <div class="aurora-shape shape2"></div>
+      <div class="aurora-shape shape3"></div>
+  </div>
     <div class="theme-switcher">
-        <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
-        <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
-        <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
-        <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star-of-david"></i></button>
-        <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
-        <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
-        <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
-    </div>
-    <header class="header-container">
-        <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
-        <a href="index.html" class="back-button action-button">
-            <i class="fas fa-chevron-left"></i> Change Grade
-        </a>
-    </header>
+    <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
+    <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
+    <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
+    <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star-of-david"></i></button>
+    <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
+    <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
+    <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
+</div>
+  <div class="logo-container">
+    <img src="moe-logo.webp" alt="Ministry of Education Logo">
+  </div>
 
-    <main id="main-content">
-        <section id="subject-selection">
-            <h2><i class="fas fa-shapes"></i> Select a Subject</h2>
-            <h3 id="grade-display" style="font-size: 1.5rem; font-weight: 400; opacity: 0.8;"></h3>
+  <div id="main-content">
+    <section id="subjects-page">
+      <button class="back-button" onclick="goBackToGradesPage()">
+        <i class="fas fa-arrow-left"></i> Back to Grades
+      </button>
+      <h2><i class="fas fa-book-open"></i> Select a Subject for <span id="grade-display"></span></h2>
+      <div class="subject-list">
+        <button onclick="navigateToSubjectPage('mathematics')"><i class="fas fa-square-root-alt"></i> Mathematics</button>
+        <button onclick="navigateToSubjectPage('english')"><i class="fas fa-language"></i> English</button>
+        <button onclick="navigateToSubjectPage('kiswahili')"><i class="fas fa-comments"></i> Kiswahili</button>
+        <button onclick="navigateToSubjectPage('integrated-science')"><i class="fas fa-flask"></i> Integrated Science</button>
+        <button onclick="navigateToSubjectPage('social-studies')"><i class="fas fa-globe-americas"></i> Social Studies</button>
+        <button onclick="navigateToSubjectPage('cre')"><i class="fas fa-church"></i> Christian Religious Education</button>
+        <button onclick="navigateToSubjectPage('pre-technical')"><i class="fas fa-cogs"></i> Pre-Technical</button>
+        <button onclick="navigateToSubjectPage('agriculture-nutrition')"><i class="fas fa-seedling"></i> Agriculture and Nutrition</button>
+        <button onclick="navigateToSubjectPage('creative-arts-sports')"><i class="fas fa-palette"></i> Creative Arts and Sports</button>
+      </div>
+    </section>
+  </div>
 
-            <a href="favorites.html" class="action-button favorite-hub-button">
-                <i class="fas fa-heart"></i>
-                View My Favorites
-            </a>
-            <div id="subject-grid">
-                </div>
-        </section>
-    </main>
+  <footer>
+    <p> &copy; Creative Learning</p>
+    <p>Creative Learning is hereby owned by Pope John</p>
+  </footer>
 
-    <footer class="footer">
-        <p>&copy; Creative Learning</p>
-        <p>Creative Learning is owned by Pope John</p>
-    </footer>
-
-    <script src="theme.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const grade = localStorage.getItem('selectedGrade');
-            const gradeDisplay = document.getElementById('grade-display');
-            const subjectGrid = document.getElementById('subject-grid');
-
-            if (!grade) {
-                // If no grade is selected, redirect back to index
-                window.location.href = 'index.html';
-                return;
-            }
-
-            gradeDisplay.textContent = `Displaying subjects for: ${grade}`;
-
-            const subjects = [
-                { id: 'mathematics', name: 'Mathematics', icon: 'fa-calculator', color: '#FF6B6B' },
-                { id: 'english', name: 'English Language', icon: 'fa-spell-check', color: '#4ECDC4' },
-                { id: 'integrated-science', name: 'Integrated Science', icon: 'fa-flask', color: '#45B7D1' },
-                { id: 'social-studies', name: 'Social Studies', icon: 'fa-globe-africa', color: '#FFA07A' },
-                { id: 'rme', name: 'R.M.E', icon: 'fa-bible', color: '#FFD700' },
-                { id: 'computing', name: 'Computing', icon: 'fa-laptop-code', color: '#9B59B6' },
-                { id: 'career-technology', name: 'Career Technology', icon: 'fa-tools', color: '#77DD77' },
-                { id: 'creative-arts', name: 'Creative Arts', icon: 'fa-palette', color: '#F7C8E0' },
-                { id: 'ghanaian-language', name: 'Ghanaian Language', icon: 'fa-language', color: '#F4A261' },
-                { id: 'french', name: 'French', icon: 'fa-flag', color: '#A2D2FF' },
-                { id: 'arabic', name: 'Arabic', icon: 'fa-star-and-crescent', color: '#BDE0FE' }
-            ];
-
-            subjectGrid.innerHTML = subjects.map(subject => `
-                <a href="note.html?subject=${subject.id}" class="subject-card" style="--card-color: ${subject.color}">
-                    <i class="fas ${subject.icon}"></i>
-                    <span>${subject.name}</span>
-                </a>
-            `).join('');
-        });
-    </Fscript>
+  <script src="script.js"></script>
+  <script src="theme.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const grade = localStorage.getItem('selectedGrade') || 'Unknown Grade';
+      document.getElementById('grade-display').textContent = grade;
+    });
+  </script>
 </body>
 </html>
