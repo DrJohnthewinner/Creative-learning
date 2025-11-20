@@ -1,56 +1,69 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // --- 1. Theme Logic (Your existing theme code) ---
-    const themeButtons = document.querySelectorAll('.theme-button');
-    const body = document.body;
+// --- Configuration ---
+const THEMES = ['dark', 'light', 'sepia', 'midnight', 'ocean', 'forest', 'rose'];
+const DEFAULT_FONT_SIZE = 16;
 
-    // Load saved theme
+// --- 1. Immediate Initialization (Runs instantly to prevent flashing) ---
+(function initSettings() {
+    // A. Apply Saved Theme
     const savedTheme = localStorage.getItem('selectedTheme');
     if (savedTheme) {
-        body.className = savedTheme;
+        document.body.classList.add(savedTheme);
     }
 
-    themeButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const theme = btn.getAttribute('data-theme');
-            // Clear old themes (assuming your classes work this way)
-            body.className = ''; 
-            if(theme) body.classList.add(theme);
-            localStorage.setItem('selectedTheme', theme);
-        });
-    });
-});
-
-
-// --- 2. Font Logic (MUST BE OUTSIDE the 'DOMContentLoaded' block above) ---
-
-// Run this immediately to set font size on page load
-(function initFontSize() {
+    // B. Apply Saved Font Size
     const savedSize = localStorage.getItem('userFontSize');
     if (savedSize) {
         document.documentElement.style.fontSize = savedSize + 'px';
     } else {
-        document.documentElement.style.fontSize = '16px'; // Default
+        document.documentElement.style.fontSize = DEFAULT_FONT_SIZE + 'px';
     }
 })();
 
-// We attach this to 'window' to make sure the HTML button can see it
+// --- 2. Setup Event Listeners (Runs when page is ready) ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Find all theme buttons
+    const themeButtons = document.querySelectorAll('.theme-button');
+    
+    themeButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const theme = btn.getAttribute('data-theme');
+            setTheme(theme);
+        });
+    });
+});
+
+// --- 3. Helper Functions ---
+
+// Function to safely switch themes
+function setTheme(themeName) {
+    // 1. Remove ALL known theme classes from body
+    document.body.classList.remove(...THEMES);
+    
+    // 2. Add the chosen theme class
+    if (themeName) {
+        document.body.classList.add(themeName);
+        localStorage.setItem('selectedTheme', themeName);
+    } else {
+        // If 'light' or default is chosen, we might just remove classes
+        localStorage.removeItem('selectedTheme');
+    }
+}
+
+// Function to adjust font size (Made global for HTML buttons)
 window.adjustFontSize = function(amount) {
     const htmlEl = document.documentElement;
     
-    // Get current size (default to 16 if logic fails)
-    let currentSize = parseFloat(window.getComputedStyle(htmlEl, null).getPropertyValue('font-size')) || 16;
+    // Get current size, default to 16 if weird
+    let currentSize = parseFloat(window.getComputedStyle(htmlEl, null).getPropertyValue('font-size')) || DEFAULT_FONT_SIZE;
     
     let newSize = currentSize + amount;
 
-    // Safety Limits (Min 12px, Max 30px)
+    // Safety Limits
     if (newSize < 12) newSize = 12;
-    if (newSize > 30) newSize = 30;
+    if (newSize > 28) newSize = 28;
 
-    // Apply the new size
+    // Apply and Save
     htmlEl.style.fontSize = newSize + 'px';
-    
-    // Save to memory
     localStorage.setItem('userFontSize', newSize);
-    
-    console.log("Font adjusted to: " + newSize + "px"); // Check your console for this!
+    console.log(`Font size set to: ${newSize}px`);
 };
