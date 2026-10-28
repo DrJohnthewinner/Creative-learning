@@ -1,139 +1,121 @@
 /**
- * 🌟 SUPER MERGED THEME MANAGER 🌟
- * Handles Theme Switching, Font Scaling, and Initial Load Optimization.
+ * Theme + font-size manager
+ * - Load this in <head> (right after theme.css) so the saved theme applies before first paint.
+ * - Safe to include more than once (guarded).
+ * - Clicks are handled by ONE delegated listener, so buttons work no matter when they
+ *   were added to the page or when this script ran.
  */
+(function () {
+    'use strict';
 
-// --- ⚙️ Configuration & Constants ---
-const CONFIG = {
-    storageKey: 'site_theme',      // Unified key for local storage
-    fontKey: 'site_font_size',     // Key for font size
-    defaultTheme: 'dark',          // Fallback theme
-    defaultFontSize: 16,           // Base font size in px
-    minFontSize: 12,
-    maxFontSize: 28,
-    // List of available themes for validation/cycling
-    themes: ['dark', 'light', 'sepia', 'midnight', 'ocean', 'forest', 'rose']
-};
+    if (window.__themeManagerLoaded) return;
+    window.__themeManagerLoaded = true;
 
-// --- ⚡ Core Logic (State-of-the-Art) ---
+    var CONFIG = {
+        storageKey: 'site_theme',
+        fontKey: 'site_font_size',
+        defaultTheme: 'dark',
+        defaultFontSize: 16,
+        minFontSize: 12,
+        maxFontSize: 28,
+        themes: ['dark', 'light', 'sepia', 'midnight', 'ocean', 'forest', 'rose']
+    };
 
-/**
- * Applies the theme to the HTML root element.
- * Uses 'data-theme' attribute for modern CSS support (e.g., [data-theme="dark"]).
- * @param {string} themeName 
- */
-function applyThemeToDOM(themeName) {
-    document.documentElement.setAttribute('data-theme', themeName);
-    
-    // Optional: Update active states on buttons immediately if DOM is ready
-    if (document.readyState === 'interactive' || document.readyState === 'complete') {
-        updateActiveButtons(themeName);
+    // ---------- storage helpers (never throw) ----------
+    function load(key) {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
     }
-}
-
-/**
- * Sets the theme, saves it, and handles UI updates.
- * @param {string} themeName 
- */
-function setTheme(themeName) {
-    if (!themeName) return;
-
-    // 1. Save to LocalStorage 💾
-    localStorage.setItem(CONFIG.storageKey, themeName);
-
-    // 2. Apply visually 🎨
-    applyThemeToDOM(themeName);
-
-    // 3. Close Modal if open (User made a choice) 🚪
-    const modalOverlay = document.getElementById('themeModalOverlay');
-    if (modalOverlay) {
-        modalOverlay.classList.remove('visible');
+    function save(key, value) {
+        try { localStorage.setItem(key, value); } catch (e) { /* private mode etc. */ }
     }
-}
+    function remove(key) {
+        try { localStorage.removeItem(key); } catch (e) {}
+    }
 
-/**
- * Updates the visual 'active' state of theme buttons.
- * @param {string} activeTheme 
- */
-function updateActiveButtons(activeTheme) {
-    const buttons = document.querySelectorAll('.theme-button, .theme-option-button');
-    buttons.forEach(btn => {
-        if (btn.dataset.theme === activeTheme) {
-            btn.classList.add('active');
-        } else {
-            btn.classList.remove('active');
+    // ---------- theme ----------
+    function updateActiveButtons(activeTheme) {
+        var buttons = document.querySelectorAll('.theme-button, .theme-option-button');
+        for (var i = 0; i < buttons.length; i++) {
+            buttons[i].classList.toggle('active', buttons[i].getAttribute('data-theme') === activeTheme);
+        }
+    }
+
+    function applyTheme(name) {
+        if (CONFIG.themes.indexOf(name) === -1) name = CONFIG.defaultTheme;
+        // Set on <html> (what theme.css targets) and on <body> (covers any older cached CSS).
+        document.documentElement.setAttribute('data-theme', name);
+        if (document.body) document.body.setAttribute('data-theme', name);
+        updateActiveButtons(name);
+        return name;
+    }
+
+    function closeModal() {
+        var overlay = document.getElementById('themeModalOverlay');
+        if (overlay) overlay.classList.remove('visible');
+    }
+
+    function setTheme(name) {
+        if (!name) return;
+        name = applyTheme(name);
+        save(CONFIG.storageKey, name);
+        closeModal();
+    }
+
+    // ---------- font size ----------
+    function applyFontSize(px) {
+        document.documentElement.style.fontSize = px + 'px';
+    }
+
+    function adjustFontSize(amount) {
+        var current = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || CONFIG.defaultFontSize;
+        var next = Math.min(CONFIG.maxFontSize, Math.max(CONFIG.minFontSize, current + amount));
+        applyFontSize(next);
+        save(CONFIG.fontKey, next);
+    }
+
+    function resetFontSize() {
+        remove(CONFIG.fontKey);
+        document.documentElement.style.fontSize = '';
+    }
+
+    // Expose for inline onclick attributes and for testing in the console
+    window.setTheme = setTheme;
+    window.adjustFontSize = adjustFontSize;
+    window.resetFontSize = resetFontSize;
+
+    // ---------- 1. Run immediately (before the page paints) ----------
+    var savedTheme = load(CONFIG.storageKey);
+    applyTheme(savedTheme || CONFIG.defaultTheme);
+
+    var savedFont = parseFloat(load(CONFIG.fontKey));
+    if (savedFont) applyFontSize(savedFont);
+
+    // ---------- 2. One delegated click listener for every theme button ----------
+    document.addEventListener('click', function (event) {
+        var target = event.target;
+        if (!target || !target.closest) return;
+
+        var button = target.closest('.theme-button, .theme-option-button');
+        if (button) {
+            setTheme(button.getAttribute('data-theme'));
+            return;
+        }
+
+        // Clicking the dark backdrop of the first-visit modal keeps the default theme
+        if (target.id === 'themeModalOverlay') {
+            setTheme(load(CONFIG.storageKey) || CONFIG.defaultTheme);
         }
     });
-}
 
-/**
- * Global function to adjust font size safely.
- * @param {number} amount - Positive or negative integer
- */
-window.adjustFontSize = function(amount) {
-    const htmlEl = document.documentElement;
-    
-    // Get current computed size
-    let currentSize = parseFloat(window.getComputedStyle(htmlEl).fontSize) || CONFIG.defaultFontSize;
-    let newSize = currentSize + amount;
+    // ---------- 3. Once the DOM exists ----------
+    document.addEventListener('DOMContentLoaded', function () {
+        var current = load(CONFIG.storageKey) || CONFIG.defaultTheme;
+        applyTheme(current); // now <body> exists, so it gets the attribute too
 
-    // 🛡️ Safety Limits
-    if (newSize < CONFIG.minFontSize) newSize = CONFIG.minFontSize;
-    if (newSize > CONFIG.maxFontSize) newSize = CONFIG.maxFontSize;
-
-    // Apply and Save
-    htmlEl.style.fontSize = `${newSize}px`;
-    localStorage.setItem(CONFIG.fontKey, newSize);
-    console.log(`📏 Font size updated to: ${newSize}px`);
-};
-
-// --- 🚀 1. Immediate Initialization (IIFE) ---
-// Runs BEFORE content loads to prevent "Flash of Unstyled Content" (FOUC) 🕶️
-(() => {
-    // A. Restore Theme
-    const savedTheme = localStorage.getItem(CONFIG.storageKey);
-    const initialTheme = savedTheme || CONFIG.defaultTheme;
-    
-    // Apply immediately to the root <html> element
-    applyThemeToDOM(initialTheme);
-
-    // B. Restore Font Size
-    const savedFont = localStorage.getItem(CONFIG.fontKey);
-    if (savedFont) {
-        document.documentElement.style.fontSize = `${savedFont}px`;
-    }
-})();
-
-// --- 🎮 2. Event Listeners (DOM Ready) ---
-document.addEventListener('DOMContentLoaded', () => {
-    // 🔍 Grab Elements
-    const themeButtons = document.querySelectorAll('.theme-button');
-    const themeOptionButtons = document.querySelectorAll('.theme-option-button'); // Buttons inside modal
-    const modalOverlay = document.getElementById('themeModalOverlay');
-    const savedTheme = localStorage.getItem(CONFIG.storageKey);
-
-    // A. Bind ALL Theme Buttons (Navbar + Modal)
-    const allThemeBtns = [...themeButtons, ...themeOptionButtons];
-    allThemeBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            setTheme(btn.dataset.theme);
-        });
+        // First visit: show the picker if this page has one
+        var overlay = document.getElementById('themeModalOverlay');
+        if (!load(CONFIG.storageKey) && overlay) {
+            overlay.classList.add('visible');
+        }
     });
-
-    // B. Initialize Active Button State
-    if (savedTheme) {
-        updateActiveButtons(savedTheme);
-    }
-
-    // C. Modal Logic: First Time Visit Check 🕵️‍♂️
-    // If no theme is saved AND the modal exists, show it.
-    if (!savedTheme && modalOverlay) {
-        console.log("👋 First visit detected! Showing theme selector.");
-        modalOverlay.classList.add('visible');
-        // Optional: Set a temporary default for preview
-        applyThemeToDOM(CONFIG.defaultTheme); 
-    } else if (!savedTheme) {
-        // Fallback if no modal exists
-        setTheme(CONFIG.defaultTheme);
-    }
-});
+})();
