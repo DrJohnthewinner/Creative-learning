@@ -1,6 +1,9 @@
-/* === THEME CORE VARIABLES === */
+/* =====================================================================
+   THEME CORE VARIABLES
+   theme.js sets data-theme on <html>, so every theme block targets :root.
+   Dark is the default (no attribute needed).
+   ===================================================================== */
 :root {
-    /* Default to Dark Theme */
     --bg-gradient-start: #0D1117;
     --bg-gradient-end: #161B22;
     --card-bg: rgba(22, 27, 34, 0.7);
@@ -18,7 +21,25 @@
     --aurora-color-3: #F778BA;
 }
 
-body[data-theme="light"] {
+:root[data-theme="dark"] {
+    --bg-gradient-start: #0D1117;
+    --bg-gradient-end: #161B22;
+    --card-bg: rgba(22, 27, 34, 0.7);
+    --text-color: #C9D1D9;
+    --heading-color: #FFFFFF;
+    --accent-color-1: #58A6FF;
+    --border-color: rgba(255, 255, 255, 0.15);
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --button-bg: rgba(255, 255, 255, 0.08);
+    --button-text: #FFFFFF;
+    --button-hover-bg: #58A6FF;
+    --button-hover-text: #FFFFFF;
+    --aurora-color-1: #58A6FF;
+    --aurora-color-2: #A371F7;
+    --aurora-color-3: #F778BA;
+}
+
+:root[data-theme="light"] {
     --bg-gradient-start: #F4F7FC;
     --bg-gradient-end: #E9EFF8;
     --card-bg: rgba(255, 255, 255, 0.8);
@@ -36,7 +57,7 @@ body[data-theme="light"] {
     --aurora-color-3: #ffc482;
 }
 
-body[data-theme="sepia"] {
+:root[data-theme="sepia"] {
     --bg-gradient-start: #FBF0D9;
     --bg-gradient-end: #F8EAD6;
     --card-bg: rgba(248, 234, 214, 0.8);
@@ -54,7 +75,7 @@ body[data-theme="sepia"] {
     --aurora-color-3: #c28e8e;
 }
 
-body[data-theme="midnight"] {
+:root[data-theme="midnight"] {
     --bg-gradient-start: #000000;
     --bg-gradient-end: #050505;
     --card-bg: rgba(20, 20, 20, 0.7);
@@ -72,7 +93,7 @@ body[data-theme="midnight"] {
     --aurora-color-3: #CF6679;
 }
 
-body[data-theme="ocean"] {
+:root[data-theme="ocean"] {
     --bg-gradient-start: #0F2027;
     --bg-gradient-end: #203A43;
     --card-bg: rgba(32, 58, 67, 0.75);
@@ -90,7 +111,7 @@ body[data-theme="ocean"] {
     --aurora-color-3: #2C5364;
 }
 
-body[data-theme="forest"] {
+:root[data-theme="forest"] {
     --bg-gradient-start: #1A2E24;
     --bg-gradient-end: #2F4F4F;
     --card-bg: rgba(47, 79, 79, 0.7);
@@ -108,7 +129,7 @@ body[data-theme="forest"] {
     --aurora-color-3: #386641;
 }
 
-body[data-theme="rose"] {
+:root[data-theme="rose"] {
     --bg-gradient-start: #FFE5E5;
     --bg-gradient-end: #FFC0CB;
     --card-bg: rgba(255, 240, 245, 0.8);
@@ -126,14 +147,18 @@ body[data-theme="rose"] {
     --aurora-color-3: #cdb4db;
 }
 
-/* === GLOBAL THEMED STYLES === */
+/* =====================================================================
+   GLOBAL THEMED STYLES
+   ===================================================================== */
 body {
     background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
     color: var(--text-color);
     transition: background 0.5s ease, color 0.5s ease;
     background-attachment: fixed;
 }
+
 h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
+
 .container, #grade-selection, #subjects-page, #notes-page, #detail-page {
     background: var(--card-bg);
     border: 1px solid var(--border-color);
@@ -141,19 +166,24 @@ h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
 }
+
 .action-button, .grade-list button, .home-button, .back-button, .subject-list button, .download-button {
     background: var(--button-bg);
     color: var(--button-text);
     border: 1px solid var(--border-color);
     transition: all 0.3s ease;
 }
+
 .action-button:hover, .grade-list button:hover, .home-button:hover, .back-button:hover, .subject-list button:hover, .download-button:hover {
     background: var(--button-hover-bg);
     color: var(--button-hover-text);
     transform: translateY(-4px) scale(1.03);
     box-shadow: 0 10px 30px var(--shadow-color);
 }
-/* === BACKGROUND AURORA === */
+
+/* =====================================================================
+   BACKGROUND AURORA
+   ===================================================================== */
 .background-aurora { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
 .aurora-shape { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.4; transition: background-color 0.5s ease; }
 .shape1 { width: 400px; height: 400px; background: var(--aurora-color-1); top: 10%; left: 10%; animation: move-aurora1 20s infinite alternate ease-in-out; }
@@ -162,33 +192,69 @@ h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
 @keyframes move-aurora1 { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(100px, 50px) rotate(45deg); } }
 @keyframes move-aurora2 { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(-80px, -60px) rotate(-60deg); } }
 @keyframes move-aurora3 { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(60px, -100px) rotate(70deg); } }
-/* === THEME SWITCHER (TOP RIGHT) === */
-.theme-switcher { position: absolute; top: 20px; right: 20px; display: flex; flex-wrap: wrap; justify-content: flex-end; width: 180px; gap: 8px; background: var(--card-bg); padding: 8px; border-radius: 25px; border: 1px solid var(--border-color); box-shadow: 0 4px 20px var(--shadow-color); backdrop-filter: blur(10px); z-index: 1000; }
-.theme-button { width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent; cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; color: var(--text-color); background-color: transparent; font-size: 14px; }
+
+/* =====================================================================
+   THEME SWITCHER (TOP RIGHT)
+   ===================================================================== */
+.theme-switcher {
+    position: absolute; top: 20px; right: 20px;
+    display: flex; flex-wrap: wrap; justify-content: flex-end;
+    width: 180px; gap: 8px;
+    background: var(--card-bg); padding: 8px; border-radius: 25px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px var(--shadow-color);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 1000;
+}
+.theme-button {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: 2px solid transparent; cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-color); background-color: transparent; font-size: 14px;
+}
 .theme-button:hover { transform: scale(1.1) rotate(15deg); }
 .theme-button.active { border-color: var(--accent-color-1); color: var(--accent-color-1); transform: scale(1.1); }
-/* === THEME MODAL (for index.html) === */
-.theme-modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(10px); z-index: 2000; display: flex; justify-content: center; align-items: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+
+/* =====================================================================
+   THEME MODAL (index.html)
+   ===================================================================== */
+.theme-modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 2000;
+    display: flex; justify-content: center; align-items: center;
+    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+}
 .theme-modal-overlay.visible { opacity: 1; pointer-events: auto; }
-.theme-modal { background: var(--card-bg); padding: 30px; border-radius: 20px; border: 1px solid var(--border-color); box-shadow: 0 10px 50px var(--shadow-color); text-align: center; transform: scale(0.95); transition: transform 0.3s ease; }
+.theme-modal {
+    background: var(--card-bg); padding: 30px; border-radius: 20px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 50px var(--shadow-color);
+    text-align: center; transform: scale(0.95); transition: transform 0.3s ease;
+}
 .theme-modal-overlay.visible .theme-modal { transform: scale(1); }
 .theme-modal h2 { margin-bottom: 25px; font-size: 2rem; }
 .theme-options { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 500px; }
-.theme-option-button { background: var(--button-bg); border: 2px solid var(--border-color); color: var(--button-text); padding: 15px; border-radius: 15px; cursor: pointer; transition: all 0.3s ease; font-size: 1rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100px; }
-.theme-option-button i { font-size: 1.8rem; }
-
-.theme-option-button:hover { transform: translateY(-5px); border-color: var(--accent-color-1); box-shadow: 0 8px 20px var(--shadow-color); }
-/* === FAVORITES FEATURE STYLES === */
-
-/* Grouping for the buttons on detail.html */
-.action-buttons-group {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-    flex-wrap: wrap; /* ensures responsiveness */
+.theme-option-button {
+    background: var(--button-bg); border: 2px solid var(--border-color);
+    color: var(--button-text); padding: 15px; border-radius: 15px;
+    cursor: pointer; transition: all 0.3s ease;
+    font-size: 1rem; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100px;
 }
+.theme-option-button i { font-size: 1.8rem; }
+.theme-option-button:hover { transform: translateY(-5px); border-color: var(--accent-color-1); box-shadow: 0 8px 20px var(--shadow-color); }
+.theme-option-button.active { border-color: var(--accent-color-1); }
 
-/* Base style for the favorite button on detail.html */
+/* =====================================================================
+   FAVORITES FEATURE
+   ===================================================================== */
+.action-buttons-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+
 .favorite-button {
     background-color: var(--button-bg);
     color: var(--text-color);
@@ -196,122 +262,110 @@ h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
     transition: all 0.3s ease;
     cursor: pointer;
 }
-
-/* Active/Favorited state for the button */
 .favorite-button.favorited,
-.view-favorites-button.active {
-    background-color: #e83e8c; /* A nice heart-like pink */
-    color: #ffffff;
-    border-color: #e83e8c;
-}
-
+.view-favorites-button.active { background-color: #e83e8c; color: #ffffff; border-color: #e83e8c; }
 .favorite-button.favorited:hover,
-.view-favorites-button.active:hover {
-    background-color: #d82c7c; /* Darker pink on hover */
-    border-color: #d82c7c;
-}
+.view-favorites-button.active:hover { background-color: #d82c7c; border-color: #d82c7c; }
 
-/* Style for the favorite icon on the note list (note.html) */
 .favorite-icon-container {
-    position: absolute;
-    top: 15px;
-    right: 15px;
-    cursor: pointer;
-    font-size: 1.5rem;
-    padding: 5px;
-    z-index: 10; /* Ensures it's clickable */
+    position: absolute; top: 15px; right: 15px;
+    cursor: pointer; font-size: 1.5rem; padding: 5px; z-index: 10;
 }
+.favorite-icon { color: var(--text-color); transition: color 0.2s ease, transform 0.2s ease; }
+.favorite-icon.favorited { color: #e83e8c; transform: scale(1.1); }
+.favorite-icon:hover { transform: scale(1.2); }
 
-.favorite-icon {
-    color: var(--text-color); /* Default outline color */
-    transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.favorite-icon.favorited {
-    color: #e83e8c; /* Active pink color */
-    transform: scale(1.1);
-}
-
-.favorite-icon:hover {
-    transform: scale(1.2);
-}
-
-/* Style for the "View Favorites" toggle button (note.html) */
 .view-favorites-button {
-    width: 50px; /* Small square button */
-    height: 50px;
-    padding: 0;
-    margin-left: 10px;
-    border-radius: 50%;
-    font-size: 1.2rem;
+    width: 50px; height: 50px; padding: 0; margin-left: 10px;
+    border-radius: 50%; font-size: 1.2rem;
     border: 2px solid var(--border-color);
     background-color: var(--button-bg);
     color: var(--accent-color-1);
     transition: all 0.3s ease;
 }
 
-/* Toast Notification (Simple Pop-up) */
 .favorite-toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 12px 25px;
-    border-radius: 8px;
-    font-size: 1rem;
-    color: #fff;
-    z-index: 2000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    transition: opacity 0.3s, transform 0.3s;
-    opacity: 0.9;
-    font-weight: 600;
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    padding: 12px 25px; border-radius: 8px; font-size: 1rem; color: #fff;
+    z-index: 2000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    transition: opacity 0.3s, transform 0.3s; opacity: 0.9; font-weight: 600;
 }
-/* Font Control Container */
+
+/* =====================================================================
+   FONT CONTROLS (theme-aware)
+   ===================================================================== */
 .font-controls {
-    position: fixed;
-    top: 80px; /* Positioned slightly below the theme switcher */
-    right: 20px;
-    z-index: 1000;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background: rgba(255, 255, 255, 0.1); /* Glass effect */
-    padding: 10px;
-    border-radius: 50px;
+    position: fixed; top: 125px; right: 20px; z-index: 1000;
+    display: flex; flex-direction: column; gap: 10px;
+    background: var(--card-bg); padding: 10px; border-radius: 50px;
     backdrop-filter: blur(5px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    -webkit-backdrop-filter: blur(5px);
+    border: 1px solid var(--border-color);
 }
-
-/* Font Buttons */
 .font-button {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: none;
+    width: 40px; height: 40px; border-radius: 50%;
+    border: 1px solid var(--border-color);
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-    font-weight: bold;
-    font-size: 1.2rem; /* Fixed size for the icon itself */
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    background: var(--button-bg);
+    color: var(--button-text);
+    font-weight: bold; font-size: 1.2rem;
+    display: flex; align-items: center; justify-content: center;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
+.font-button:hover { transform: scale(1.1); background: var(--button-hover-bg); color: var(--button-hover-text); }
 
-.font-button:hover {
-    transform: scale(1.1);
-    background: #4CAF50; /* Green highlight on hover */
-}
-
-/* Mobile Responsiveness */
 @media (max-width: 768px) {
     .font-controls {
-        top: auto;
-        bottom: 20px; /* Move to bottom on mobile */
-        left: 20px;
-        right: auto;
-        flex-direction: row; /* Horizontal on mobile */
+        top: auto; bottom: 20px; left: 20px; right: auto;
+        flex-direction: row;
     }
 }
+
+/* =====================================================================
+   THEME-AWARE OVERRIDES
+   Page-level <style> blocks load AFTER this file and hardcode white
+   colors. Prefixing with `body` raises specificity so these win.
+   ===================================================================== */
+
+/* Note cards (note.html, favorites.html) */
+body .note-item {
+    position: relative;
+    background: var(--button-bg);
+    border: 1px solid var(--border-color);
+}
+body .note-title,
+body .note-sub-topic { border-bottom-color: var(--border-color); }
+body .note-sub-topic { color: var(--text-color); }
+
+/* Search box (note.html) */
+body #search-input {
+    background: var(--button-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    outline: none;
+}
+body #search-input:focus { border-color: var(--accent-color-1); }
+body #search-input::placeholder { color: var(--text-color); opacity: 0.6; }
+body .search-container i { color: var(--text-color); }
+
+/* "More details" link */
+body .more-details-link {
+    color: var(--accent-color-1);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s ease;
+}
+body .more-details-link:hover {
+    background: var(--button-hover-bg);
+    color: var(--button-hover-text);
+}
+
+/* Detail page */
+body #note-detail-content { background: var(--button-bg); }
+body .note-sub-topic { border-bottom-color: var(--border-color); }
+
+/* Footers */
+body .footer,
+body footer { color: var(--text-color); }
+
+/* Landing page quote box */
+body .inspiration-message { background: var(--button-bg); color: var(--text-color); }
