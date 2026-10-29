@@ -7,10 +7,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="theme.css">
     <style>
-        /* Non-theme related layout styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Poppins', sans-serif;
@@ -29,47 +28,108 @@
         #notes-page {
             border-radius: 20px; padding: 40px; text-align: center; width: 100%;
         }
+        
+        /* Breadcrumb Navigation */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            color: var(--text-color);
+            opacity: 0.9;
+        }
+        .breadcrumb a {
+            color: var(--accent-color-1);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .breadcrumb a:hover { text-decoration: underline; }
+
         h2 {
-            font-weight: 700; font-size: 2.5rem; margin-bottom: 30px; display: flex;
+            font-weight: 700; font-size: 2.5rem; margin-bottom: 25px; display: flex;
             align-items: center; justify-content: center; gap: 15px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
-        h2 .fas { font-size: 2.2rem; }
         .back-button {
-            padding: 18px 35px; border-radius: 50px; font-size: 1.2rem; font-weight: 600;
-            cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 30px;
+            padding: 12px 25px; border-radius: 50px; font-size: 1rem; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 20px;
         }
-        .back-button i { margin-right: 10px; }
-        .note-list { list-style: none; padding: 0; margin-top: 30px; }
+        .back-button i { margin-right: 8px; }
+
+        /* Search Bar & Clear Button */
+        .search-container { width: 100%; margin-bottom: 10px; position: relative; }
+        #search-input {
+            width: 100%; padding: 14px 45px 14px 20px; border: 1px solid var(--border-color); border-radius: 30px;
+            font-size: 1rem; background: var(--button-bg); color: var(--text-color); outline: none;
+        }
+        #search-input:focus { border-color: var(--accent-color-1); }
+        .search-container .search-icon { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none; }
+        .search-clear-btn {
+            position: absolute; right: 45px; top: 50%; transform: translateY(-50%);
+            background: transparent; border: none; color: var(--text-color);
+            font-size: 1.2rem; cursor: pointer; display: none; opacity: 0.7;
+        }
+        .search-clear-btn:hover { opacity: 1; }
+        
+        /* Result Count Indicator */
+        .results-count {
+            text-align: left; font-size: 0.9rem; font-weight: 600; margin-bottom: 20px;
+            color: var(--text-color); opacity: 0.85; padding-left: 10px;
+        }
+
+        /* Note Items & Badges */
+        .note-list { list-style: none; padding: 0; margin-top: 15px; }
         .note-item {
             padding: 25px; margin-bottom: 20px; border-radius: 15px; text-align: left;
-            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            position: relative; transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            background: var(--button-bg); border: 1px solid var(--border-color);
         }
-        .note-item:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); }
-        .note-title {
-            font-size: 1.4rem; font-weight: 700; margin-bottom: 12px; padding-bottom: 8px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+        .note-item:hover { transform: translateY(-3px); box-shadow: 0 10px 25px var(--shadow-color); }
+        .note-header-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+        .note-title { font-size: 1.4rem; font-weight: 700; margin-bottom: 8px; }
+        .note-sub-topic { display: block; font-size: 0.95rem; font-style: italic; margin-top: 3px; opacity: 0.85; }
+        
+        /* Badges */
+        .badge-container { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+        .badge {
+            font-size: 0.75rem; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+            display: inline-flex; align-items: center; gap: 5px; text-transform: uppercase;
         }
-        .more-details-link {
-            display: inline-block; margin-top: 10px; text-decoration: none; font-weight: 600;
-            padding: 8px 15px; border-radius: 8px;
-        }
+        .badge-new { background-color: #00c853; color: #ffffff; }
+        .badge-attachment { background-color: var(--accent-color-1); color: #ffffff; }
+
         .note-content {
             font-size: 1.05rem; margin-bottom: 18px; line-height: 1.7; display: -webkit-box;
             -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;
         }
-        small { display: block; margin-top: 15px; font-size: 0.9rem; font-style: italic; }
-        .loading-state { text-align: center; padding: 50px; font-size: 1.1rem; }
-        .loading-state i { font-size: 2rem; margin-bottom: 10px; }
-        .footer { width: 100%; padding: 20px; border-radius: 20px 20px 0 0; margin-top: 40px; text-align: center; }
-        .note-sub-topic { display: block; font-size: 0.9em; margin-top: 3px; font-style: italic; }
-        .search-container { width: 100%; margin-bottom: 20px; position: relative; }
-        #search-input {
-            width: 100%; padding: 12px 40px 12px 20px; border: none; border-radius: 25px;
-            font-size: 1rem; backdrop-filter: blur(5px);
+        
+        /* Search Text Highlighting */
+        mark.search-highlight {
+            background-color: #ffeb3b; color: #000; padding: 2px 4px; border-radius: 3px; font-weight: 600;
         }
-        #search-input::placeholder { color: rgba(255, 255, 255, 0.7); }
-        .search-container i { position: absolute; right: 20px; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 1.1rem; }
-        .no-results { font-style: italic; margin-top: 20px; display: none; }
+
+        .more-details-link {
+            display: inline-block; margin-top: 10px; text-decoration: none; font-weight: 600;
+            padding: 8px 18px; border-radius: 8px; border: 1px solid var(--border-color);
+            color: var(--accent-color-1); transition: all 0.3s ease;
+        }
+        .more-details-link:hover { background: var(--button-hover-bg); color: var(--button-hover-text); }
+
+        .date-info { display: block; margin-top: 15px; font-size: 0.85rem; font-style: italic; opacity: 0.75; }
+
+        /* Back to Top Floating Button */
+        .back-to-top {
+            position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px;
+            border-radius: 50%; background: var(--accent-color-1); color: #fff;
+            border: none; cursor: pointer; display: none; align-items: center;
+            justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 999; transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .back-to-top:hover { transform: scale(1.1); }
+
+        .footer { width: 100%; padding: 20px; border-radius: 20px 20px 0 0; margin-top: 40px; text-align: center; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
@@ -79,6 +139,7 @@
         <div class="aurora-shape shape2"></div>
         <div class="aurora-shape shape3"></div>
     </div>
+    
     <div class="theme-switcher">
         <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
         <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
@@ -88,39 +149,52 @@
         <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
         <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
     </div>
+
     <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
 
     <div id="main-content">
         <section id="notes-page">
-            <button class="back-button" onclick="window.location.href='subjects.html'">
+            <nav class="breadcrumb">
+                <a href="landing.html"><i class="fas fa-graduation-cap"></i> <span id="bc-grade">Grade</span></a>
+                <i class="fas fa-chevron-right"></i>
+                <a href="subjects.html"><i class="fas fa-book-open"></i> Subjects</a>
+                <i class="fas fa-chevron-right"></i>
+                <span id="bc-subject">Notes</span>
+            </nav>
+
+            <button class="action-button back-button" onclick="window.location.href='subjects.html'">
                 <i class="fas fa-arrow-left"></i> Back to Subjects
             </button>
 
             <h2 id="subject-title"><i class="fas fa-book"></i> Notes for <span id="subject-name"></span> (<span id="grade-display"></span>)</h2>
 
             <div class="search-container">
-                <input type="text" id="search-input" placeholder="Search notes...">
-                <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search notes by topic, subtopic or keyword...">
+                <button class="search-clear-btn" id="search-clear" onclick="clearSearch()" aria-label="Clear Search">✕</button>
+                <i class="fas fa-search search-icon"></i>
             </div>
+
+            <div class="results-count" id="results-count"></div>
 
             <div id="subject-notes-area" class="loading-state">
                 <i class="fas fa-spinner fa-spin"></i>
                 <p>Loading notes...</p>
             </div>
-
-            <p id="no-results" class="no-results">No notes match your search.</p>
         </section>
     </div>
 
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
     <footer class="footer">
-        <p> &copy; Creative Learning</p>
+        <p>&copy; Creative Learning</p>
         <p>Creative Learning is owned by Pope John</p>
     </footer>
 
     <script src="script.js"></script>
     <script src="theme.js"></script>
     <script>
-        // Firebase and Supabase config remains the same...
         const firebaseConfig = {
             apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
             authDomain: "creative-learning-f2252.firebaseapp.com",
@@ -131,61 +205,157 @@
         };
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
-        // The rest of the script from your original file remains here...
+
         let allNotes = [];
+
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const subjectId = urlParams.get('subject');
-            const grade = localStorage.getItem('selectedGrade') || 'Unknown Grade';
+            const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
+            
+            // Set Breadcrumb & Titles
+            document.getElementById('bc-grade').textContent = grade;
             if (subjectId) {
-                document.getElementById('subject-name').textContent = subjectId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                const formattedSubject = subjectId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                document.getElementById('subject-name').textContent = formattedSubject;
+                document.getElementById('bc-subject').textContent = formattedSubject;
                 document.getElementById('grade-display').textContent = grade;
-                loadSubjectNotes(subjectId.toLowerCase(), grade, document.getElementById('subject-notes-area'));
+                
+                // Save last visited subject
+                localStorage.setItem('last_visited_subject', subjectId);
+                localStorage.setItem('last_visited_subject_name', formattedSubject);
+
+                loadSubjectNotes(subjectId.toLowerCase(), grade);
             }
-            document.getElementById('search-input').addEventListener('keyup', searchNotes);
+
+            const searchInput = document.getElementById('search-input');
+            searchInput.addEventListener('input', () => {
+                toggleClearButton();
+                searchNotes();
+            });
+
+            // Back to Top Scroll Listener
+            window.addEventListener('scroll', () => {
+                const btn = document.getElementById('backToTop');
+                if (window.scrollY > 300) btn.style.display = 'flex';
+                else btn.style.display = 'none';
+            });
         });
-        function loadSubjectNotes(subjectId, grade, notesArea) {
+
+        function loadSubjectNotes(subjectId, grade) {
+            const notesArea = document.getElementById('subject-notes-area');
             db.collection('notes').where('subject', '==', subjectId).where('grade', '==', grade).orderBy('createdAt', 'desc').get()
                 .then(querySnapshot => {
                     if (querySnapshot.empty) {
-                        notesArea.innerHTML = '<p>No notes available for this subject yet.</p>'; return;
+                        notesArea.innerHTML = '<p>No notes available for this subject yet.</p>';
+                        document.getElementById('results-count').textContent = '0 results found';
+                        return;
                     }
                     allNotes = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    renderNotes(allNotes, notesArea);
+                    renderNotes(allNotes);
                 }).catch(error => {
                     console.error("Error loading notes:", error);
                     notesArea.innerHTML = `<p>Error loading notes. Please try again later.</p>`;
                 });
         }
-        function renderNotes(notesToRender, notesArea) {
+
+        function renderNotes(notesToRender, query = '') {
+            const notesArea = document.getElementById('subject-notes-area');
+            const resultsCounter = document.getElementById('results-count');
+
+            resultsCounter.textContent = `${notesToRender.length} ${notesToRender.length === 1 ? 'result' : 'results'} found`;
+
             if (notesToRender.length === 0) {
-                document.getElementById('no-results').style.display = 'block';
-                notesArea.innerHTML = ''; return;
+                notesArea.innerHTML = '<p class="no-results">No notes match your search criteria.</p>';
+                return;
             }
-            document.getElementById('no-results').style.display = 'none';
+
             let notesHTML = '<ul class="note-list">';
             notesToRender.forEach(note => {
-                const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
+                const createdDate = note.createdAt?.toDate ? note.createdAt.toDate() : new Date();
+                const updatedDate = note.updatedAt?.toDate ? note.updatedAt.toDate() : null;
+
+                const isNew = (new Date() - createdDate) / (1000 * 60 * 60 * 24) <= 7;
+                const timeAgo = formatTimeAgo(createdDate);
+                const postedDateStr = createdDate.toLocaleDateString();
+                const updatedDateStr = updatedDate ? updatedDate.toLocaleDateString() : null;
+
+                // Highlighting search terms
+                const safeTopic = highlightText(note.noteTopic || '', query);
+                const safeSubTopic = highlightText(note.subTopic || '', query);
+                const safeContent = highlightText(note.content || '', query);
+
                 notesHTML += `
                 <li class="note-item">
-                    <div class="note-title">${note.noteTopic}<span class="note-sub-topic">${note.subTopic || ''}</span></div>
-                    <div class="note-content">${note.content}</div>
+                    <div class="badge-container">
+                        ${isNew ? '<span class="badge badge-new"><i class="fas fa-bolt"></i> NEW</span>' : ''}
+                        ${note.fileUrl ? '<span class="badge badge-attachment"><i class="fas fa-paperclip"></i> Attachment</span>' : ''}
+                    </div>
+                    <div class="note-title">${safeTopic}</div>
+                    ${safeSubTopic ? `<span class="note-sub-topic">${safeSubTopic}</span>` : ''}
+                    <div class="note-content">${safeContent}</div>
                     <a href="detail.html?noteId=${note.id}" class="more-details-link"><i class="fas fa-external-link-alt"></i> More Details</a>
-                    <small>Posted: ${date}</small>
+                    <span class="date-info">
+                        Posted ${timeAgo} (${postedDateStr})
+                        ${updatedDateStr ? ` &bull; Last updated ${updatedDateStr}` : ''}
+                    </span>
                 </li>`;
             });
             notesHTML += '</ul>';
             notesArea.innerHTML = notesHTML;
         }
+
         function searchNotes() {
-            const query = document.getElementById('search-input').value.toLowerCase();
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
             const filteredNotes = allNotes.filter(note => 
                 (note.noteTopic?.toLowerCase() || '').includes(query) ||
                 (note.subTopic?.toLowerCase() || '').includes(query) ||
                 (note.content?.toLowerCase() || '').includes(query)
             );
-            renderNotes(filteredNotes, document.getElementById('subject-notes-area'));
+            renderNotes(filteredNotes, query);
+        }
+
+        function clearSearch() {
+            const searchInput = document.getElementById('search-input');
+            searchInput.value = '';
+            toggleClearButton();
+            renderNotes(allNotes, '');
+        }
+
+        function toggleClearButton() {
+            const input = document.getElementById('search-input');
+            const clearBtn = document.getElementById('search-clear');
+            clearBtn.style.display = input.value.length > 0 ? 'block' : 'none';
+        }
+
+        function highlightText(text, query) {
+            if (!query) return text;
+            const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+            return text.replace(regex, '<mark class="search-highlight">$1</mark>');
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) return `${interval} year${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return `${interval} month${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return `${interval} day${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return `${interval} hour${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return `${interval} minute${interval > 1 ? 's' : ''} ago`;
+            return 'just now';
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
-    </html> 
+</html>
