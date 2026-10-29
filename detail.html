@@ -9,76 +9,92 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
     
     <link rel="stylesheet" href="theme.css">
     <script src="theme.js"></script>
 
     <style>
-        /* Core Layout Styles */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Poppins', sans-serif;
             min-height: 100vh; display: flex; flex-direction: column;
             align-items: center; padding: 20px; position: relative; overflow-x: hidden;
         }
-        .header-container {
-            position: absolute; top: 20px; left: 20px; z-index: 100;
-        }
+        .header-container { position: absolute; top: 20px; left: 20px; z-index: 100; }
         .moe-logo { height: 50px; z-index: 10; }
+        
         #main-content {
             flex-grow: 1; display: flex; flex-direction: column; align-items: center;
             justify-content: center; width: 100%; max-width: 1000px;
-            animation: float-in 1.2s ease-out; padding-top: 100px;
+            animation: float-in 1s ease-out; padding-top: 80px;
         }
-        #detail-page {
-            border-radius: 24px; padding: 40px; text-align: left; width: 100%;
+        #detail-page { border-radius: 24px; padding: 40px; text-align: left; width: 100%; }
+        
+        /* Breadcrumb Navigation */
+        .breadcrumb {
+            display: flex; align-items: center; gap: 8px; font-size: 0.95rem;
+            margin-bottom: 20px; flex-wrap: wrap; justify-content: flex-start;
+            color: var(--text-color); opacity: 0.9;
         }
-        h2.note-topic {
-            font-weight: 700; font-size: 2.8rem; margin-bottom: 20px;
-            display: flex; align-items: center; gap: 15px;
-        }
+        .breadcrumb a { color: var(--accent-color-1); text-decoration: none; font-weight: 600; }
+        .breadcrumb a:hover { text-decoration: underline; }
+
+        h2.note-topic { font-weight: 700; font-size: 2.5rem; margin-bottom: 10px; }
+        
         .action-button {
-            padding: 14px 28px; border-radius: 50px; font-size: 1rem;
+            padding: 12px 25px; border-radius: 50px; font-size: 1rem;
             font-weight: 600; cursor: pointer; display: inline-flex;
-            align-items: center; justify-content: center;
-            transition: transform 0.2s ease;
+            align-items: center; justify-content: center; transition: transform 0.2s ease;
         }
         .action-button:hover { transform: scale(1.05); }
-        .action-button i { margin-right: 10px; }
-        .back-button { margin-bottom: 30px; }
+        .action-button i { margin-right: 8px; }
+        .back-button { margin-bottom: 25px; }
         .download-button { margin-top: 25px; }
         
         #note-detail-content {
-            padding: 30px; border-radius: 18px; background: rgba(255,255,255,0.05);
+            padding: 30px; border-radius: 18px; background: var(--button-bg); border: 1px solid var(--border-color);
         }
         .note-sub-topic {
-            font-size: 1.3rem; font-style: italic; opacity: 0.9;
-            margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 15px;
+            font-size: 1.2rem; font-style: italic; opacity: 0.9; margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
         }
         .note-content { font-size: 1.1rem; line-height: 1.9; margin-top: 15px; white-space: pre-wrap; }
-        .note-content img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 20px; display: block; }
-        small { display: block; margin-top: 25px; opacity: 0.7; }
         
+        /* Badges */
+        .badge-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .badge {
+            font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+            display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase;
+        }
+        .badge-new { background-color: #00c853; color: #ffffff; }
+        .badge-attachment { background-color: var(--accent-color-1); color: #ffffff; }
 
-        /* Attached file (PDF / image) */
+        .date-info { display: block; margin-top: 25px; font-size: 0.9rem; font-style: italic; opacity: 0.8; }
+
+        /* Attachment Styles */
         .attachment-section { margin-top: 30px; padding-top: 25px; border-top: 1px solid var(--border-color); }
         .attachment-title { font-size: 1.2rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
         .attachment-name { font-size: 0.95rem; opacity: 0.8; margin-bottom: 15px; word-break: break-word; }
-        .attachment-image { display: block; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-color); cursor: zoom-in; }
+        .attachment-image { display: block; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-color); }
         .attachment-pdf { display: block; width: 100%; height: 75vh; min-height: 420px; border: 1px solid var(--border-color); border-radius: 12px; background: #fff; }
         .attachment-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
-        .attachment-actions .action-button { text-decoration: none; padding: 12px 22px; font-size: 0.95rem; }
-        .attachment-note, .attachment-error { font-size: 0.95rem; opacity: 0.85; margin-top: 10px; }
-        .attachment-error { color: #e5484d; opacity: 1; }
+
+        /* Back to Top */
+        .back-to-top {
+            position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px;
+            border-radius: 50%; background: var(--accent-color-1); color: #fff;
+            border: none; cursor: pointer; display: none; align-items: center;
+            justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            z-index: 999; transition: transform 0.3s ease;
+        }
+        .back-to-top:hover { transform: scale(1.1); }
 
         .footer { width: 100%; max-width: 1000px; padding: 20px; margin-top: 40px; text-align: center; }
-        
-        @keyframes float-in { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        @keyframes float-in { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body>
@@ -104,6 +120,16 @@
 
     <main id="main-content">
         <section id="detail-page">
+            <nav class="breadcrumb">
+                <a href="landing.html"><i class="fas fa-graduation-cap"></i> <span id="bc-grade">Grade</span></a>
+                <i class="fas fa-chevron-right"></i>
+                <a href="subjects.html"><i class="fas fa-book-open"></i> Subjects</a>
+                <i class="fas fa-chevron-right"></i>
+                <a id="bc-subject-link" href="note.html"><span id="bc-subject">Notes</span></a>
+                <i class="fas fa-chevron-right"></i>
+                <span id="bc-topic">Detail</span>
+            </nav>
+
             <button class="action-button back-button" onclick="history.back()">
                 <i class="fas fa-arrow-left"></i> Back to Notes
             </button>
@@ -116,13 +142,16 @@
         </section>
     </main>
 
+    <button class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
     <footer class="footer">
         <p>&copy; Creative Learning</p>
         <p>Creative Learning is owned by Pope John</p>
     </footer>
 
     <script>
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyABCpgwLNKvUxdYtnz5HBHH9IlnDZgEbUo",
             authDomain: "creative-learning-f2252.firebaseapp.com",
@@ -138,14 +167,24 @@
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const noteId = urlParams.get('noteId');
+            const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
+            document.getElementById('bc-grade').textContent = grade;
+
             if (noteId) {
-                loadNoteDetails(noteId, document.getElementById('note-detail-area'));
+                loadNoteDetails(noteId);
             } else {
                 document.getElementById('note-detail-area').innerHTML = '<div id="note-detail-content"><p>No note selected.</p></div>';
             }
+
+            window.addEventListener('scroll', () => {
+                const btn = document.getElementById('backToTop');
+                if (window.scrollY > 300) btn.style.display = 'flex';
+                else btn.style.display = 'none';
+            });
         });
 
-        function loadNoteDetails(noteId, detailsArea) {
+        function loadNoteDetails(noteId) {
+            const detailsArea = document.getElementById('note-detail-area');
             db.collection('notes').doc(noteId).get().then(doc => {
                 if (doc.exists) {
                     renderNoteDetails(doc.data(), detailsArea);
@@ -159,153 +198,93 @@
         }
 
         function renderNoteDetails(note, detailsArea) {
-            const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
+            const createdDate = note.createdAt?.toDate ? note.createdAt.toDate() : new Date();
+            const updatedDate = note.updatedAt?.toDate ? note.updatedAt.toDate() : null;
 
-            // SECURITY: Sanitize the content to prevent XSS attacks
+            const isNew = (new Date() - createdDate) / (1000 * 60 * 60 * 24) <= 7;
+            const timeAgo = formatTimeAgo(createdDate);
+            const postedDateStr = createdDate.toLocaleDateString();
+            const updatedDateStr = updatedDate ? updatedDate.toLocaleDateString() : null;
+
             const cleanContent = DOMPurify.sanitize(note.content || '');
-            const safeTopic = escapeHTML(note.noteTopic || '');
-            const safeSubTopic = note.subTopic ? escapeHTML(note.subTopic) : '';
+            const safeTopic = note.noteTopic || 'Untitled Note';
+            const safeSubTopic = note.subTopic || '';
 
-            document.title = `${note.noteTopic || 'Note'} | Creative Learning`;
+            // Update Breadcrumb & Document Title
+            document.title = `${safeTopic} | Creative Learning`;
+            document.getElementById('bc-topic').textContent = safeTopic;
+            if (note.subject) {
+                const subjectName = note.subject.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                document.getElementById('bc-subject').textContent = subjectName;
+                document.getElementById('bc-subject-link').href = `note.html?subject=${note.subject}`;
+            }
+
+            // Save to recently viewed
+            saveRecentlyViewedNote(note.id || '', safeTopic, note.subject || '');
 
             detailsArea.innerHTML = `
+                <div class="badge-container">
+                    ${isNew ? '<span class="badge badge-new"><i class="fas fa-bolt"></i> NEW</span>' : ''}
+                    ${note.fileUrl ? '<span class="badge badge-attachment"><i class="fas fa-paperclip"></i> Attachment</span>' : ''}
+                </div>
                 <h2 class="note-topic">${safeTopic}</h2>
                 ${safeSubTopic ? `<h3 class="note-sub-topic">${safeSubTopic}</h3>` : ''}
                 <div id="note-detail-content">
                     <div class="note-content">${cleanContent}</div>
                     <div id="attachment-slot"></div>
-                    <small>Posted: ${date}</small>
+                    <span class="date-info">
+                        Posted ${timeAgo} (${postedDateStr})
+                        ${updatedDateStr ? ` &bull; Last updated ${updatedDateStr}` : ''}
+                    </span>
                     <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
                 </div>`;
 
-            renderAttachment(note, document.getElementById('attachment-slot'));
-        }
-
-        // ---------- Attached file (uploaded by admin to Supabase) ----------
-
-        // Only allow https links, so a bad value in the database can't inject anything else
-        function getSafeFileUrl(raw) {
-            if (!raw || typeof raw !== 'string') return null;
-            try {
-                const url = new URL(raw);
-                return url.protocol === 'https:' ? url : null;
-            } catch (e) {
-                return null;
+            if (note.fileUrl) {
+                renderAttachment(note, document.getElementById('attachment-slot'));
             }
         }
 
-        function detectFileKind(note, url) {
-            const type = (note.fileType || '').toLowerCase();
-            const path = url.pathname.toLowerCase();
-            if (type.startsWith('image/') || /\.(png|jpe?g|gif|webp|avif|svg)$/.test(path)) return 'image';
-            if (type === 'application/pdf' || path.endsWith('.pdf')) return 'pdf';
-            return 'other';
-        }
-
-        function getDisplayName(note, url) {
-            if (note.fileName) return note.fileName;
-            const last = url.pathname.split('/').pop() || 'attachment';
-            try { return decodeURIComponent(last); } catch (e) { return last; }
-        }
-
-        // Supabase public URLs force a download when given ?download=<name>
-        function buildDownloadHref(url, filename) {
-            const u = new URL(url.href);
-            u.searchParams.delete('download');
-            return u.href + (u.search ? '&' : '?') + 'download=' + encodeURIComponent(filename);
-        }
-
-        function makeActionLink(href, iconClass, label, opts = {}) {
-            const a = document.createElement('a');
-            a.className = 'action-button';
-            a.href = href;
-            if (opts.newTab) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
-            const icon = document.createElement('i');
-            icon.className = iconClass;
-            a.appendChild(icon);
-            a.appendChild(document.createTextNode(' ' + label));
-            return a;
+        function saveRecentlyViewedNote(id, title, subject) {
+            let recent = JSON.parse(localStorage.getItem('recently_viewed_notes') || '[]');
+            recent = recent.filter(item => item.id !== id);
+            recent.unshift({ id, title, subject, time: new Date().toISOString() });
+            if (recent.length > 5) recent.pop();
+            localStorage.setItem('recently_viewed_notes', JSON.stringify(recent));
         }
 
         function renderAttachment(note, slot) {
-            if (!slot) return;
-            const url = getSafeFileUrl(note.fileUrl);
-            if (!url) return; // no attachment (or an unsafe link): show nothing
-
-            const kind = detectFileKind(note, url);
-            const name = getDisplayName(note, url);
-
+            if (!slot || !note.fileUrl) return;
+            const isPdf = note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf');
+            
             const section = document.createElement('div');
             section.className = 'attachment-section';
-
-            const title = document.createElement('h4');
-            title.className = 'attachment-title';
-            title.innerHTML = '<i class="fas fa-paperclip"></i> Attached file';
-            section.appendChild(title);
-
-            const nameEl = document.createElement('div');
-            nameEl.className = 'attachment-name';
-            nameEl.textContent = name;
-            section.appendChild(nameEl);
-
-            const actions = document.createElement('div');
-            actions.className = 'attachment-actions';
-
-            if (kind === 'image') {
-                const link = document.createElement('a');
-                link.href = url.href;
-                link.target = '_blank';
-                link.rel = 'noopener noreferrer';
-                link.title = 'Open full size';
-
-                const img = document.createElement('img');
-                img.className = 'attachment-image';
-                img.src = url.href;
-                img.alt = name;
-                img.loading = 'lazy';
-                img.addEventListener('error', () => {
-                    link.remove();
-                    const err = document.createElement('p');
-                    err.className = 'attachment-error';
-                    err.textContent = 'This image could not be loaded. Try the download button below.';
-                    section.insertBefore(err, actions);
-                });
-                link.appendChild(img);
-                section.appendChild(link);
-            } else if (kind === 'pdf') {
-                // Phones usually can't show a PDF inside a page, so only embed on larger screens
-                if (window.matchMedia('(min-width: 769px)').matches) {
-                    const frame = document.createElement('iframe');
-                    frame.className = 'attachment-pdf';
-                    frame.src = url.href;
-                    frame.title = name;
-                    section.appendChild(frame);
-                } else {
-                    const hint = document.createElement('p');
-                    hint.className = 'attachment-note';
-                    hint.textContent = 'Tap "Open" to read the PDF on your phone.';
-                    section.appendChild(hint);
-                }
-            }
-
-            actions.appendChild(makeActionLink(url.href, 'fas fa-up-right-from-square', kind === 'pdf' ? 'Open PDF' : 'Open', { newTab: true }));
-            actions.appendChild(makeActionLink(buildDownloadHref(url, name), 'fas fa-file-arrow-down', 'Download file'));
-            section.appendChild(actions);
-
+            section.innerHTML = `
+                <h4 class="attachment-title"><i class="fas fa-paperclip"></i> Attached File</h4>
+                <div class="attachment-name">${note.fileName || 'Document'}</div>
+                ${isPdf ? `<iframe class="attachment-pdf" src="${note.fileUrl}"></iframe>` : `<img class="attachment-image" src="${note.fileUrl}" alt="Attachment">`}
+                <div class="attachment-actions">
+                    <a href="${note.fileUrl}" target="_blank" class="action-button"><i class="fas fa-external-link-alt"></i> Open File</a>
+                </div>`;
             slot.appendChild(section);
         }
 
-        // Helper to escape simple text
-        function escapeHTML(str) {
-            const p = document.createElement('p');
-            p.textContent = str;
-            return p.innerHTML;
+        function formatTimeAgo(date) {
+            const seconds = Math.floor((new Date() - date) / 1000);
+            let interval = Math.floor(seconds / 31536000);
+            if (interval >= 1) return `${interval} year${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 2592000);
+            if (interval >= 1) return `${interval} month${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 86400);
+            if (interval >= 1) return `${interval} day${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 3600);
+            if (interval >= 1) return `${interval} hour${interval > 1 ? 's' : ''} ago`;
+            interval = Math.floor(seconds / 60);
+            if (interval >= 1) return `${interval} minute${interval > 1 ? 's' : ''} ago`;
+            return 'just now';
         }
 
-        // UPDATED: High-Quality PDF Download Function
         function downloadNote() {
             const element = document.getElementById('note-detail-area');
-            // Hide the download button momentarily so it doesn't appear in the PDF
             const btn = document.querySelector('.download-button');
             const attachment = document.getElementById('attachment-slot');
             btn.style.display = 'none';
@@ -314,24 +293,26 @@
             const topic = document.querySelector('.note-topic')?.textContent.trim() || 'Note';
             
             const opt = {
-              margin:       [15, 15, 15, 15],
-              filename:     `Note_${topic.replace(/[^a-z0-9]/gi, '_')}.pdf`,
-              image:        { type: 'jpeg', quality: 0.98 },
-              html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
-              jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+              margin: [15, 15, 15, 15],
+              filename: `Note_${topic.replace(/[^a-z0-9]/gi, '_')}.pdf`,
+              image: { type: 'jpeg', quality: 0.98 },
+              html2canvas: { scale: 2, useCORS: true, letterRendering: true },
+              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
-            // Generate PDF
             html2pdf().set(opt).from(element).save().then(() => {
-                // Bring the button and attachment back after download starts
                 btn.style.display = 'inline-flex';
                 if (attachment) attachment.style.display = '';
             }).catch(err => {
                 console.error(err);
                 btn.style.display = 'inline-flex';
                 if (attachment) attachment.style.display = '';
-                alert("Error generating PDF. Please try again.");
+                alert("Error generating PDF.");
             });
+        }
+
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     </script>
 </body>
