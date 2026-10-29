@@ -16,6 +16,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
     
     <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
 
     <style>
         /* Core Layout Styles */
@@ -63,6 +64,18 @@
         .note-content img { max-width: 100%; height: auto; border-radius: 12px; margin-top: 20px; display: block; }
         small { display: block; margin-top: 25px; opacity: 0.7; }
         
+
+        /* Attached file (PDF / image) */
+        .attachment-section { margin-top: 30px; padding-top: 25px; border-top: 1px solid var(--border-color); }
+        .attachment-title { font-size: 1.2rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .attachment-name { font-size: 0.95rem; opacity: 0.8; margin-bottom: 15px; word-break: break-word; }
+        .attachment-image { display: block; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-color); cursor: zoom-in; }
+        .attachment-pdf { display: block; width: 100%; height: 75vh; min-height: 420px; border: 1px solid var(--border-color); border-radius: 12px; background: #fff; }
+        .attachment-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+        .attachment-actions .action-button { text-decoration: none; padding: 12px 22px; font-size: 0.95rem; }
+        .attachment-note, .attachment-error { font-size: 0.95rem; opacity: 0.85; margin-top: 10px; }
+        .attachment-error { color: #e5484d; opacity: 1; }
+
         .footer { width: 100%; max-width: 1000px; padding: 20px; margin-top: 40px; text-align: center; }
         
         @keyframes float-in { from { opacity: 0; transform: translateY(30px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -108,7 +121,6 @@
         <p>Creative Learning is owned by Pope John</p>
     </footer>
 
-    <script src="theme.js"></script>
     <script>
         // Firebase Config
         const firebaseConfig = {
@@ -148,20 +160,139 @@
 
         function renderNoteDetails(note, detailsArea) {
             const date = note.createdAt?.toDate()?.toLocaleDateString() || 'Unknown date';
-            
+
             // SECURITY: Sanitize the content to prevent XSS attacks
-            const cleanContent = DOMPurify.sanitize(note.content);
-            const safeTopic = escapeHTML(note.noteTopic);
+            const cleanContent = DOMPurify.sanitize(note.content || '');
+            const safeTopic = escapeHTML(note.noteTopic || '');
             const safeSubTopic = note.subTopic ? escapeHTML(note.subTopic) : '';
+
+            document.title = `${note.noteTopic || 'Note'} | Creative Learning`;
 
             detailsArea.innerHTML = `
                 <h2 class="note-topic">${safeTopic}</h2>
                 ${safeSubTopic ? `<h3 class="note-sub-topic">${safeSubTopic}</h3>` : ''}
                 <div id="note-detail-content">
                     <div class="note-content">${cleanContent}</div>
+                    <div id="attachment-slot"></div>
                     <small>Posted: ${date}</small>
                     <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
                 </div>`;
+
+            renderAttachment(note, document.getElementById('attachment-slot'));
+        }
+
+        // ---------- Attached file (uploaded by admin to Supabase) ----------
+
+        // Only allow https links, so a bad value in the database can't inject anything else
+        function getSafeFileUrl(raw) {
+            if (!raw || typeof raw !== 'string') return null;
+            try {
+                const url = new URL(raw);
+                return url.protocol === 'https:' ? url : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        function detectFileKind(note, url) {
+            const type = (note.fileType || '').toLowerCase();
+            const path = url.pathname.toLowerCase();
+            if (type.startsWith('image/') || /\.(png|jpe?g|gif|webp|avif|svg)$/.test(path)) return 'image';
+            if (type === 'application/pdf' || path.endsWith('.pdf')) return 'pdf';
+            return 'other';
+        }
+
+        function getDisplayName(note, url) {
+            if (note.fileName) return note.fileName;
+            const last = url.pathname.split('/').pop() || 'attachment';
+            try { return decodeURIComponent(last); } catch (e) { return last; }
+        }
+
+        // Supabase public URLs force a download when given ?download=<name>
+        function buildDownloadHref(url, filename) {
+            const u = new URL(url.href);
+            u.searchParams.delete('download');
+            return u.href + (u.search ? '&' : '?') + 'download=' + encodeURIComponent(filename);
+        }
+
+        function makeActionLink(href, iconClass, label, opts = {}) {
+            const a = document.createElement('a');
+            a.className = 'action-button';
+            a.href = href;
+            if (opts.newTab) { a.target = '_blank'; a.rel = 'noopener noreferrer'; }
+            const icon = document.createElement('i');
+            icon.className = iconClass;
+            a.appendChild(icon);
+            a.appendChild(document.createTextNode(' ' + label));
+            return a;
+        }
+
+        function renderAttachment(note, slot) {
+            if (!slot) return;
+            const url = getSafeFileUrl(note.fileUrl);
+            if (!url) return; // no attachment (or an unsafe link): show nothing
+
+            const kind = detectFileKind(note, url);
+            const name = getDisplayName(note, url);
+
+            const section = document.createElement('div');
+            section.className = 'attachment-section';
+
+            const title = document.createElement('h4');
+            title.className = 'attachment-title';
+            title.innerHTML = '<i class="fas fa-paperclip"></i> Attached file';
+            section.appendChild(title);
+
+            const nameEl = document.createElement('div');
+            nameEl.className = 'attachment-name';
+            nameEl.textContent = name;
+            section.appendChild(nameEl);
+
+            const actions = document.createElement('div');
+            actions.className = 'attachment-actions';
+
+            if (kind === 'image') {
+                const link = document.createElement('a');
+                link.href = url.href;
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
+                link.title = 'Open full size';
+
+                const img = document.createElement('img');
+                img.className = 'attachment-image';
+                img.src = url.href;
+                img.alt = name;
+                img.loading = 'lazy';
+                img.addEventListener('error', () => {
+                    link.remove();
+                    const err = document.createElement('p');
+                    err.className = 'attachment-error';
+                    err.textContent = 'This image could not be loaded. Try the download button below.';
+                    section.insertBefore(err, actions);
+                });
+                link.appendChild(img);
+                section.appendChild(link);
+            } else if (kind === 'pdf') {
+                // Phones usually can't show a PDF inside a page, so only embed on larger screens
+                if (window.matchMedia('(min-width: 769px)').matches) {
+                    const frame = document.createElement('iframe');
+                    frame.className = 'attachment-pdf';
+                    frame.src = url.href;
+                    frame.title = name;
+                    section.appendChild(frame);
+                } else {
+                    const hint = document.createElement('p');
+                    hint.className = 'attachment-note';
+                    hint.textContent = 'Tap "Open" to read the PDF on your phone.';
+                    section.appendChild(hint);
+                }
+            }
+
+            actions.appendChild(makeActionLink(url.href, 'fas fa-up-right-from-square', kind === 'pdf' ? 'Open PDF' : 'Open', { newTab: true }));
+            actions.appendChild(makeActionLink(buildDownloadHref(url, name), 'fas fa-file-arrow-down', 'Download file'));
+            section.appendChild(actions);
+
+            slot.appendChild(section);
         }
 
         // Helper to escape simple text
@@ -176,7 +307,9 @@
             const element = document.getElementById('note-detail-area');
             // Hide the download button momentarily so it doesn't appear in the PDF
             const btn = document.querySelector('.download-button');
+            const attachment = document.getElementById('attachment-slot');
             btn.style.display = 'none';
+            if (attachment) attachment.style.display = 'none';
             
             const topic = document.querySelector('.note-topic')?.textContent.trim() || 'Note';
             
@@ -190,11 +323,13 @@
 
             // Generate PDF
             html2pdf().set(opt).from(element).save().then(() => {
-                // Bring the button back after download starts
+                // Bring the button and attachment back after download starts
                 btn.style.display = 'inline-flex';
+                if (attachment) attachment.style.display = '';
             }).catch(err => {
                 console.error(err);
                 btn.style.display = 'inline-flex';
+                if (attachment) attachment.style.display = '';
                 alert("Error generating PDF. Please try again.");
             });
         }
