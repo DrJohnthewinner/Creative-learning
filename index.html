@@ -3,45 +3,99 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to Creative Learning</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <title>Boom AI - CBC Learning Platform</title>
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="theme.css">
+    <script src="theme.js"></script>
+
     <style>
-        /* Non-theme related layout styles */
-        body { font-family: 'Poppins', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; text-align: center; }
-        .container { border-radius: 20px; padding: 40px; max-width: 600px; width: 100%; animation: fadeIn 1s ease-in-out; }
-        h1 { font-weight: 700; font-size: 3rem; margin-bottom: 20px; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2); }
-        p { font-size: 1.2rem; margin-bottom: 30px; line-height: 1.6; }
-        .button-group { display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
-        .action-button { display: inline-block; padding: 15px 30px; border-radius: 50px; font-size: 1.3rem; font-weight: 700; text-decoration: none; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); width: 100%; box-sizing: border-box; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @media (max-width: 600px) { .container { padding: 30px 20px; } h1 { font-size: 2.5rem; } p { font-size: 1rem; } .action-button { font-size: 1.1rem; padding: 12px 25px; } }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        .moe-logo { position: absolute; top: 20px; left: 20px; height: 50px; z-index: 10; }
+        
+        .home-container {
+            border-radius: 24px;
+            padding: 50px 40px;
+            text-align: center;
+            width: 100%;
+            max-width: 600px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px var(--shadow-color);
+        }
+        h1 {
+            font-weight: 700;
+            font-size: 2.8rem;
+            margin-bottom: 15px;
+            color: var(--heading-color);
+        }
+        p.subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            color: var(--text-color);
+        }
+
+        /* Word of the Day Widget on Home */
+        .home-word-card {
+            background: var(--button-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            margin-bottom: 30px;
+            text-align: left;
+            color: var(--text-color);
+        }
+        .home-word-card strong {
+            color: var(--heading-color);
+            display: block;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .cta-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 16px 35px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            background: var(--button-hover-bg);
+            color: var(--button-hover-text);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, filter 0.2s ease;
+        }
+        .cta-button:hover {
+            transform: translateY(-3px);
+            filter: brightness(1.1);
+        }
+
+        .footer { margin-top: 30px; text-align: center; font-size: 0.9rem; color: var(--text-color); opacity: 0.8; }
     </style>
 </head>
 <body>
-
     <div class="background-aurora">
         <div class="aurora-shape shape1"></div>
         <div class="aurora-shape shape2"></div>
         <div class="aurora-shape shape3"></div>
     </div>
     
-    <div class="theme-modal-overlay" id="themeModalOverlay">
-        <div class="theme-modal">
-            <h2>Choose Your Preferred Theme</h2>
-            <div class="theme-options">
-                <button class="theme-option-button" data-theme="dark"><i class="fas fa-moon"></i><span>Dark</span></button>
-                <button class="theme-option-button" data-theme="light"><i class="fas fa-sun"></i><span>Light</span></button>
-                <button class="theme-option-button" data-theme="sepia"><i class="fas fa-book-open"></i><span>Sepia</span></button>
-                <button class="theme-option-button" data-theme="midnight"><i class="fas fa-star-of-david"></i><span>Midnight</span></button>
-                <button class="theme-option-button" data-theme="ocean"><i class="fas fa-water"></i><span>Ocean</span></button>
-                <button class="theme-option-button" data-theme="forest"><i class="fas fa-leaf"></i><span>Forest</span></button>
-                <button class="theme-option-button" data-theme="rose"><i class="fas fa-spa"></i><span>Rose</span></button>
-            </div>
-        </div>
-    </div>
-
     <div class="theme-switcher">
         <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
         <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
@@ -52,19 +106,52 @@
         <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
     </div>
 
-    <div class="container">
-        <h1>Welcome to Creative Learning!</h1>
-        <p>Embark on an exciting journey of knowledge and discovery. Our platform is designed to make learning engaging and fun for students of all grades.</p>
-        <div class="button-group">
-            <a href="landing.html" class="action-button">Learn via Smart Mind</a>
-            <a href="https://junior-sch.netlify.app" target="_blank" class="action-button">Download Schemes and Assessments</a>
-            <footer class="footer">
-                <p>&copy; 2025 Creative Learning.</p>
-                <p>Creative Learning company is hereby owned by Pope John.</p>
-            </footer>
+    <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
+
+    <div class="home-container">
+        <h1>Boom AI</h1>
+        <p class="subtitle">Empowering Grade 7–9 CBC Learners with Smart Notes, Practice Tools & Interactive Study Guides.</p>
+
+        <!-- Word of the Day Widget -->
+        <div class="home-word-card">
+            <strong><i class="fas fa-language" style="color: var(--accent-color-1);"></i> Word of the Day / Neno la Leo</strong>
+            <span id="word-of-day">Loading vocabulary...</span>
         </div>
+
+        <a href="landing.html" class="cta-button">
+            Get Started <i class="fas fa-arrow-right"></i>
+        </a>
     </div>
 
-    <script src="theme.js"></script>
+    <footer class="footer">
+        <p>&copy; 2026 Boom AI. Powered by Pope John.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            loadWordOfTheDay();
+
+            window.addEventListener('scroll', () => {
+                const switcher = document.querySelector('.theme-switcher');
+                if (window.scrollY > 50 && switcher) {
+                    switcher.style.opacity = '0.3';
+                } else if (switcher) {
+                    switcher.style.opacity = '1';
+                }
+            });
+        });
+
+        function loadWordOfTheDay() {
+            const words = [
+                { en: "Curiosity (Eagerness to know)", sw: "Udadisi (Hamu ya kujua)" },
+                { en: "Resilience (Ability to recover quickly)", sw: "Uvumilivu (Uwezo wa kustahimili)" },
+                { en: "Innovation (Introducing new ideas)", sw: "Ubunifu (Kuvumbua mambo mapya)" },
+                { en: "Knowledge (Information and skills)", sw: "Maarifa (Ujuzi na ufahamu)" }
+            ];
+            const dayIndex = new Date().getDate() % words.length;
+            const w = words[dayIndex];
+            document.getElementById('word-of-day').textContent = `EN: ${w.en} | SW: ${w.sw}`;
+        }
+    </script>
 </body>
 </html>
