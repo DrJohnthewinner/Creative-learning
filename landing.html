@@ -3,12 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Creative Learning - Select Grade</title>
+  <title>Boom AI - Select Grade</title>
+  
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  
   <link rel="stylesheet" href="theme.css">
+  <script src="theme.js"></script>
+
   <style>
-    /* Non-theme related layout styles */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Poppins', sans-serif;
       min-height: 100vh;
@@ -18,157 +22,99 @@
       padding: 20px;
       position: relative;
     }
-    .moe-logo {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      height: 50px;
-      z-index: 10;
-    }
+    .moe-logo { position: absolute; top: 20px; left: 20px; height: 50px; z-index: 10; }
+    
     #main-content {
       animation: fadeIn 1s ease-in-out;
       width: 100%;
-      max-width: 550px;
+      max-width: 500px;
       flex-grow: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      padding: 80px 0 20px;
+      padding: 40px 0;
     }
     #grade-selection {
       border-radius: 20px;
       padding: 40px;
       text-align: center;
       width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
     }
     h1 {
       font-weight: 700;
-      font-size: 2.8rem;
-      margin-bottom: 25px;
+      font-size: 2.5rem;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 15px;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
-    }
-    h1 .fas {
-        font-size: 2.5rem;
-    }
-    .inspiration-message {
-      font-size: 1.1rem;
-      margin-bottom: 35px;
-      padding: 20px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 15px;
-      font-style: italic;
-      line-height: 1.7;
-    }
-    .continue-banner {
-      background: var(--button-bg);
-      border: 2px solid var(--accent-color-1);
-      border-radius: 18px;
-      padding: 20px;
-      margin-bottom: 25px;
-      text-align: left;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      animation: fadeIn 0.8s ease;
-      box-shadow: 0 8px 25px var(--shadow-color);
-    }
-    .continue-banner-title {
-      font-weight: 700;
-      font-size: 0.95rem;
-      color: var(--accent-color-1);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .continue-banner-info {
-      font-size: 1.1rem;
-      font-weight: 600;
       color: var(--heading-color);
     }
-    .continue-btn {
+    
+    .weekly-summary-card {
+      background: var(--button-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
       padding: 12px 20px;
-      border-radius: 50px;
-      background: var(--accent-color-1);
-      color: #fff;
-      font-size: 1rem;
+      margin-bottom: 25px;
+      font-size: 0.95rem;
       font-weight: 600;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
+      color: var(--text-color);
+      display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
-      transition: all 0.3s ease;
     }
-    .continue-btn:hover {
-      transform: translateY(-2px);
-      filter: brightness(1.15);
+
+    .inspiration-message {
+      font-size: 1.05rem;
+      margin-bottom: 30px;
+      padding: 18px;
+      background: var(--button-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 15px;
+      font-style: italic;
+      line-height: 1.6;
+      color: var(--text-color);
     }
-    .grade-list {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
+    .grade-list { display: flex; flex-direction: column; gap: 15px; }
     .grade-list button {
-      padding: 18px 35px;
-      border: none;
+      padding: 16px 30px;
+      border: 1px solid var(--border-color);
       border-radius: 50px;
       font-size: 1.2rem;
       font-weight: 600;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: var(--button-bg);
+      color: var(--button-text);
+      transition: all 0.3s ease;
+    }
+    .grade-list button:hover {
+      background: var(--button-hover-bg);
+      color: var(--button-hover-text);
+      transform: translateY(-3px);
     }
     .home-button {
-      margin-top: 25px;
-      padding: 12px 25px;
-      border: none;
-      border-radius: 50px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      margin-top: 20px; padding: 12px 25px; border-radius: 50px;
+      font-size: 1rem; font-weight: 600; cursor: pointer;
+      background: var(--button-bg); color: var(--button-text);
+      border: 1px solid var(--border-color); display: inline-flex; align-items: center; gap: 8px;
     }
-    .footer {
-      margin-top: 30px;
-      padding: 15px;
-      font-size: 0.95rem;
-      text-align: center;
-      width: 100%;
-    }
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
+
+    .footer { margin-top: 30px; padding: 15px; font-size: 0.9rem; text-align: center; width: 100%; color: var(--text-color); }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
 <body>
-  <div class="font-controls">
-    <button class="font-button" onclick="adjustFontSize(1)" aria-label="Increase Font Size">
-        <i class="fas fa-plus"></i>
-    </button>
-    <button class="font-button" onclick="adjustFontSize(-1)" aria-label="Decrease Font Size">
-        <i class="fas fa-minus"></i>
-    </button>
-    <button class="font-button" onclick="adjustFontSize(0); localStorage.removeItem('userFontSize'); location.reload();" aria-label="Reset Font">
-        <i class="fas fa-redo"></i>
-    </button>
-  </div>
   <div class="background-aurora">
       <div class="aurora-shape shape1"></div>
       <div class="aurora-shape shape2"></div>
       <div class="aurora-shape shape3"></div>
   </div>
+
   <div class="theme-switcher">
     <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
     <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
@@ -183,10 +129,12 @@
 
   <div id="main-content">
     <section id="grade-selection">
-      <h1><i class="fas fa-graduation-cap"></i> Select Your Grade</h1>
+      <h1><i class="fas fa-graduation-cap"></i> Select Grade</h1>
 
-      <!-- Continue Where You Left Off Banner -->
-      <div id="continue-section" style="display: none;"></div>
+      <div class="weekly-summary-card" id="weeklySummaryCard">
+        <i class="fas fa-chart-line" style="color: var(--accent-color-1);"></i>
+        <span id="weeklyReadText">You’ve read 0 notes this week</span>
+      </div>
 
       <div class="inspiration-message">
         "Every step you take in learning builds a stronger future. Embrace the journey of discovery!"
@@ -203,41 +151,33 @@
   </div>
 
   <footer class="footer">
-      <p>&copy; 2025 Creative Learning.</p>
-      <p> Creative Learning is hereby owned by Pope John.</p>
+      <p>&copy; 2026 Boom AI. Powered by Pope John.</p>
   </footer> 
 
-  <script src="script.js"></script>
-  <script src="theme.js"></script>
   <script>
+    function selectGrade(grade) {
+      localStorage.setItem('selectedGrade', grade);
+      window.location.href = 'subjects.html';
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
-      const lastStateRaw = localStorage.getItem('lastState');
-      if (lastStateRaw) {
-        try {
-          const lastState = JSON.parse(lastStateRaw);
-          if (lastState && lastState.noteId && lastState.noteTopic) {
-            const continueSec = document.getElementById('continue-section');
-            const subjTitle = (lastState.subject || '').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-            continueSec.innerHTML = `
-              <div class="continue-banner">
-                <div class="continue-banner-title">
-                  <i class="fas fa-history"></i> Continue where you left off
-                </div>
-                <div class="continue-banner-info">
-                  ${lastState.grade} › ${subjTitle} › ${lastState.noteTopic}
-                </div>
-                <button class="continue-btn" onclick="window.location.href='detail.html?noteId=${lastState.noteId}'">
-                  Resume Reading <i class="fas fa-arrow-right"></i>
-                </button>
-              </div>
-            `;
-            continueSec.style.display = 'block';
-          }
-        } catch(e) {
-          console.error("Error reading last state:", e);
+      calculateWeeklyReadSummary();
+
+      window.addEventListener('scroll', () => {
+        const switcher = document.querySelector('.theme-switcher');
+        if (window.scrollY > 50 && switcher) {
+          switcher.style.opacity = '0.3';
+        } else if (switcher) {
+          switcher.style.opacity = '1';
         }
-      }
+      });
     });
+
+    function calculateWeeklyReadSummary() {
+      const readNotes = JSON.parse(localStorage.getItem('boom_read_notes') || '[]');
+      const count = readNotes.length;
+      document.getElementById('weeklyReadText').textContent = `You’ve read ${count} note${count === 1 ? '' : 's'} this week!`;
+    }
   </script>
 </body>
 </html>
