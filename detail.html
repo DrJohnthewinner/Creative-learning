@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note Details | Learn with Fun!</title>
+    <title>Note Details | Boom AI</title>
     
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
@@ -19,91 +19,111 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Poppins', sans-serif;
-            min-height: 100vh; display: flex; flex-direction: column;
-            align-items: center; padding: 20px; position: relative; overflow-x: hidden;
+        body { font-family: 'Poppins', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; position: relative; }
+        
+        .reading-progress-bar { position: fixed; top: 0; left: 0; height: 5px; background: var(--accent-color-1); width: 0%; z-index: 3000; transition: width 0.1s ease; }
+
+        /* Calculator Toggle Button near Themes */
+        .calc-toggle-btn {
+            position: fixed;
+            top: 20px;
+            right: 280px;
+            background: var(--button-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 1000;
+            box-shadow: 0 4px 10px var(--shadow-color);
+            transition: all 0.2s ease;
         }
+        .calc-toggle-btn:hover { background: var(--accent-color-1); color: #fff; }
+        @media(max-width: 768px) { .calc-toggle-btn { right: 20px; top: 80px; } }
+
         .header-container { position: absolute; top: 20px; left: 20px; z-index: 100; }
         .moe-logo { height: 50px; z-index: 10; }
         
-        #main-content {
-            flex-grow: 1; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; width: 100%; max-width: 1000px;
-            animation: float-in 1s ease-out; padding-top: 80px;
-        }
-        #detail-page { border-radius: 24px; padding: 40px; text-align: left; width: 100%; }
+        #main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; padding-top: 80px; }
+        #detail-page { border-radius: 24px; padding: 40px; text-align: left; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); }
         
-        /* Breadcrumb Navigation */
-        .breadcrumb {
-            display: flex; align-items: center; gap: 8px; font-size: 0.95rem;
-            margin-bottom: 20px; flex-wrap: wrap; justify-content: flex-start;
-            color: var(--text-color); opacity: 0.9;
-        }
+        .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; margin-bottom: 20px; flex-wrap: wrap; color: var(--text-color); }
         .breadcrumb a { color: var(--accent-color-1); text-decoration: none; font-weight: 600; }
-        .breadcrumb a:hover { text-decoration: underline; }
 
-        h2.note-topic { font-weight: 700; font-size: 2.5rem; margin-bottom: 10px; }
+        h2.note-topic { font-weight: 700; font-size: 2.5rem; margin-bottom: 10px; color: var(--heading-color); }
         
-        .action-button {
-            padding: 12px 25px; border-radius: 50px; font-size: 1rem;
-            font-weight: 600; cursor: pointer; display: inline-flex;
-            align-items: center; justify-content: center; transition: transform 0.2s ease;
-        }
-        .action-button:hover { transform: scale(1.05); }
-        .action-button i { margin-right: 8px; }
+        .action-button { padding: 12px 25px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; background: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); }
         .back-button { margin-bottom: 25px; }
         .download-button { margin-top: 25px; }
         
-        #note-detail-content {
-            padding: 30px; border-radius: 18px; background: var(--button-bg); border: 1px solid var(--border-color);
-        }
-        .note-sub-topic {
-            font-size: 1.2rem; font-style: italic; opacity: 0.9; margin-bottom: 15px;
-            border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
-        }
-        .note-content { font-size: 1.1rem; line-height: 1.9; margin-top: 15px; white-space: pre-wrap; }
+        .reading-mode-btn { margin-left: 10px; background: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
         
-        /* Badges */
-        .badge-container { display: flex; gap: 10px; margin-bottom: 15px; }
-        .badge {
-            font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 20px;
-            display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase;
+        body.distraction-free .header-container,
+        body.distraction-free .breadcrumb,
+        body.distraction-free .back-button,
+        body.distraction-free .footer,
+        body.distraction-free .theme-switcher,
+        body.distraction-free .calc-toggle-btn { display: none !important; }
+        body.distraction-free #main-content { padding-top: 20px; }
+
+        /* Calculator Popup Modal */
+        .calc-box { 
+            position: fixed; top: 80px; right: 20px; width: 280px;
+            background: var(--card-bg); border: 1px solid var(--border-color); 
+            border-radius: 16px; padding: 20px; text-align: left; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 2500; 
+            backdrop-filter: blur(12px); display: none; 
+            animation: fadeInCalc 0.2s ease-out;
         }
+        @keyframes fadeInCalc { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .calc-box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 600; color: var(--heading-color); }
+        .calc-box-close { background: transparent; border: none; color: var(--text-color); cursor: pointer; font-size: 1.1rem; }
+        .calc-box input { width: 100%; padding: 12px; font-size: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--button-bg); color: var(--text-color); margin-bottom: 12px; text-align: right; }
+        .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+        .calc-buttons button { padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--button-bg); color: var(--text-color); cursor: pointer; font-weight: 600; }
+        .calc-buttons button:hover { background: var(--accent-color-1); color: #fff; }
+
+        #note-detail-content { padding: 30px; border-radius: 18px; background: var(--button-bg); border: 1px solid var(--border-color); }
+        .note-sub-topic { font-size: 1.2rem; font-style: italic; opacity: 0.9; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; color: var(--text-color); }
+        .note-content { font-size: 1.1rem; line-height: 1.9; margin-top: 15px; white-space: pre-wrap; color: var(--text-color); }
+        
+        .badge-container { display: flex; gap: 10px; margin-bottom: 15px; }
+        .badge { font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
         .badge-new { background-color: #00c853; color: #ffffff; }
         .badge-attachment { background-color: var(--accent-color-1); color: #ffffff; }
 
-        .date-info { display: block; margin-top: 25px; font-size: 0.9rem; font-style: italic; opacity: 0.8; }
+        .date-info { display: block; margin-top: 25px; font-size: 0.9rem; font-style: italic; opacity: 0.8; color: var(--text-color); }
 
-        /* Attachment Styles */
+        .feedback-section { margin-top: 35px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
+        .feedback-buttons { display: flex; gap: 10px; align-items: center; }
+        .feedback-btn { background: var(--button-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 600; }
+        .feedback-btn:hover { background: var(--accent-color-1); color: #fff; }
+        .report-link { color: #e5484d; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+
         .attachment-section { margin-top: 30px; padding-top: 25px; border-top: 1px solid var(--border-color); }
-        .attachment-title { font-size: 1.2rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
-        .attachment-name { font-size: 0.95rem; opacity: 0.8; margin-bottom: 15px; word-break: break-word; }
+        .attachment-title { font-size: 1.2rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; color: var(--heading-color); }
+        .attachment-name { font-size: 0.95rem; opacity: 0.8; margin-bottom: 15px; word-break: break-word; color: var(--text-color); }
         .attachment-image { display: block; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-color); }
         .attachment-pdf { display: block; width: 100%; height: 75vh; min-height: 420px; border: 1px solid var(--border-color); border-radius: 12px; background: #fff; }
-        .attachment-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
 
-        /* Back to Top */
-        .back-to-top {
-            position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px;
-            border-radius: 50%; background: var(--accent-color-1); color: #fff;
-            border: none; cursor: pointer; display: none; align-items: center;
-            justify-content: center; font-size: 1.2rem; box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            z-index: 999; transition: transform 0.3s ease;
-        }
-        .back-to-top:hover { transform: scale(1.1); }
-
-        .footer { width: 100%; max-width: 1000px; padding: 20px; margin-top: 40px; text-align: center; }
-        @keyframes float-in { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        .back-to-top { position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px; border-radius: 50%; background: var(--accent-color-1); color: #fff; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.2rem; z-index: 999; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .footer { width: 100%; max-width: 1000px; padding: 20px; margin-top: 40px; text-align: center; color: var(--text-color); }
     </style>
 </head>
 <body>
+    <div class="reading-progress-bar" id="progressBar"></div>
+
     <div class="background-aurora">
         <div class="aurora-shape shape1"></div>
         <div class="aurora-shape shape2"></div>
         <div class="aurora-shape shape3"></div>
     </div>
     
+    <!-- Calculator Trigger Button near Theme Switcher -->
+    <button class="calc-toggle-btn" id="calcToggleBtn" onclick="toggleCalculator()" title="Open Calculator">
+        <i class="fas fa-calculator"></i>
+    </button>
+
     <div class="theme-switcher">
         <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
         <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
@@ -117,6 +137,21 @@
     <header class="header-container">
         <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
     </header>
+
+    <!-- Calculator Popup Modal -->
+    <div class="calc-box" id="calc-box">
+        <div class="calc-box-header">
+            <span><i class="fas fa-calculator"></i> Calculator</span>
+            <button class="calc-box-close" onclick="toggleCalculator()"><i class="fas fa-times"></i></button>
+        </div>
+        <input type="text" id="calc-input" readonly placeholder="0">
+        <div class="calc-buttons">
+            <button onclick="appendCalc('7')">7</button><button onclick="appendCalc('8')">8</button><button onclick="appendCalc('9')">9</button><button onclick="appendCalc('/')">/</button>
+            <button onclick="appendCalc('4')">4</button><button onclick="appendCalc('5')">5</button><button onclick="appendCalc('6')">6</button><button onclick="appendCalc('*')">*</button>
+            <button onclick="appendCalc('1')">1</button><button onclick="appendCalc('2')">2</button><button onclick="appendCalc('3')">3</button><button onclick="appendCalc('-')">-</button>
+            <button onclick="clearCalc()">C</button><button onclick="appendCalc('0')">0</button><button onclick="calculateResult()">=</button><button onclick="appendCalc('+')">+</button>
+        </div>
+    </div>
 
     <main id="main-content">
         <section id="detail-page">
@@ -133,10 +168,11 @@
             <button class="action-button back-button" onclick="history.back()">
                 <i class="fas fa-arrow-left"></i> Back to Notes
             </button>
+            <button class="reading-mode-btn" onclick="toggleReadingMode()"><i class="fas fa-eye"></i> Reading Mode</button>
 
             <div id="note-detail-area">
                 <div id="note-detail-content">
-                    <p><i class="fas fa-spinner fa-spin"></i> Loading note details...</p>
+                    <div class="skeleton skeleton-card"></div>
                 </div>
             </div>
         </section>
@@ -147,8 +183,7 @@
     </button>
 
     <footer class="footer">
-        <p>&copy; Creative Learning</p>
-        <p>Creative Learning is owned by Pope John</p>
+        <p>&copy; 2026 Boom AI. Powered by Pope John.</p>
     </footer>
 
     <script>
@@ -164,30 +199,92 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
 
+        let currentNoteTitle = '';
+        let currentNoteId = '';
+
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const noteId = urlParams.get('noteId');
+            currentNoteId = noteId;
             const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
             document.getElementById('bc-grade').textContent = grade;
 
             if (noteId) {
+                markNoteAsRead(noteId);
                 loadNoteDetails(noteId);
             } else {
                 document.getElementById('note-detail-area').innerHTML = '<div id="note-detail-content"><p>No note selected.</p></div>';
             }
 
             window.addEventListener('scroll', () => {
+                updateProgressBar();
+                saveScrollPosition();
+
                 const btn = document.getElementById('backToTop');
                 if (window.scrollY > 300) btn.style.display = 'flex';
                 else btn.style.display = 'none';
             });
         });
 
+        function toggleCalculator() {
+            const box = document.getElementById('calc-box');
+            if (box.style.display === 'block') {
+                box.style.display = 'none';
+            } else {
+                box.style.display = 'block';
+            }
+        }
+
+        function appendCalc(val) { document.getElementById('calc-input').value += val; }
+        function clearCalc() { document.getElementById('calc-input').value = ''; }
+        function calculateResult() {
+            try {
+                document.getElementById('calc-input').value = eval(document.getElementById('calc-input').value);
+            } catch (e) {
+                document.getElementById('calc-input').value = 'Error';
+            }
+        }
+
+        function markNoteAsRead(id) {
+            let readNotes = JSON.parse(localStorage.getItem('boom_read_notes') || '[]');
+            if (!readNotes.includes(id)) {
+                readNotes.push(id);
+                localStorage.setItem('boom_read_notes', JSON.stringify(readNotes));
+            }
+        }
+
+        function updateProgressBar() {
+            const scrollTop = window.scrollY;
+            const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPercent = (scrollTop / docHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercent + '%';
+        }
+
+        function saveScrollPosition() {
+            if (currentNoteId) {
+                localStorage.setItem(`boom_scroll_${currentNoteId}`, window.scrollY);
+            }
+        }
+
+        function restoreScrollPosition() {
+            if (currentNoteId) {
+                const savedPos = localStorage.getItem(`boom_scroll_${currentNoteId}`);
+                if (savedPos) {
+                    window.scrollTo({ top: parseInt(savedPos), behavior: 'smooth' });
+                }
+            }
+        }
+
+        function toggleReadingMode() {
+            document.body.classList.toggle('distraction-free');
+        }
+
         function loadNoteDetails(noteId) {
             const detailsArea = document.getElementById('note-detail-area');
             db.collection('notes').doc(noteId).get().then(doc => {
                 if (doc.exists) {
-                    renderNoteDetails(doc.data(), detailsArea);
+                    renderNoteDetails(doc.data(), detailsArea, doc.id);
+                    setTimeout(restoreScrollPosition, 300);
                 } else {
                     detailsArea.innerHTML = '<div id="note-detail-content"><p>Note not found.</p></div>';
                 }
@@ -197,35 +294,43 @@
             });
         }
 
-        function renderNoteDetails(note, detailsArea) {
+        function renderNoteDetails(note, detailsArea, noteId) {
             const createdDate = note.createdAt?.toDate ? note.createdAt.toDate() : new Date();
             const updatedDate = note.updatedAt?.toDate ? note.updatedAt.toDate() : null;
 
             const isNew = (new Date() - createdDate) / (1000 * 60 * 60 * 24) <= 7;
+            const wordCount = (note.content || '').split(/\s+/).length;
+            const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
             const timeAgo = formatTimeAgo(createdDate);
             const postedDateStr = createdDate.toLocaleDateString();
             const updatedDateStr = updatedDate ? updatedDate.toLocaleDateString() : null;
 
             const cleanContent = DOMPurify.sanitize(note.content || '');
             const safeTopic = note.noteTopic || 'Untitled Note';
+            currentNoteTitle = safeTopic;
             const safeSubTopic = note.subTopic || '';
 
-            // Update Breadcrumb & Document Title
-            document.title = `${safeTopic} | Creative Learning`;
+            document.title = `${safeTopic} | Boom AI`;
             document.getElementById('bc-topic').textContent = safeTopic;
             if (note.subject) {
                 const subjectName = note.subject.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 document.getElementById('bc-subject').textContent = subjectName;
                 document.getElementById('bc-subject-link').href = `note.html?subject=${note.subject}`;
+                
+                // Auto open calculator if Mathematics
+                if (note.subject.toLowerCase() === 'mathematics') {
+                    toggleCalculator();
+                }
             }
 
-            // Save to recently viewed
-            saveRecentlyViewedNote(note.id || '', safeTopic, note.subject || '');
+            const reportEmailBody = encodeURIComponent(`Hello Admin,\n\nI found a mistake in the following note:\nNote ID: ${noteId}\nTopic: ${safeTopic}\nPlease review and fix it.`);
 
             detailsArea.innerHTML = `
                 <div class="badge-container">
                     ${isNew ? '<span class="badge badge-new"><i class="fas fa-bolt"></i> NEW</span>' : ''}
                     ${note.fileUrl ? '<span class="badge badge-attachment"><i class="fas fa-paperclip"></i> Attachment</span>' : ''}
+                    <span class="badge" style="background:rgba(255,255,255,0.15); color:var(--text-color);"><i class="fas fa-clock"></i> ${readingTime} min read</span>
                 </div>
                 <h2 class="note-topic">${safeTopic}</h2>
                 ${safeSubTopic ? `<h3 class="note-sub-topic">${safeSubTopic}</h3>` : ''}
@@ -236,6 +341,18 @@
                         Posted ${timeAgo} (${postedDateStr})
                         ${updatedDateStr ? ` &bull; Last updated ${updatedDateStr}` : ''}
                     </span>
+
+                    <div class="feedback-section">
+                        <div class="feedback-buttons">
+                            <span>Was this helpful?</span>
+                            <button class="feedback-btn" onclick="handleFeedback(true)"><i class="fas fa-thumbs-up"></i> Yes</button>
+                            <button class="feedback-btn" onclick="handleFeedback(false)"><i class="fas fa-thumbs-down"></i> No</button>
+                        </div>
+                        <a class="report-link" href="mailto:support@boomai.edu?subject=Report Mistake in Note: ${encodeURIComponent(safeTopic)}&body=${reportEmailBody}">
+                            <i class="fas fa-exclamation-triangle"></i> Report a mistake
+                        </a>
+                    </div>
+
                     <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
                 </div>`;
 
@@ -244,12 +361,8 @@
             }
         }
 
-        function saveRecentlyViewedNote(id, title, subject) {
-            let recent = JSON.parse(localStorage.getItem('recently_viewed_notes') || '[]');
-            recent = recent.filter(item => item.id !== id);
-            recent.unshift({ id, title, subject, time: new Date().toISOString() });
-            if (recent.length > 5) recent.pop();
-            localStorage.setItem('recently_viewed_notes', JSON.stringify(recent));
+        function handleFeedback(isHelpful) {
+            alert(isHelpful ? "Thank you for your feedback!" : "Thanks for letting us know. We will improve this note!");
         }
 
         function renderAttachment(note, slot) {
@@ -290,11 +403,9 @@
             btn.style.display = 'none';
             if (attachment) attachment.style.display = 'none';
             
-            const topic = document.querySelector('.note-topic')?.textContent.trim() || 'Note';
-            
             const opt = {
               margin: [15, 15, 15, 15],
-              filename: `Note_${topic.replace(/[^a-z0-9]/gi, '_')}.pdf`,
+              filename: `Note_${currentNoteTitle.replace(/[^a-z0-9]/gi, '_')}.pdf`,
               image: { type: 'jpeg', quality: 0.98 },
               html2canvas: { scale: 2, useCORS: true, letterRendering: true },
               jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
