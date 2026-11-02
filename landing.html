@@ -97,8 +97,35 @@
       color: var(--button-hover-text);
       transform: translateY(-3px);
     }
+
+    /* Senior School Section Separator */
+    .section-divider {
+      margin-top: 25px;
+      margin-bottom: 15px;
+      text-align: center;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--heading-color);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .divider-line {
+      width: 100%;
+      height: 1px;
+      background: var(--border-color);
+      border: none;
+      margin-bottom: 15px;
+    }
+
     .home-button {
-      margin-top: 20px; padding: 12px 25px; border-radius: 50px;
+      margin-top: 25px; padding: 12px 25px; border-radius: 50px;
       font-size: 1rem; font-weight: 600; cursor: pointer;
       background: var(--button-bg); color: var(--button-text);
       border: 1px solid var(--border-color); display: inline-flex; align-items: center; gap: 8px;
@@ -139,11 +166,25 @@
       <div class="inspiration-message">
         "Every step you take in learning builds a stronger future. Embrace the journey of discovery!"
       </div>
+
       <div class="grade-list">
+        <!-- Junior Secondary Section -->
         <button onclick="selectGrade('Grade 7')">Grade 7</button>
         <button onclick="selectGrade('Grade 8')">Grade 8</button>
         <button onclick="selectGrade('Grade 9')">Grade 9</button>
+
+        <!-- Senior School Divider & Section Header -->
+        <div class="section-divider">
+          <div class="section-title">
+            <i class="fas fa-award" style="color: var(--accent-color-1);"></i> Senior School
+          </div>
+          <hr class="divider-line">
+        </div>
+
+        <!-- Senior School Grades -->
+        <button onclick="selectGrade('Grade 10')" style="border-color: var(--accent-color-1);">Grade 10 🎉</button>
       </div>
+
       <button class="home-button" onclick="window.location.href='index.html'">
         <i class="fas fa-home"></i> Go back to home page
       </button>
