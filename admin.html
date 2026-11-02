@@ -51,7 +51,6 @@
     .card.active { opacity: 1; transform: translateY(0); pointer-events: auto; display: block; }
     .card h2 { margin-bottom: 25px; color: var(--accent-color-1); font-weight: 600; }
 
-    /* Inputs & Selects */
     #main-content input[type="email"],
     #main-content input[type="password"],
     #main-content input[type="text"],
@@ -69,15 +68,12 @@
 
     .char-counter { font-size: 0.8rem; text-align: right; opacity: 0.7; margin-bottom: 5px; }
 
-    /* Checkbox Group for Pinned Notes */
     .checkbox-group { display: flex; align-items: center; gap: 10px; margin: 12px 0; text-align: left; font-size: 0.95rem; color: var(--text-color); cursor: pointer; }
     .checkbox-group input { width: 18px; height: 18px; cursor: pointer; }
 
-    /* Password Container */
     .password-group { position: relative; width: 100%; }
     .password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color); opacity: 0.7; }
 
-    /* Buttons */
     #main-content button {
       background: var(--button-hover-bg); color: var(--button-hover-text);
       padding: 12px 25px; border: none; border-radius: 8px;
@@ -91,24 +87,20 @@
 
     .error { color: #e5484d; margin-top: 15px; font-size: 0.9rem; font-weight: 600; }
 
-    /* Admin Workspace Grid */
     .admin-workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
     @media(max-width: 768px) { .admin-workspace { grid-template-columns: 1fr; } }
 
     .preview-pane { background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; max-height: 500px; overflow-y: auto; }
     .preview-pane h3 { font-size: 1rem; margin-bottom: 10px; opacity: 0.8; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
 
-    /* Filters & Counters Bar */
     .admin-filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
     .admin-filter-bar input, .admin-filter-bar select { flex: 1; min-width: 150px; margin: 0; padding: 8px; }
     
     .subject-counter-summary { font-size: 0.85rem; margin-bottom: 15px; opacity: 0.85; text-align: left; background: var(--button-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
 
-    /* Upload Progress Bar */
     .progress-bar-container { width: 100%; background: rgba(255,255,255,0.1); border-radius: 8px; height: 10px; overflow: hidden; margin: 10px 0; display: none; }
     .progress-bar-fill { height: 100%; background: #00c853; width: 0%; transition: width 0.2s ease; }
 
-    /* Notes list */
     .note-list { margin-top: 20px; background: var(--button-bg); border-radius: 10px; padding: 15px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); }
     .note-item { background: var(--button-bg); border: 1px solid var(--border-color); border-left: 5px solid var(--accent-color-1); border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
     .note-item span { flex-grow: 1; text-align: left; color: var(--text-color); }
@@ -165,32 +157,22 @@
 
             <textarea id="content" rows="6" placeholder="Note Content (HTML tags allowed)" required oninput="triggerAutosave(); updateLivePreview();"></textarea>
 
-            <select id="subject" required onchange="saveLastSubjectGrade(); triggerAutosave();">
-              <option value="" disabled selected>Select Subject</option>
-              <option value="mathematics">Mathematics</option>
-              <option value="english">English</option>
-              <option value="kiswahili">Kiswahili</option>
-              <option value="integrated-science">Integrated Science</option>
-              <option value="social-studies">Social Studies</option>
-              <option value="cre">Christian Religious Education</option>
-              <option value="pre-technical">Pre-Technical</option>
-              <option value="agriculture-nutrition">Agriculture and Nutrition</option>
-              <option value="creative-arts-sports">Creative Arts and Sports</option>
-            </select>
-
-            <select id="grade" required onchange="saveLastSubjectGrade(); triggerAutosave();">
-              <option value="" disabled selected>Select Grade</option>
+            <select id="grade" required onchange="updateSubjectDropdown(); saveLastSubjectGrade(); triggerAutosave();">
+              <option value="" disabled selected>Select Grade First</option>
               <option value="Grade 7">Grade 7</option>
               <option value="Grade 8">Grade 8</option>
               <option value="Grade 9">Grade 9</option>
+              <option value="Grade 10">Grade 10 (Senior School)</option>
             </select>
 
-            <!-- Pin/Feature Note Checkbox -->
+            <select id="subject" required onchange="saveLastSubjectGrade(); triggerAutosave();">
+              <option value="" disabled selected>Select Grade First</option>
+            </select>
+
             <label class="checkbox-group">
               <input type="checkbox" id="isPinned" onchange="triggerAutosave()"> Pin / Feature this note to top
             </label>
 
-            <!-- File Upload & Attachment Management -->
             <div id="current-attachment-box" style="display:none; text-align:left; font-size:0.85rem; margin: 10px 0; padding:8px; background:var(--button-bg); border-radius:6px;">
               <strong>Current Attachment:</strong> <a id="current-attachment-link" href="#" target="_blank">View File</a>
               <label style="display:block; margin-top:5px; cursor:pointer;"><input type="checkbox" id="removeFileCheckbox"> Remove attached file</label>
@@ -240,12 +222,20 @@
             <option value="pre-technical">Pre-Technical</option>
             <option value="agriculture-nutrition">Agriculture and Nutrition</option>
             <option value="creative-arts-sports">Creative Arts and Sports</option>
+            <option value="core-mathematics">Core Mathematics</option>
+            <option value="essential-mathematics">Essential Mathematics</option>
+            <option value="biology">Biology</option>
+            <option value="chemistry">Chemistry</option>
+            <option value="physics">Physics</option>
+            <option value="computer-studies">Computer Studies</option>
+            <option value="business-studies">Business Studies</option>
           </select>
           <select id="adminGradeFilter" onchange="filterAdminNotes()">
             <option value="">All Grades</option>
             <option value="Grade 7">Grade 7</option>
             <option value="Grade 8">Grade 8</option>
             <option value="Grade 9">Grade 9</option>
+            <option value="Grade 10">Grade 10</option>
           </select>
         </div>
 
@@ -282,7 +272,79 @@
     let idleTimer = null;
     let formHasUnsavedChanges = false;
 
-    // --- AUTH & IDLE LOGOUT ---
+    const juniorSubjectsList = [
+      { id: 'mathematics', name: 'Mathematics' },
+      { id: 'english', name: 'English' },
+      { id: 'kiswahili', name: 'Kiswahili' },
+      { id: 'integrated-science', name: 'Integrated Science' },
+      { id: 'social-studies', name: 'Social Studies' },
+      { id: 'cre', name: 'Christian Religious Education' },
+      { id: 'pre-technical', name: 'Pre-Technical' },
+      { id: 'agriculture-nutrition', name: 'Agriculture and Nutrition' },
+      { id: 'creative-arts-sports', name: 'Creative Arts and Sports' }
+    ];
+
+    const seniorSchoolCategoriesList = [
+      {
+        category: 'Core Subjects',
+        subjects: [
+          { id: 'senior-english', name: 'English' },
+          { id: 'senior-kiswahili', name: 'Kiswahili / KSL' },
+          { id: 'core-mathematics', name: 'Core Mathematics' },
+          { id: 'essential-mathematics', name: 'Essential Mathematics' },
+          { id: 'csl', name: 'Community Service Learning (CSL)' }
+        ]
+      },
+      {
+        category: 'Arts & Sports Science',
+        subjects: [
+          { id: 'sports-recreation', name: 'Sports and Recreation' },
+          { id: 'music-dance', name: 'Music and Dance' },
+          { id: 'theatre-film', name: 'Theatre and Film' },
+          { id: 'fine-arts', name: 'Fine Arts' }
+        ]
+      },
+      {
+        category: 'Social Sciences',
+        subjects: [
+          { id: 'literature-english', name: 'Literature in English' },
+          { id: 'indigenous-languages', name: 'Indigenous Languages' },
+          { id: 'fasihi-kiswahili', name: 'Fasihi ya Kiswahili' },
+          { id: 'sign-language', name: 'Sign Language' },
+          { id: 'arabic', name: 'Arabic' },
+          { id: 'french', name: 'French' },
+          { id: 'german', name: 'German' },
+          { id: 'mandarin-chinese', name: 'Mandarin Chinese' },
+          { id: 'cre-senior', name: 'Christian Religious Education' },
+          { id: 'ire-senior', name: 'Islamic Religious Education' },
+          { id: 'hre-senior', name: 'Hindu Religious Education' },
+          { id: 'business-studies', name: 'Business Studies' },
+          { id: 'history-citizenship', name: 'History and Citizenship' },
+          { id: 'geography', name: 'Geography' }
+        ]
+      },
+      {
+        category: 'Science, Technology, Engineering & Mathematics (STEM)',
+        subjects: [
+          { id: 'biology', name: 'Biology' },
+          { id: 'chemistry', name: 'Chemistry' },
+          { id: 'physics', name: 'Physics' },
+          { id: 'general-science', name: 'General Science' },
+          { id: 'agriculture', name: 'Agriculture' },
+          { id: 'computer-studies', name: 'Computer Studies' },
+          { id: 'home-science', name: 'Home Science' },
+          { id: 'aviation', name: 'Aviation' },
+          { id: 'building-construction', name: 'Building Construction' },
+          { id: 'electricity', name: 'Electricity' },
+          { id: 'metalwork', name: 'Metalwork' },
+          { id: 'power-mechanics', name: 'Power Mechanics' },
+          { id: 'wood-technology', name: 'Wood Technology' },
+          { id: 'media-technology', name: 'Media Technology' },
+          { id: 'marine-fisheries', name: 'Marine and Fisheries Technology' }
+        ]
+      }
+    ];
+
     auth.onAuthStateChanged(user => {
       if (user) {
         showDashboard();
@@ -351,7 +413,35 @@
       loadAdminNotes();
     }
 
-    // --- REMEMBER LAST SUBJECT AND GRADE ---
+    function updateSubjectDropdown(selectedSubj = '') {
+      const grade = document.getElementById('grade').value;
+      const subjectSelect = document.getElementById('subject');
+      subjectSelect.innerHTML = '<option value="" disabled selected>Select Subject</option>';
+
+      if (grade === 'Grade 10') {
+        seniorSchoolCategoriesList.forEach(cat => {
+          const optgroup = document.createElement('optgroup');
+          optgroup.label = cat.category;
+          cat.subjects.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.id;
+            opt.textContent = s.name;
+            if (s.id === selectedSubj) opt.selected = true;
+            optgroup.appendChild(opt);
+          });
+          subjectSelect.appendChild(optgroup);
+        });
+      } else if (['Grade 7', 'Grade 8', 'Grade 9'].includes(grade)) {
+        juniorSubjectsList.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.id;
+          opt.textContent = s.name;
+          if (s.id === selectedSubj) opt.selected = true;
+          subjectSelect.appendChild(opt);
+        });
+      }
+    }
+
     function saveLastSubjectGrade() {
       const subj = document.getElementById('subject').value;
       const grade = document.getElementById('grade').value;
@@ -360,10 +450,12 @@
     }
 
     function loadLastSubjectGrade() {
-      const lastSubj = localStorage.getItem('boom_last_admin_subject');
       const lastGrade = localStorage.getItem('boom_last_admin_grade');
-      if (lastSubj && !editingNoteId) document.getElementById('subject').value = lastSubj;
-      if (lastGrade && !editingNoteId) document.getElementById('grade').value = lastGrade;
+      const lastSubj = localStorage.getItem('boom_last_admin_subject');
+      if (lastGrade && !editingNoteId) {
+        document.getElementById('grade').value = lastGrade;
+        updateSubjectDropdown(lastSubj);
+      }
     }
 
     window.addEventListener('beforeunload', (e) => {
@@ -420,8 +512,10 @@
           document.getElementById('sub-topic').value = d.subtopic || '';
           document.getElementById('note-title').value = d.title || '';
           document.getElementById('content').value = d.content || '';
-          if (d.subject) document.getElementById('subject').value = d.subject;
-          if (d.grade) document.getElementById('grade').value = d.grade;
+          if (d.grade) {
+            document.getElementById('grade').value = d.grade;
+            updateSubjectDropdown(d.subject);
+          }
           document.getElementById('isPinned').checked = !!d.isPinned;
           updateCharCount();
           updateLivePreview();
@@ -486,7 +580,7 @@
     function renderSubjectCounters(counts) {
       const summary = document.getElementById('subjectCounterSummary');
       let html = '<strong><i class="fas fa-chart-bar"></i> Notes per Subject:</strong> ';
-      const subjects = ['mathematics', 'english', 'kiswahili', 'integrated-science', 'social-studies', 'cre', 'pre-technical', 'agriculture-nutrition', 'creative-arts-sports'];
+      const subjects = ['mathematics', 'english', 'kiswahili', 'integrated-science', 'social-studies', 'cre', 'pre-technical', 'agriculture-nutrition', 'creative-arts-sports', 'core-mathematics', 'essential-mathematics', 'biology', 'chemistry', 'physics', 'computer-studies', 'business-studies'];
       
       html += subjects.map(s => `${s.replace(/-/g, ' ')} (${counts[s] || 0})`).join(' | ');
       summary.innerHTML = html;
@@ -538,8 +632,8 @@
       document.getElementById('sub-topic').value = note.subTopic || '';
       document.getElementById('note-title').value = note.noteTitle || '';
       document.getElementById('content').value = note.content || '';
-      document.getElementById('subject').value = note.subject || '';
       document.getElementById('grade').value = note.grade || '';
+      updateSubjectDropdown(note.subject);
       document.getElementById('isPinned').checked = !!note.isPinned;
 
       editingNoteId = null;
@@ -560,8 +654,8 @@
       document.getElementById('sub-topic').value = note.subTopic || '';
       document.getElementById('note-title').value = note.noteTitle || '';
       document.getElementById('content').value = note.content || '';
-      document.getElementById('subject').value = note.subject || '';
       document.getElementById('grade').value = note.grade || '';
+      updateSubjectDropdown(note.subject);
       document.getElementById('isPinned').checked = !!note.isPinned;
 
       editingNoteId = id;
