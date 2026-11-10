@@ -1,371 +1,201 @@
-/* =====================================================================
-   THEME CORE VARIABLES
-   theme.js sets data-theme on <html>, so every theme block targets :root.
-   Dark is the default (no attribute needed).
-   ===================================================================== */
-:root {
-    --bg-gradient-start: #0D1117;
-    --bg-gradient-end: #161B22;
-    --card-bg: rgba(22, 27, 34, 0.7);
-    --text-color: #C9D1D9;
-    --heading-color: #FFFFFF;
-    --accent-color-1: #58A6FF;
-    --border-color: rgba(255, 255, 255, 0.15);
-    --shadow-color: rgba(0, 0, 0, 0.5);
-    --button-bg: rgba(255, 255, 255, 0.08);
-    --button-text: #FFFFFF;
-    --button-hover-bg: #58A6FF;
-    --button-hover-text: #FFFFFF;
-    --aurora-color-1: #58A6FF;
-    --aurora-color-2: #A371F7;
-    --aurora-color-3: #F778BA;
-}
+/**
+ * Theme + font-size manager (+ small shared UI helpers)
+ * - Load in <head> right after theme.css so the saved theme applies before first paint.
+ * - Safe to include more than once (guarded).
+ * - Theme buttons are handled by ONE delegated click listener.
+ */
+(function () {
+    'use strict';
 
-:root[data-theme="dark"] {
-    --bg-gradient-start: #0D1117;
-    --bg-gradient-end: #161B22;
-    --card-bg: rgba(22, 27, 34, 0.7);
-    --text-color: #C9D1D9;
-    --heading-color: #FFFFFF;
-    --accent-color-1: #58A6FF;
-    --border-color: rgba(255, 255, 255, 0.15);
-    --shadow-color: rgba(0, 0, 0, 0.5);
-    --button-bg: rgba(255, 255, 255, 0.08);
-    --button-text: #FFFFFF;
-    --button-hover-bg: #58A6FF;
-    --button-hover-text: #FFFFFF;
-    --aurora-color-1: #58A6FF;
-    --aurora-color-2: #A371F7;
-    --aurora-color-3: #F778BA;
-}
+    if (window.__themeManagerLoaded) return;
+    window.__themeManagerLoaded = true;
 
-:root[data-theme="light"] {
-    --bg-gradient-start: #F4F7FC;
-    --bg-gradient-end: #E9EFF8;
-    --card-bg: rgba(255, 255, 255, 0.8);
-    --text-color: #4A5568;
-    --heading-color: #1A202C;
-    --accent-color-1: #4C51BF;
-    --border-color: rgba(0, 0, 0, 0.1);
-    --shadow-color: rgba(0, 0, 0, 0.1);
-    --button-bg: rgba(0, 0, 0, 0.05);
-    --button-text: #2D3748;
-    --button-hover-bg: #2D3748;
-    --button-hover-text: #FFFFFF;
-    --aurora-color-1: #82aaff;
-    --aurora-color-2: #c792ea;
-    --aurora-color-3: #ffc482;
-}
+    var CONFIG = {
+        storageKey: 'site_theme',
+        fontKey: 'site_font_size',
+        defaultTheme: 'dark',
+        defaultFontSize: 16,
+        minFontSize: 12,
+        maxFontSize: 28,
+        themes: ['dark', 'light', 'sepia', 'midnight', 'ocean', 'forest', 'rose']
+    };
 
-:root[data-theme="sepia"] {
-    --bg-gradient-start: #FBF0D9;
-    --bg-gradient-end: #F8EAD6;
-    --card-bg: rgba(248, 234, 214, 0.8);
-    --text-color: #5B4636;
-    --heading-color: #3D2C1D;
-    --accent-color-1: #8D6E63;
-    --border-color: rgba(61, 44, 29, 0.15);
-    --shadow-color: rgba(91, 70, 54, 0.15);
-    --button-bg: rgba(93, 64, 55, 0.08);
-    --button-text: #5D4037;
-    --button-hover-bg: #5D4037;
-    --button-hover-text: #FFFFFF;
-    --aurora-color-1: #d1a377;
-    --aurora-color-2: #a87b53;
-    --aurora-color-3: #c28e8e;
-}
+    // Browser UI colour per theme (matches --bg in theme.css)
+    var CHROME_COLOR = {
+        dark: '#0E1116', light: '#F5F7FA', sepia: '#F3E9D2', midnight: '#000000',
+        ocean: '#0B1C26', forest: '#14261D', rose: '#FCEBEF'
+    };
 
-:root[data-theme="midnight"] {
-    --bg-gradient-start: #000000;
-    --bg-gradient-end: #050505;
-    --card-bg: rgba(20, 20, 20, 0.7);
-    --text-color: #A0A0A0;
-    --heading-color: #E0E0E0;
-    --accent-color-1: #BB86FC;
-    --border-color: rgba(255, 255, 255, 0.1);
-    --shadow-color: rgba(0, 0, 0, 0.7);
-    --button-bg: rgba(255, 255, 255, 0.05);
-    --button-text: #E0E0E0;
-    --button-hover-bg: #BB86FC;
-    --button-hover-text: #000000;
-    --aurora-color-1: #BB86FC;
-    --aurora-color-2: #03DAC6;
-    --aurora-color-3: #CF6679;
-}
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-:root[data-theme="ocean"] {
-    --bg-gradient-start: #0F2027;
-    --bg-gradient-end: #203A43;
-    --card-bg: rgba(32, 58, 67, 0.75);
-    --text-color: #B0C4DE;
-    --heading-color: #FFFFFF;
-    --accent-color-1: #6dd5ed;
-    --border-color: rgba(255, 255, 255, 0.15);
-    --shadow-color: rgba(0, 0, 0, 0.5);
-    --button-bg: rgba(255, 255, 255, 0.08);
-    --button-text: #FFFFFF;
-    --button-hover-bg: #6dd5ed;
-    --button-hover-text: #0F2027;
-    --aurora-color-1: #2193b0;
-    --aurora-color-2: #6dd5ed;
-    --aurora-color-3: #2C5364;
-}
-
-:root[data-theme="forest"] {
-    --bg-gradient-start: #1A2E24;
-    --bg-gradient-end: #2F4F4F;
-    --card-bg: rgba(47, 79, 79, 0.7);
-    --text-color: #D1E2D4;
-    --heading-color: #F0FFF0;
-    --accent-color-1: #6A994E;
-    --border-color: rgba(255, 255, 255, 0.15);
-    --shadow-color: rgba(0, 0, 0, 0.6);
-    --button-bg: rgba(255, 255, 255, 0.08);
-    --button-text: #F0FFF0;
-    --button-hover-bg: #A7C957;
-    --button-hover-text: #1A2E24;
-    --aurora-color-1: #a7c957;
-    --aurora-color-2: #6a994e;
-    --aurora-color-3: #386641;
-}
-
-:root[data-theme="rose"] {
-    --bg-gradient-start: #FFE5E5;
-    --bg-gradient-end: #FFC0CB;
-    --card-bg: rgba(255, 240, 245, 0.8);
-    --text-color: #8B575C;
-    --heading-color: #C71585;
-    --accent-color-1: #DB7093;
-    --border-color: rgba(0, 0, 0, 0.1);
-    --shadow-color: rgba(139, 87, 92, 0.15);
-    --button-bg: rgba(199, 21, 133, 0.05);
-    --button-text: #C71585;
-    --button-hover-bg: #C71585;
-    --button-hover-text: #FFFFFF;
-    --aurora-color-1: #ffafcc;
-    --aurora-color-2: #ffc8dd;
-    --aurora-color-3: #cdb4db;
-}
-
-/* =====================================================================
-   GLOBAL THEMED STYLES
-   ===================================================================== */
-body {
-    background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
-    color: var(--text-color);
-    transition: background 0.5s ease, color 0.5s ease;
-    background-attachment: fixed;
-}
-
-h1, h2, h3, h4, h5, h6 { color: var(--heading-color); }
-
-.container, #grade-selection, #subjects-page, #notes-page, #detail-page {
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    box-shadow: 0 10px 40px var(--shadow-color);
-    backdrop-filter: blur(15px);
-    -webkit-backdrop-filter: blur(15px);
-}
-
-.action-button, .grade-list button, .home-button, .back-button, .subject-list button, .download-button {
-    background: var(--button-bg);
-    color: var(--button-text);
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-}
-
-.action-button:hover, .grade-list button:hover, .home-button:hover, .back-button:hover, .subject-list button:hover, .download-button:hover {
-    background: var(--button-hover-bg);
-    color: var(--button-hover-text);
-    transform: translateY(-4px) scale(1.03);
-    box-shadow: 0 10px 30px var(--shadow-color);
-}
-
-/* =====================================================================
-   BACKGROUND AURORA
-   ===================================================================== */
-.background-aurora { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
-.aurora-shape { position: absolute; border-radius: 50%; filter: blur(100px); opacity: 0.4; transition: background-color 0.5s ease; }
-.shape1 { width: 400px; height: 400px; background: var(--aurora-color-1); top: 10%; left: 10%; animation: move-aurora1 20s infinite alternate ease-in-out; }
-.shape2 { width: 350px; height: 350px; background: var(--aurora-color-2); top: 50%; left: 60%; animation: move-aurora2 25s infinite alternate ease-in-out; }
-.shape3 { width: 300px; height: 300px; background: var(--aurora-color-3); top: 80%; left: 20%; animation: move-aurora3 18s infinite alternate ease-in-out; }
-@keyframes move-aurora1 { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(100px, 50px) rotate(45deg); } }
-@keyframes move-aurora2 { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(-80px, -60px) rotate(-60deg); } }
-@keyframes move-aurora3 { from { transform: translate(0, 0) rotate(0deg); } to { transform: translate(60px, -100px) rotate(70deg); } }
-
-/* =====================================================================
-   THEME SWITCHER (TOP RIGHT)
-   ===================================================================== */
-.theme-switcher {
-    position: absolute; top: 20px; right: 20px;
-    display: flex; flex-wrap: wrap; justify-content: flex-end;
-    width: 180px; gap: 8px;
-    background: var(--card-bg); padding: 8px; border-radius: 25px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 4px 20px var(--shadow-color);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 1000;
-}
-.theme-button {
-    width: 32px; height: 32px; border-radius: 50%;
-    border: 2px solid transparent; cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex; align-items: center; justify-content: center;
-    color: var(--text-color); background-color: transparent; font-size: 14px;
-}
-.theme-button:hover { transform: scale(1.1) rotate(15deg); }
-.theme-button.active { border-color: var(--accent-color-1); color: var(--accent-color-1); transform: scale(1.1); }
-
-/* =====================================================================
-   THEME MODAL (index.html)
-   ===================================================================== */
-.theme-modal-overlay {
-    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    z-index: 2000;
-    display: flex; justify-content: center; align-items: center;
-    opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-}
-.theme-modal-overlay.visible { opacity: 1; pointer-events: auto; }
-.theme-modal {
-    background: var(--card-bg); padding: 30px; border-radius: 20px;
-    border: 1px solid var(--border-color);
-    box-shadow: 0 10px 50px var(--shadow-color);
-    text-align: center; transform: scale(0.95); transition: transform 0.3s ease;
-}
-.theme-modal-overlay.visible .theme-modal { transform: scale(1); }
-.theme-modal h2 { margin-bottom: 25px; font-size: 2rem; }
-.theme-options { display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 500px; }
-.theme-option-button {
-    background: var(--button-bg); border: 2px solid var(--border-color);
-    color: var(--button-text); padding: 15px; border-radius: 15px;
-    cursor: pointer; transition: all 0.3s ease;
-    font-size: 1rem; font-weight: 600;
-    display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100px;
-}
-.theme-option-button i { font-size: 1.8rem; }
-.theme-option-button:hover { transform: translateY(-5px); border-color: var(--accent-color-1); box-shadow: 0 8px 20px var(--shadow-color); }
-.theme-option-button.active { border-color: var(--accent-color-1); }
-
-/* =====================================================================
-   FAVORITES FEATURE
-   ===================================================================== */
-.action-buttons-group { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
-
-.favorite-button {
-    background-color: var(--button-bg);
-    color: var(--text-color);
-    border: 2px solid var(--border-color);
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-.favorite-button.favorited,
-.view-favorites-button.active { background-color: #e83e8c; color: #ffffff; border-color: #e83e8c; }
-.favorite-button.favorited:hover,
-.view-favorites-button.active:hover { background-color: #d82c7c; border-color: #d82c7c; }
-
-.favorite-icon-container {
-    position: absolute; top: 15px; right: 15px;
-    cursor: pointer; font-size: 1.5rem; padding: 5px; z-index: 10;
-}
-.favorite-icon { color: var(--text-color); transition: color 0.2s ease, transform 0.2s ease; }
-.favorite-icon.favorited { color: #e83e8c; transform: scale(1.1); }
-.favorite-icon:hover { transform: scale(1.2); }
-
-.view-favorites-button {
-    width: 50px; height: 50px; padding: 0; margin-left: 10px;
-    border-radius: 50%; font-size: 1.2rem;
-    border: 2px solid var(--border-color);
-    background-color: var(--button-bg);
-    color: var(--accent-color-1);
-    transition: all 0.3s ease;
-}
-
-.favorite-toast {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    padding: 12px 25px; border-radius: 8px; font-size: 1rem; color: #fff;
-    z-index: 2000; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    transition: opacity 0.3s, transform 0.3s; opacity: 0.9; font-weight: 600;
-}
-
-/* =====================================================================
-   FONT CONTROLS (theme-aware)
-   ===================================================================== */
-.font-controls {
-    position: fixed; top: 125px; right: 20px; z-index: 1000;
-    display: flex; flex-direction: column; gap: 10px;
-    background: var(--card-bg); padding: 10px; border-radius: 50px;
-    backdrop-filter: blur(5px);
-    -webkit-backdrop-filter: blur(5px);
-    border: 1px solid var(--border-color);
-}
-.font-button {
-    width: 40px; height: 40px; border-radius: 50%;
-    border: 1px solid var(--border-color);
-    cursor: pointer;
-    background: var(--button-bg);
-    color: var(--button-text);
-    font-weight: bold; font-size: 1.2rem;
-    display: flex; align-items: center; justify-content: center;
-    transition: all 0.3s ease;
-}
-.font-button:hover { transform: scale(1.1); background: var(--button-hover-bg); color: var(--button-hover-text); }
-
-@media (max-width: 768px) {
-    .font-controls {
-        top: auto; bottom: 20px; left: 20px; right: auto;
-        flex-direction: row;
+    // ---------- storage helpers (never throw) ----------
+    function load(key) {
+        try { return localStorage.getItem(key); } catch (e) { return null; }
     }
-}
+    function save(key, value) {
+        try { localStorage.setItem(key, value); } catch (e) { /* private mode etc. */ }
+    }
+    function remove(key) {
+        try { localStorage.removeItem(key); } catch (e) {}
+    }
 
-/* =====================================================================
-   THEME-AWARE OVERRIDES
-   Page-level <style> blocks load AFTER this file and hardcode white
-   colors. Prefixing with `body` raises specificity so these win.
-   ===================================================================== */
+    // ---------- theme ----------
+    function updateActiveButtons(activeTheme) {
+        var buttons = document.querySelectorAll('.theme-button, .theme-option-button');
+        for (var i = 0; i < buttons.length; i++) {
+            var isActive = buttons[i].getAttribute('data-theme') === activeTheme;
+            buttons[i].classList.toggle('active', isActive);
+            buttons[i].setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        }
+    }
 
-/* Note cards (note.html, favorites.html) */
-body .note-item {
-    position: relative;
-    background: var(--button-bg);
-    border: 1px solid var(--border-color);
-}
-body .note-title,
-body .note-sub-topic { border-bottom-color: var(--border-color); }
-body .note-sub-topic { color: var(--text-color); }
+    function setChromeColor(name) {
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta) {
+            if (!document.head) return;
+            meta = document.createElement('meta');
+            meta.setAttribute('name', 'theme-color');
+            document.head.appendChild(meta);
+        }
+        meta.setAttribute('content', CHROME_COLOR[name] || CHROME_COLOR.dark);
+    }
 
-/* Search box (note.html) */
-body #search-input {
-    background: var(--button-bg);
-    color: var(--text-color);
-    border: 1px solid var(--border-color);
-    outline: none;
-}
-body #search-input:focus { border-color: var(--accent-color-1); }
-body #search-input::placeholder { color: var(--text-color); opacity: 0.6; }
-body .search-container i { color: var(--text-color); }
+    function applyTheme(name) {
+        if (CONFIG.themes.indexOf(name) === -1) name = CONFIG.defaultTheme;
+        document.documentElement.setAttribute('data-theme', name);
+        if (document.body) document.body.setAttribute('data-theme', name);
+        updateActiveButtons(name);
+        setChromeColor(name);
+        return name;
+    }
 
-/* "More details" link */
-body .more-details-link {
-    color: var(--accent-color-1);
-    border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-}
-body .more-details-link:hover {
-    background: var(--button-hover-bg);
-    color: var(--button-hover-text);
-}
+    function closeModal() {
+        var overlay = document.getElementById('themeModalOverlay');
+        if (overlay) overlay.classList.remove('visible');
+    }
 
-/* Detail page */
-body #note-detail-content { background: var(--button-bg); }
-body .note-sub-topic { border-bottom-color: var(--border-color); }
+    function setTheme(name) {
+        if (!name) return;
+        // Brief colour transition only on a user action, never on page load
+        if (!reduceMotion) {
+            document.documentElement.classList.add('theme-anim');
+            setTimeout(function () { document.documentElement.classList.remove('theme-anim'); }, 300);
+        }
+        name = applyTheme(name);
+        save(CONFIG.storageKey, name);
+        closeModal();
+    }
 
-/* Footers */
-body .footer,
-body footer { color: var(--text-color); }
+    // ---------- font size ----------
+    function applyFontSize(px) {
+        document.documentElement.style.fontSize = px + 'px';
+    }
 
-/* Landing page quote box */
-body .inspiration-message { background: var(--button-bg); color: var(--text-color); }
+    function adjustFontSize(amount) {
+        var current = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || CONFIG.defaultFontSize;
+        var next = Math.min(CONFIG.maxFontSize, Math.max(CONFIG.minFontSize, current + amount));
+        applyFontSize(next);
+        save(CONFIG.fontKey, next);
+    }
+
+    function resetFontSize() {
+        remove(CONFIG.fontKey);
+        document.documentElement.style.fontSize = '';
+    }
+
+    // ---------- shared feedback helpers (replace alert()) ----------
+    // showToast('Saved')  ->  slides in, auto-dismisses in ~2.5s
+    function showToast(message, ms) {
+        var old = document.querySelector('.toast');
+        if (old) old.remove();
+        var el = document.createElement('div');
+        el.className = 'toast';
+        el.setAttribute('role', 'status');
+        el.textContent = message;
+        document.body.appendChild(el);
+        setTimeout(function () {
+            el.classList.add('is-leaving');
+            setTimeout(function () { el.remove(); }, 200);
+        }, ms || 2500);
+    }
+
+    // confirmButton(btn, 'Saved') -> label changes briefly, then returns
+    function confirmButton(btn, label, ms) {
+        if (!btn) return;
+        var original = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i> ' + label;
+        btn.classList.add('is-done');
+        setTimeout(function () {
+            btn.innerHTML = original;
+            btn.classList.remove('is-done');
+        }, ms || 1800);
+    }
+
+    // setLoading(btn, true) -> spinner + disabled; setLoading(btn, false) restores
+    function setLoading(btn, on) {
+        if (!btn) return;
+        btn.classList.toggle('is-loading', !!on);
+        btn.disabled = !!on;
+        if (btn.hasAttribute('aria-busy') || on) btn.setAttribute('aria-busy', on ? 'true' : 'false');
+    }
+
+    // Expose for inline onclick attributes and for testing in the console
+    window.setTheme = setTheme;
+    window.adjustFontSize = adjustFontSize;
+    window.resetFontSize = resetFontSize;
+    window.showToast = showToast;
+    window.confirmButton = confirmButton;
+    window.setLoading = setLoading;
+
+    // ---------- 1. Run immediately (before the page paints) ----------
+    var savedTheme = load(CONFIG.storageKey);
+    applyTheme(savedTheme || CONFIG.defaultTheme);
+
+    var savedFont = parseFloat(load(CONFIG.fontKey));
+    if (savedFont) applyFontSize(savedFont);
+
+    // ---------- 2. One delegated click listener for every theme button ----------
+    document.addEventListener('click', function (event) {
+        var target = event.target;
+        if (!target || !target.closest) return;
+
+        var button = target.closest('.theme-button, .theme-option-button');
+        if (button) {
+            setTheme(button.getAttribute('data-theme'));
+            return;
+        }
+
+        // Clicking the dark backdrop of the first-visit modal keeps the default theme
+        if (target.id === 'themeModalOverlay') {
+            setTheme(load(CONFIG.storageKey) || CONFIG.defaultTheme);
+        }
+    });
+
+    // ---------- 3. Once the DOM exists ----------
+    document.addEventListener('DOMContentLoaded', function () {
+        var current = load(CONFIG.storageKey) || CONFIG.defaultTheme;
+        applyTheme(current); // now <body> exists, so it gets the attribute too
+
+        // Neutral icon for midnight (was a religious symbol), fixes every page without editing each one
+        var midnightIcons = document.querySelectorAll('[data-theme="midnight"] .fa-star-of-david');
+        for (var i = 0; i < midnightIcons.length; i++) {
+            midnightIcons[i].classList.remove('fa-star-of-david');
+            midnightIcons[i].classList.add('fa-star');
+        }
+
+        // Accessible names for every theme button that lacks a visible label
+        var names = { dark: 'Dark', light: 'Light', sepia: 'Sepia', midnight: 'Midnight', ocean: 'Ocean', forest: 'Forest', rose: 'Rose' };
+        var themeButtons = document.querySelectorAll('.theme-button');
+        for (var j = 0; j < themeButtons.length; j++) {
+            var t = themeButtons[j].getAttribute('data-theme');
+            if (!themeButtons[j].getAttribute('aria-label')) themeButtons[j].setAttribute('aria-label', (names[t] || t) + ' theme');
+            themeButtons[j].setAttribute('title', (names[t] || t) + ' theme');
+        }
+
+        // First visit: show the picker if this page has one
+        var overlay = document.getElementById('themeModalOverlay');
+        if (!load(CONFIG.storageKey) && overlay) {
+            overlay.classList.add('visible');
+        }
+    });
+})();
