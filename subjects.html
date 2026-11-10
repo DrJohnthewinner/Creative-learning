@@ -3,125 +3,66 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Select Subject | Boom AI</title>
-  
+  <title>Choose a subject | Boom AI</title>
+
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="theme.css">
   <script src="theme.js"></script>
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-      padding: 20px;
-    }
-    .logo-container { position: absolute; top: 20px; left: 20px; z-index: 10; }
-    .logo-container img { height: 50px; width: auto; }
-    
-    #main-content {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 50px 20px;
-      width: 100%;
-      max-width: 1100px;
-      margin-top: 40px;
-      flex-grow: 1;
-    }
-    #subjects-page {
-      border-radius: 25px;
-      padding: 40px 30px;
-      width: 100%;
-      text-align: center;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-    }
-    h2 { font-weight: 600; font-size: 2.3rem; margin-bottom: 20px; color: var(--heading-color); }
-    
-    .streak-banner {
-      background: var(--button-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 12px 20px;
-      margin-bottom: 25px;
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 600;
-      color: var(--text-color);
-    }
+    /* Page-specific layout only. */
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); position: relative; }
+    .logo-container { position: absolute; top: var(--sp-4); left: var(--sp-4); }
+    .logo-container img { height: var(--sp-7); width: auto; display: block; }
 
-    .pathway-section { margin-top: 30px; text-align: left; }
-    .pathway-title { font-size: 1.3rem; font-weight: 700; color: var(--heading-color); margin-bottom: 15px; border-bottom: 2px solid var(--border-color); padding-bottom: 5px; display: flex; align-items: center; gap: 10px; }
+    #main-content { width: 100%; max-width: 1100px; flex: 1; padding-top: calc(var(--sp-7) * 2 + var(--sp-3)); }
+    @media (min-width: 768px) { #main-content { padding-top: var(--sp-7); } }
 
-    .subject-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-      margin-top: 15px;
-      margin-bottom: 25px;
-    }
+    #subjects-page { padding: var(--sp-5); }
+    @media (min-width: 768px) { #subjects-page { padding: var(--sp-6); } }
+
+    .breadcrumb { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; font-size: var(--fs-2); color: var(--text-muted); margin-bottom: var(--sp-4); }
+    .breadcrumb a { display: inline-flex; align-items: center; min-height: var(--tap); font-weight: var(--fw-semibold); }
+    .breadcrumb .fa-chevron-right { font-size: var(--fs-1); }
+
+    #subjects-page h1 { margin: 0 0 var(--sp-2); }
+    .streak { margin: 0 0 var(--sp-5); font-size: var(--fs-2); color: var(--text-muted); }
+
+    .pathway-section + .pathway-section { margin-top: var(--sp-6); }
+    .pathway-title { font-size: var(--fs-4); margin: 0 0 var(--sp-3); }
+
+    .subject-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-3); }
+
+    /* Subject card is a link: keyboard and long-press friendly */
     .subject-card {
-      background: var(--button-bg);
-      border: 1px solid var(--border-color);
-      padding: 20px;
-      border-radius: 15px;
-      text-align: left;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      display: flex; flex-direction: column; gap: var(--sp-3);
+      padding: var(--sp-4);
+      color: var(--text); text-decoration: none;
+      transition: border-color var(--dur-med) var(--ease), background var(--dur-med) var(--ease), transform var(--dur-fast) var(--ease);
     }
-    .subject-card:hover {
-      background: var(--button-hover-bg);
-      color: var(--button-hover-text);
-      transform: translateY(-3px);
-    }
-    .subject-card-title { font-size: 1.1rem; font-weight: 600; display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-    
-    .progress-container { width: 100%; background: rgba(255,255,255,0.1); border-radius: 10px; height: 8px; overflow: hidden; margin-top: 10px; }
-    .progress-fill { height: 100%; background: var(--accent-color-1); width: 0%; transition: width 0.4s ease; }
-    .progress-text { font-size: 0.75rem; opacity: 0.8; margin-top: 4px; text-align: right; display: block; }
+    .subject-card:hover { border-color: var(--accent); }
+    .subject-card:active { transform: scale(0.98); }
+    .subject-card-title { display: flex; align-items: center; gap: var(--sp-3); font-size: var(--fs-3); font-weight: var(--fw-semibold); color: var(--heading); }
+    .subject-card-title .fas { width: var(--icon-button); text-align: center; font-size: var(--icon-button); color: var(--accent); }
+    .progress-text { font-size: var(--fs-1); color: var(--text-muted); }
 
-    .back-button { padding: 10px 20px; border-radius: 12px; font-size: 0.95rem; cursor: pointer; margin-bottom: 20px; }
+    .loading-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-3); }
+    .loading-grid .skeleton-card { height: 112px; margin: 0; }
 
-    .milestone-toast {
-      position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-      background: #00c853; color: #fff; padding: 12px 25px; border-radius: 30px;
-      font-weight: 600; box-shadow: 0 4px 15px rgba(0,0,0,0.3); z-index: 3000;
-      display: none; animation: slideDown 0.4s ease;
-    }
-    @keyframes slideDown { from { top: -40px; opacity: 0; } to { top: 20px; opacity: 1; } }
-
-    footer { text-align: center; padding: 15px; font-size: 0.9rem; opacity: 0.8; color: var(--text-color); width: 100%; }
+    .footer { margin-top: var(--sp-7); padding: var(--sp-5) 0 var(--sp-2); }
   </style>
 </head>
 <body>
-  <div class="background-aurora">
-      <div class="aurora-shape shape1"></div>
-      <div class="aurora-shape shape2"></div>
-      <div class="aurora-shape shape3"></div>
-  </div>
-
-  <div class="milestone-toast" id="milestoneToast"><i class="fas fa-trophy"></i> Amazing! You hit a study milestone!</div>
-
   <div class="theme-switcher">
     <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
     <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
     <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
-    <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star-of-david"></i></button>
+    <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star"></i></button>
     <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
     <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
     <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
@@ -131,24 +72,22 @@
     <img src="moe-logo.webp" alt="Ministry of Education Logo">
   </div>
 
-  <div id="main-content">
+  <main id="main-content">
     <section id="subjects-page">
-      <button class="action-button back-button" onclick="window.location.href='landing.html'">
-        <i class="fas fa-arrow-left"></i> Back to Grades
-      </button>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="landing.html">Grades</a>
+        <i class="fas fa-chevron-right" aria-hidden="true"></i>
+        <span id="grade-display" aria-current="page"></span>
+      </nav>
 
-      <div class="streak-banner" id="streakBanner">
-        <i class="fas fa-fire" style="color: #ff9800; font-size: 1.2rem;"></i>
-        <span id="streakCountText">Loading streak...</span>
-      </div>
+      <h1>Choose a subject</h1>
+      <p class="streak"><span id="streakCountText">Loading streak...</span></p>
 
-      <h2><i class="fas fa-book-open"></i> Select Subject for <span id="grade-display"></span></h2>
-      
-      <div id="dynamic-subjects-container"></div>
+      <div id="dynamic-subjects-container" aria-live="polite"></div>
     </section>
-  </div>
+  </main>
 
-  <footer>
+  <footer class="footer">
     <p>&copy; 2026 Boom AI. Powered by Pope John</p>
   </footer>
 
@@ -179,7 +118,6 @@
     const seniorSchoolCategories = [
       {
         category: 'Core Subjects',
-        icon: 'fas fa-bookmark',
         subjects: [
           { id: 'senior-english', name: 'English', icon: 'fas fa-language' },
           { id: 'senior-kiswahili', name: 'Kiswahili / KSL', icon: 'fas fa-comments' },
@@ -190,7 +128,6 @@
       },
       {
         category: 'Arts & Sports Science',
-        icon: 'fas fa-futbol',
         subjects: [
           { id: 'sports-recreation', name: 'Sports and Recreation', icon: 'fas fa-running' },
           { id: 'music-dance', name: 'Music and Dance', icon: 'fas fa-music' },
@@ -200,7 +137,6 @@
       },
       {
         category: 'Social Sciences',
-        icon: 'fas fa-globe',
         subjects: [
           { id: 'literature-english', name: 'Literature in English', icon: 'fas fa-book' },
           { id: 'indigenous-languages', name: 'Indigenous Languages', icon: 'fas fa-language' },
@@ -220,7 +156,6 @@
       },
       {
         category: 'Science, Technology, Engineering & Mathematics (STEM)',
-        icon: 'fas fa-atom',
         subjects: [
           { id: 'biology', name: 'Biology', icon: 'fas fa-dna' },
           { id: 'chemistry', name: 'Chemistry', icon: 'fas fa-flask' },
@@ -244,32 +179,22 @@
     document.addEventListener('DOMContentLoaded', async function () {
       const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
       document.getElementById('grade-display').textContent = grade;
+      document.title = `${grade} subjects | Boom AI`;
 
       checkStreakAndMilestones();
       await renderSubjects(grade);
-
-      window.addEventListener('scroll', () => {
-        const switcher = document.querySelector('.theme-switcher');
-        if (window.scrollY > 50 && switcher) {
-          switcher.style.opacity = '0.3';
-        } else if (switcher) {
-          switcher.style.opacity = '1';
-        }
-      });
     });
 
     function checkStreakAndMilestones() {
       const today = new Date().toDateString();
       let streakData = JSON.parse(localStorage.getItem('boom_streak') || '{}');
-      
+
       if (streakData.lastDate !== today) {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        
+
         if (streakData.lastDate === yesterday.toDateString()) {
           streakData.count = (streakData.count || 0) + 1;
-        } else if (!streakData.lastDate) {
-          streakData.count = 1;
         } else {
           streakData.count = 1;
         }
@@ -277,22 +202,38 @@
         localStorage.setItem('boom_streak', JSON.stringify(streakData));
 
         if ([3, 7, 30].includes(streakData.count)) {
-          showMilestoneToast(`🔥 Milestone Reached: ${streakData.count} Day Study Streak!`);
+          showToast(`${streakData.count}-day study streak. Keep going!`, 5000);
         }
       }
-      document.getElementById('streakCountText').textContent = `${streakData.count} Day Study Streak 🔥`;
+      const n = streakData.count || 1;
+      document.getElementById('streakCountText').textContent = `${n}-day study streak`;
     }
 
-    function showMilestoneToast(msg) {
-      const toast = document.getElementById('milestoneToast');
-      toast.innerHTML = `<i class="fas fa-trophy"></i> ${msg}`;
-      toast.style.display = 'block';
-      setTimeout(() => { toast.style.display = 'none'; }, 5000);
+    function subjectCardHTML(s, notesBySubject) {
+      const stats = notesBySubject[s.id] || { total: 0, read: 0 };
+      const percent = stats.total > 0 ? Math.round((stats.read / stats.total) * 100) : 0;
+      const label = stats.total > 0 ? `${stats.read} of ${stats.total} notes read` : 'No notes yet';
+      return `
+        <a class="subject-card" href="note.html?subject=${s.id}">
+          <span class="subject-card-title"><i class="${s.icon}" aria-hidden="true"></i> ${s.name}</span>
+          <span>
+            <span class="progress-container" role="progressbar" aria-label="${s.name} progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${percent}" style="display:block;">
+              <span class="progress-fill" style="display:block; width:${percent}%;"></span>
+            </span>
+            <span class="progress-text">${label}</span>
+          </span>
+        </a>`;
+    }
+
+    function showSkeleton(container) {
+      container.innerHTML = '<div class="loading-grid" aria-hidden="true">' +
+        '<div class="skeleton skeleton-card"></div>'.repeat(6) + '</div>';
     }
 
     async function renderSubjects(grade) {
       const container = document.getElementById('dynamic-subjects-container');
       const readNotes = JSON.parse(localStorage.getItem('boom_read_notes') || '[]');
+      showSkeleton(container);
 
       try {
         const snapshot = await db.collection('notes').where('grade', '==', grade).get();
@@ -310,45 +251,27 @@
         if (grade === 'Grade 10') {
           container.innerHTML = seniorSchoolCategories.map(cat => `
             <div class="pathway-section">
-              <div class="pathway-title"><i class="${cat.icon}" style="color: var(--accent-color-1);"></i> ${cat.category}</div>
+              <h2 class="pathway-title">${cat.category}</h2>
               <div class="subject-list">
-                ${cat.subjects.map(s => {
-                  const stats = notesBySubject[s.id] || { total: 0, read: 0 };
-                  const percent = stats.total > 0 ? Math.round((stats.read / stats.total) * 100) : 0;
-                  return `
-                    <div class="subject-card" onclick="window.location.href='note.html?subject=${s.id}'">
-                      <div class="subject-card-title"><i class="${s.icon}"></i> ${s.name}</div>
-                      <div class="progress-container">
-                        <div class="progress-fill" style="width: ${percent}%;"></div>
-                      </div>
-                      <span class="progress-text">${stats.read} / ${stats.total} notes read (${percent}%)</span>
-                    </div>
-                  `;
-                }).join('')}
+                ${cat.subjects.map(s => subjectCardHTML(s, notesBySubject)).join('')}
               </div>
             </div>
           `).join('');
         } else {
           container.innerHTML = `
             <div class="subject-list">
-              ${juniorSubjects.map(s => {
-                const stats = notesBySubject[s.id] || { total: 0, read: 0 };
-                const percent = stats.total > 0 ? Math.round((stats.read / stats.total) * 100) : 0;
-                return `
-                  <div class="subject-card" onclick="window.location.href='note.html?subject=${s.id}'">
-                    <div class="subject-card-title"><i class="${s.icon}"></i> ${s.name}</div>
-                    <div class="progress-container">
-                      <div class="progress-fill" style="width: ${percent}%;"></div>
-                    </div>
-                    <span class="progress-text">${stats.read} / ${stats.total} notes read (${percent}%)</span>
-                  </div>
-                `;
-              }).join('')}
+              ${juniorSubjects.map(s => subjectCardHTML(s, notesBySubject)).join('')}
             </div>
           `;
         }
       } catch (err) {
         console.error("Error loading subjects:", err);
+        container.innerHTML = `
+          <div class="state-block">
+            <p>Subjects could not load. Check your internet connection and try again.</p>
+            <button type="button" class="btn btn-primary" id="retryBtn"><i class="fas fa-rotate-right" aria-hidden="true"></i> Try again</button>
+          </div>`;
+        document.getElementById('retryBtn').addEventListener('click', () => renderSubjects(grade));
       }
     }
   </script>
