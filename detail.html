@@ -3,182 +3,115 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Note Details | Boom AI</title>
-    
+    <title>Note | Boom AI</title>
+
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-    
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-    
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
-    
+
     <link rel="stylesheet" href="theme.css">
     <script src="theme.js"></script>
+    <script src="tools.js"></script>
 
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Poppins', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; position: relative; }
-        
-        .reading-progress-bar { position: fixed; top: 0; left: 0; height: 5px; background: var(--accent-color-1); width: 0%; z-index: 3000; transition: width 0.1s ease; }
+        /* Page-specific layout only. */
+        body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); position: relative; }
+        .moe-logo { position: absolute; top: var(--sp-4); left: var(--sp-4); height: var(--sp-7); width: auto; }
+        .reading-progress-bar { position: fixed; top: 0; left: 0; height: 4px; width: 0%; z-index: var(--z-toast); transition: width var(--dur-fast) linear; }
 
-        /* Calculator Toggle Button near Themes */
-        .calc-toggle-btn {
-            position: fixed;
-            top: 20px;
-            right: 280px;
-            background: var(--button-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-color);
-            width: 42px; height: 42px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer; z-index: 1000;
-            box-shadow: 0 4px 10px var(--shadow-color);
-            transition: all 0.2s ease;
-        }
-        .calc-toggle-btn:hover { background: var(--accent-color-1); color: #fff; }
-        @media(max-width: 768px) { .calc-toggle-btn { right: 20px; top: 80px; } }
+        #main-content { width: 100%; max-width: var(--content-w); flex: 1; padding-top: calc(var(--sp-7) * 2 + var(--sp-3)); }
+        @media (min-width: 768px) { #main-content { padding-top: var(--sp-7); } }
 
-        .header-container { position: absolute; top: 20px; left: 20px; z-index: 100; }
-        .moe-logo { height: 50px; z-index: 10; }
-        
-        #main-content { flex-grow: 1; display: flex; flex-direction: column; align-items: center; width: 100%; max-width: 1000px; padding-top: 80px; }
-        #detail-page { border-radius: 24px; padding: 40px; text-align: left; width: 100%; background: var(--card-bg); border: 1px solid var(--border-color); }
-        
-        .breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.95rem; margin-bottom: 20px; flex-wrap: wrap; color: var(--text-color); }
-        .breadcrumb a { color: var(--accent-color-1); text-decoration: none; font-weight: 600; }
+        #detail-page { padding: var(--sp-5); }
+        @media (min-width: 768px) { #detail-page { padding: var(--sp-6); } }
 
-        h2.note-topic { font-weight: 700; font-size: 2.5rem; margin-bottom: 10px; color: var(--heading-color); }
-        
-        .action-button { padding: 12px 25px; border-radius: 50px; font-size: 1rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; background: var(--button-bg); color: var(--button-text); border: 1px solid var(--border-color); }
-        .back-button { margin-bottom: 25px; }
-        .download-button { margin-top: 25px; }
-        
-        .reading-mode-btn { margin-left: 10px; background: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; font-weight: 600; }
-        
-        body.distraction-free .header-container,
-        body.distraction-free .breadcrumb,
-        body.distraction-free .back-button,
-        body.distraction-free .footer,
-        body.distraction-free .theme-switcher,
-        body.distraction-free .calc-toggle-btn { display: none !important; }
-        body.distraction-free #main-content { padding-top: 20px; }
+        .page-top { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
+        .page-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-5); }
+        .page-actions .btn { padding: var(--sp-2) var(--sp-4); font-size: var(--fs-2); }
+        .btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 
-        /* Calculator Popup Modal */
-        .calc-box { 
-            position: fixed; top: 80px; right: 20px; width: 280px;
-            background: var(--card-bg); border: 1px solid var(--border-color); 
-            border-radius: 16px; padding: 20px; text-align: left; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 2500; 
-            backdrop-filter: blur(12px); display: none; 
-            animation: fadeInCalc 0.2s ease-out;
-        }
-        @keyframes fadeInCalc { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-        .calc-box-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-weight: 600; color: var(--heading-color); }
-        .calc-box-close { background: transparent; border: none; color: var(--text-color); cursor: pointer; font-size: 1.1rem; }
-        .calc-box input { width: 100%; padding: 12px; font-size: 1.2rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--button-bg); color: var(--text-color); margin-bottom: 12px; text-align: right; }
-        .calc-buttons { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-        .calc-buttons button { padding: 12px; font-size: 1rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--button-bg); color: var(--text-color); cursor: pointer; font-weight: 600; }
-        .calc-buttons button:hover { background: var(--accent-color-1); color: #fff; }
+        /* The note is the main feature: comfortable measure, large text */
+        #note-article { max-width: var(--reading-w); }
+        #note-article h1 { margin: 0 0 var(--sp-2); }
+        .note-meta { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); align-items: center; margin: 0 0 var(--sp-5); font-size: var(--fs-2); color: var(--text-muted); }
+        .note-content { font-size: 1.1rem; line-height: 1.9; max-width: none; overflow-wrap: anywhere; }
+        .note-content.plain { white-space: pre-wrap; }                 /* only for old plain-text notes */
+        .note-content h2, .note-content h3 { margin: var(--sp-5) 0 var(--sp-2); }
+        .note-content img, .note-content table { max-width: 100%; }
+        .note-content table { display: block; overflow-x: auto; }
 
-        #note-detail-content { padding: 30px; border-radius: 18px; background: var(--button-bg); border: 1px solid var(--border-color); }
-        .note-sub-topic { font-size: 1.2rem; font-style: italic; opacity: 0.9; margin-bottom: 15px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; color: var(--text-color); }
-        .note-content { font-size: 1.1rem; line-height: 1.9; margin-top: 15px; white-space: pre-wrap; color: var(--text-color); }
-        
-        .badge-container { display: flex; gap: 10px; margin-bottom: 15px; }
-        .badge { font-size: 0.8rem; font-weight: 700; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 6px; text-transform: uppercase; }
-        .badge-new { background-color: #00c853; color: #ffffff; }
-        .badge-attachment { background-color: var(--accent-color-1); color: #ffffff; }
+        .attachment-section { margin-top: var(--sp-6); max-width: var(--reading-w); }
+        .attachment-section h2 { font-size: var(--fs-4); margin: 0 0 var(--sp-3); }
+        .attachment-image { display: block; max-width: 100%; height: auto; border-radius: var(--r-inner-lg); border: 1px solid var(--border); }
+        .attachment-pdf { display: block; width: 100%; height: 75vh; min-height: 420px; border: 1px solid var(--border); border-radius: var(--r-inner-lg); background: #fff; margin-top: var(--sp-3); }
+        .attachment-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 
-        .date-info { display: block; margin-top: 25px; font-size: 0.9rem; font-style: italic; opacity: 0.8; color: var(--text-color); }
+        .download-row { margin-top: var(--sp-6); }
 
-        .feedback-section { margin-top: 35px; padding-top: 20px; border-top: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; }
-        .feedback-buttons { display: flex; gap: 10px; align-items: center; }
-        .feedback-btn { background: var(--button-bg); border: 1px solid var(--border-color); color: var(--text-color); padding: 8px 16px; border-radius: 20px; cursor: pointer; font-weight: 600; }
-        .feedback-btn:hover { background: var(--accent-color-1); color: #fff; }
-        .report-link { color: #e5484d; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        /* PDF export: force readable black-on-white whatever the theme */
+        .pdf-export, .pdf-export * { color: #000 !important; background: #fff !important; border-color: #ccc !important; }
 
-        .attachment-section { margin-top: 30px; padding-top: 25px; border-top: 1px solid var(--border-color); }
-        .attachment-title { font-size: 1.2rem; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; color: var(--heading-color); }
-        .attachment-name { font-size: 0.95rem; opacity: 0.8; margin-bottom: 15px; word-break: break-word; color: var(--text-color); }
-        .attachment-image { display: block; max-width: 100%; height: auto; border-radius: 12px; border: 1px solid var(--border-color); }
-        .attachment-pdf { display: block; width: 100%; height: 75vh; min-height: 420px; border: 1px solid var(--border-color); border-radius: 12px; background: #fff; }
+        /* Reading mode: hide everything except the note and the way out */
+        .distraction-free .moe-logo, .distraction-free .theme-switcher, .distraction-free .breadcrumb,
+        .distraction-free #tools-slot, .distraction-free .footer, .distraction-free .page-actions .secondary,
+        .distraction-free .download-row, .distraction-free .back-to-top { display: none; }
+        .distraction-free #main-content { padding-top: var(--sp-4); }
 
-        .back-to-top { position: fixed; bottom: 30px; right: 30px; width: 48px; height: 48px; border-radius: 50%; background: var(--accent-color-1); color: #fff; border: none; cursor: pointer; display: none; align-items: center; justify-content: center; font-size: 1.2rem; z-index: 999; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .footer { width: 100%; max-width: 1000px; padding: 20px; margin-top: 40px; text-align: center; color: var(--text-color); }
+        .footer { margin-top: var(--sp-7); padding: var(--sp-5) 0 var(--sp-2); }
     </style>
 </head>
 <body>
-    <div class="reading-progress-bar" id="progressBar"></div>
-
-    <div class="background-aurora">
-        <div class="aurora-shape shape1"></div>
-        <div class="aurora-shape shape2"></div>
-        <div class="aurora-shape shape3"></div>
-    </div>
-    
-    <!-- Calculator Trigger Button near Theme Switcher -->
-    <button class="calc-toggle-btn" id="calcToggleBtn" onclick="toggleCalculator()" title="Open Calculator">
-        <i class="fas fa-calculator"></i>
-    </button>
+    <div class="reading-progress-bar" id="progressBar" role="presentation"></div>
 
     <div class="theme-switcher">
         <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
         <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
         <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
-        <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star-of-david"></i></button>
+        <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star"></i></button>
         <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
         <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
         <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
     </div>
 
-    <header class="header-container">
-        <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
-    </header>
-
-    <!-- Calculator Popup Modal -->
-    <div class="calc-box" id="calc-box">
-        <div class="calc-box-header">
-            <span><i class="fas fa-calculator"></i> Calculator</span>
-            <button class="calc-box-close" onclick="toggleCalculator()"><i class="fas fa-times"></i></button>
-        </div>
-        <input type="text" id="calc-input" readonly placeholder="0">
-        <div class="calc-buttons">
-            <button onclick="appendCalc('7')">7</button><button onclick="appendCalc('8')">8</button><button onclick="appendCalc('9')">9</button><button onclick="appendCalc('/')">/</button>
-            <button onclick="appendCalc('4')">4</button><button onclick="appendCalc('5')">5</button><button onclick="appendCalc('6')">6</button><button onclick="appendCalc('*')">*</button>
-            <button onclick="appendCalc('1')">1</button><button onclick="appendCalc('2')">2</button><button onclick="appendCalc('3')">3</button><button onclick="appendCalc('-')">-</button>
-            <button onclick="clearCalc()">C</button><button onclick="appendCalc('0')">0</button><button onclick="calculateResult()">=</button><button onclick="appendCalc('+')">+</button>
-        </div>
-    </div>
+    <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
 
     <main id="main-content">
         <section id="detail-page">
-            <nav class="breadcrumb">
-                <a href="landing.html"><i class="fas fa-graduation-cap"></i> <span id="bc-grade">Grade</span></a>
-                <i class="fas fa-chevron-right"></i>
-                <a href="subjects.html"><i class="fas fa-book-open"></i> Subjects</a>
-                <i class="fas fa-chevron-right"></i>
-                <a id="bc-subject-link" href="note.html"><span id="bc-subject">Notes</span></a>
-                <i class="fas fa-chevron-right"></i>
-                <span id="bc-topic">Detail</span>
-            </nav>
+            <div class="page-top">
+                <nav class="breadcrumb" aria-label="Breadcrumb">
+                    <a href="landing.html" id="bc-grade-link"><span id="bc-grade">Grade</span></a>
+                    <i class="fas fa-chevron-right" aria-hidden="true"></i>
+                    <a id="bc-subject-link" href="subjects.html"><span id="bc-subject">Subjects</span></a>
+                </nav>
+                <div id="tools-slot" class="toolbar"></div>
+            </div>
 
-            <button class="action-button back-button" onclick="history.back()">
-                <i class="fas fa-arrow-left"></i> Back to Notes
-            </button>
-            <button class="reading-mode-btn" onclick="toggleReadingMode()"><i class="fas fa-eye"></i> Reading Mode</button>
+            <div class="page-actions">
+                <button type="button" class="btn secondary" onclick="history.back()"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back</button>
+                <button type="button" class="btn secondary" id="favBtn" aria-pressed="false" onclick="toggleFavoriteNote(this)" hidden>
+                    <i class="far fa-heart" aria-hidden="true"></i> <span>Add to favourites</span>
+                </button>
+                <button type="button" class="btn reading-toggle" id="readingBtn" aria-pressed="false" onclick="toggleReadingMode()">
+                    <i class="fas fa-book-open" aria-hidden="true"></i> <span>Reading mode</span>
+                </button>
+            </div>
 
-            <div id="note-detail-area">
-                <div id="note-detail-content">
-                    <div class="skeleton skeleton-card"></div>
-                </div>
+            <div id="note-detail-area" aria-live="polite">
+                <div class="skeleton skeleton-line short" style="height:2rem; margin-bottom: var(--sp-4);"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line"></div>
+                <div class="skeleton skeleton-line short"></div>
             </div>
         </section>
     </main>
 
-    <button class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Back to top">
+    <button type="button" class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Back to top">
         <i class="fas fa-arrow-up"></i>
     </button>
 
@@ -195,7 +128,6 @@
             messagingSenderId: "451756350336",
             appId: "1:451756350336:web:19b9255b8834a01f4cff65"
         };
-        
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
 
@@ -203,46 +135,31 @@
         let currentNoteId = '';
 
         document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const noteId = urlParams.get('noteId');
+            const noteId = new URLSearchParams(window.location.search).get('noteId');
             currentNoteId = noteId;
-            const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
-            document.getElementById('bc-grade').textContent = grade;
+            document.getElementById('bc-grade').textContent = localStorage.getItem('selectedGrade') || 'Grade 8';
+            touchStreak();
 
             if (noteId) {
                 markNoteAsRead(noteId);
                 loadNoteDetails(noteId);
             } else {
-                document.getElementById('note-detail-area').innerHTML = '<div id="note-detail-content"><p>No note selected.</p></div>';
+                showState('No note was selected.', 'Choose a subject', 'subjects.html');
             }
 
             window.addEventListener('scroll', () => {
                 updateProgressBar();
-                saveScrollPosition();
-
-                const btn = document.getElementById('backToTop');
-                if (window.scrollY > 300) btn.style.display = 'flex';
-                else btn.style.display = 'none';
+                document.getElementById('backToTop').style.display = window.scrollY > 300 ? 'flex' : 'none';
             });
+            document.addEventListener('boom:prefs', applyUserDisplayPrefs);
         });
 
-        function toggleCalculator() {
-            const box = document.getElementById('calc-box');
-            if (box.style.display === 'block') {
-                box.style.display = 'none';
-            } else {
-                box.style.display = 'block';
-            }
-        }
-
-        function appendCalc(val) { document.getElementById('calc-input').value += val; }
-        function clearCalc() { document.getElementById('calc-input').value = ''; }
-        function calculateResult() {
-            try {
-                document.getElementById('calc-input').value = eval(document.getElementById('calc-input').value);
-            } catch (e) {
-                document.getElementById('calc-input').value = 'Error';
-            }
+        function showState(message, buttonLabel, href, onClick) {
+            const area = document.getElementById('note-detail-area');
+            area.innerHTML = `<div class="state-block"><p>${escapeHtml(message)}</p>` +
+                (href ? `<a class="btn btn-primary" href="${href}">${escapeHtml(buttonLabel)}</a>`
+                      : `<button type="button" class="btn btn-primary" id="stateBtn">${escapeHtml(buttonLabel)}</button>`) + '</div>';
+            if (!href && onClick) document.getElementById('stateBtn').addEventListener('click', onClick);
         }
 
         function markNoteAsRead(id) {
@@ -254,177 +171,169 @@
         }
 
         function updateProgressBar() {
-            const scrollTop = window.scrollY;
             const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-            const scrollPercent = (scrollTop / docHeight) * 100;
-            document.getElementById('progressBar').style.width = scrollPercent + '%';
+            const pct = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
+            document.getElementById('progressBar').style.width = Math.min(100, pct) + '%';
         }
 
-        function saveScrollPosition() {
-            if (currentNoteId) {
-                localStorage.setItem(`boom_scroll_${currentNoteId}`, window.scrollY);
-            }
+        /* --- favourites --- */
+        function syncFavButton() {
+            const on = getFavs().includes(currentNoteId);
+            const btn = document.getElementById('favBtn');
+            btn.setAttribute('aria-pressed', on);
+            btn.querySelector('i').className = `${on ? 'fas' : 'far'} fa-heart ${on ? 'favorited' : ''}`;
+            btn.querySelector('span').textContent = on ? 'Saved to favourites' : 'Add to favourites';
+        }
+        function toggleFavoriteNote(btn) {
+            if (!currentNoteId) return;
+            const on = toggleFav(currentNoteId);
+            syncFavButton();
+            if (on) btn.querySelector('i').classList.add('favorite-icon', 'pop');
+            showToast(on ? 'Added to favourites' : 'Removed from favourites');
         }
 
-        function restoreScrollPosition() {
-            if (currentNoteId) {
-                const savedPos = localStorage.getItem(`boom_scroll_${currentNoteId}`);
-                if (savedPos) {
-                    window.scrollTo({ top: parseInt(savedPos), behavior: 'smooth' });
-                }
-            }
-        }
-
+        /* --- reading mode --- */
         function toggleReadingMode() {
-            document.body.classList.toggle('distraction-free');
+            const on = document.body.classList.toggle('distraction-free');
+            const btn = document.getElementById('readingBtn');
+            btn.setAttribute('aria-pressed', on);
+            btn.querySelector('span').textContent = on ? 'Exit reading mode' : 'Reading mode';
         }
 
+        /* --- loading --- */
         function loadNoteDetails(noteId) {
-            const detailsArea = document.getElementById('note-detail-area');
             db.collection('notes').doc(noteId).get().then(doc => {
                 if (doc.exists) {
-                    renderNoteDetails(doc.data(), detailsArea, doc.id);
-                    setTimeout(restoreScrollPosition, 300);
+                    renderNoteDetails(doc.data(), doc.id);
                 } else {
-                    detailsArea.innerHTML = '<div id="note-detail-content"><p>Note not found.</p></div>';
+                    showState('This note could not be found. It may have been removed.', 'Choose a subject', 'subjects.html');
                 }
-            }).catch(error => {
-                console.error("Error loading note details:", error);
-                detailsArea.innerHTML = `<div id="note-detail-content"><p>Error loading details.</p></div>`;
+            }).catch(err => {
+                console.error('Error loading note:', err);
+                showState('The note could not load. Check your internet connection and try again.', 'Try again', null,
+                    () => { showSkeleton(); loadNoteDetails(noteId); });
             });
         }
+        function showSkeleton() {
+            document.getElementById('note-detail-area').innerHTML =
+                '<div class="skeleton skeleton-line short" style="height:2rem; margin-bottom: var(--sp-4);"></div>' +
+                '<div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div>';
+        }
 
-        function renderNoteDetails(note, detailsArea, noteId) {
-            const createdDate = note.createdAt?.toDate ? note.createdAt.toDate() : new Date();
-            const updatedDate = note.updatedAt?.toDate ? note.updatedAt.toDate() : null;
-
-            const isNew = (new Date() - createdDate) / (1000 * 60 * 60 * 24) <= 7;
-            const wordCount = (note.content || '').split(/\s+/).length;
-            const readingTime = Math.max(1, Math.ceil(wordCount / 200));
-
-            const timeAgo = formatTimeAgo(createdDate);
-            const postedDateStr = createdDate.toLocaleDateString();
-            const updatedDateStr = updatedDate ? updatedDate.toLocaleDateString() : null;
-
-            const cleanContent = DOMPurify.sanitize(note.content || '');
-            const safeTopic = note.noteTopic || 'Untitled Note';
+        function renderNoteDetails(note, noteId) {
+            const area = document.getElementById('note-detail-area');
+            const safeTopic = note.noteTopic || 'Untitled note';
             currentNoteTitle = safeTopic;
-            const safeSubTopic = note.subTopic || '';
+            const raw = note.content || '';
+            const cleanContent = DOMPurify.sanitize(raw);
+            const isPlain = !/<[a-z][\s\S]*>/i.test(raw);
+            const type = note.contentType && note.contentType !== 'Notes' ? note.contentType : '';
 
-            document.title = `${safeTopic} | Boom AI`;
-            document.getElementById('bc-topic').textContent = safeTopic;
+            // Breadcrumb: link back to this note's subject list
             if (note.subject) {
-                const subjectName = note.subject.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                document.getElementById('bc-subject').textContent = subjectName;
-                document.getElementById('bc-subject-link').href = `note.html?subject=${note.subject}`;
-                
-                // Auto open calculator if Mathematics
-                if (note.subject.toLowerCase() === 'mathematics') {
-                    toggleCalculator();
-                }
+                document.getElementById('bc-subject').textContent = formatSubject(note.subject);
+                document.getElementById('bc-subject-link').href = 'note.html?subject=' + encodeURIComponent(note.subject);
             }
+            document.title = `${safeTopic} | Boom AI`;
 
-            const reportEmailBody = encodeURIComponent(`Hello Admin,\n\nI found a mistake in the following note:\nNote ID: ${noteId}\nTopic: ${safeTopic}\nPlease review and fix it.`);
-
-            detailsArea.innerHTML = `
-                <div class="badge-container">
-                    ${isNew ? '<span class="badge badge-new"><i class="fas fa-bolt"></i> NEW</span>' : ''}
-                    ${note.fileUrl ? '<span class="badge badge-attachment"><i class="fas fa-paperclip"></i> Attachment</span>' : ''}
-                    <span class="badge" style="background:rgba(255,255,255,0.15); color:var(--text-color);"><i class="fas fa-clock"></i> ${readingTime} min read</span>
-                </div>
-                <h2 class="note-topic">${safeTopic}</h2>
-                ${safeSubTopic ? `<h3 class="note-sub-topic">${safeSubTopic}</h3>` : ''}
-                <div id="note-detail-content">
-                    <div class="note-content">${cleanContent}</div>
-                    <div id="attachment-slot"></div>
-                    <span class="date-info">
-                        Posted ${timeAgo} (${postedDateStr})
-                        ${updatedDateStr ? ` &bull; Last updated ${updatedDateStr}` : ''}
-                    </span>
-
-                    <div class="feedback-section">
-                        <div class="feedback-buttons">
-                            <span>Was this helpful?</span>
-                            <button class="feedback-btn" onclick="handleFeedback(true)"><i class="fas fa-thumbs-up"></i> Yes</button>
-                            <button class="feedback-btn" onclick="handleFeedback(false)"><i class="fas fa-thumbs-down"></i> No</button>
-                        </div>
-                        <a class="report-link" href="mailto:support@boomai.edu?subject=Report Mistake in Note: ${encodeURIComponent(safeTopic)}&body=${reportEmailBody}">
-                            <i class="fas fa-exclamation-triangle"></i> Report a mistake
-                        </a>
-                    </div>
-
-                    <button class="action-button download-button" onclick="downloadNote()"><i class="fas fa-download"></i> Download as PDF</button>
+            area.innerHTML = `
+                <article id="note-article">
+                    <h1>${escapeHtml(safeTopic)}</h1>
+                    <p class="note-meta">
+                        ${note.subTopic ? `<span>${escapeHtml(note.subTopic)}</span>` : ''}
+                        ${type ? `<span class="badge">${escapeHtml(type)}</span>` : ''}
+                        ${note.createdAt && note.createdAt.toDate ? `<time datetime="${note.createdAt.toDate().toISOString()}">Added ${note.createdAt.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</time>` : ''}
+                    </p>
+                    <div class="note-content ${isPlain ? 'plain' : ''}">${cleanContent}</div>
+                </article>
+                <div id="attachment-slot"></div>
+                <div class="download-row">
+                    <button type="button" class="btn btn-primary" id="downloadBtn" onclick="downloadNote(this)"><i class="fas fa-download" aria-hidden="true"></i> Download as PDF</button>
                 </div>`;
 
-            if (note.fileUrl) {
-                renderAttachment(note, document.getElementById('attachment-slot'));
-            }
+            document.getElementById('favBtn').hidden = false;
+            syncFavButton();
+            renderAttachment(note);
+            applyUserDisplayPrefs();
+            updateProgressBar();
         }
 
-        function handleFeedback(isHelpful) {
-            alert(isHelpful ? "Thank you for your feedback!" : "Thanks for letting us know. We will improve this note!");
-        }
+        /* --- attachment (was never shown before) --- */
+        function renderAttachment(note) {
+            const url = note.fileUrl;
+            if (!url || !/^https?:\/\//i.test(url)) return;
+            const slot = document.getElementById('attachment-slot');
+            const isImage = (note.fileType || '').startsWith('image/');
+            const isPdf = note.fileType === 'application/pdf' || /\.pdf($|\?)/i.test(url);
+            const name = note.fileName || (isPdf ? 'PDF attachment' : 'Attachment');
+            const dataSaver = getPrefs().dataSaver;
 
-        function renderAttachment(note, slot) {
-            if (!slot || !note.fileUrl) return;
-            const isPdf = note.fileType === 'application/pdf' || note.fileUrl.endsWith('.pdf');
-            
-            const section = document.createElement('div');
+            const section = document.createElement('section');
             section.className = 'attachment-section';
-            section.innerHTML = `
-                <h4 class="attachment-title"><i class="fas fa-paperclip"></i> Attached File</h4>
-                <div class="attachment-name">${note.fileName || 'Document'}</div>
-                ${isPdf ? `<iframe class="attachment-pdf" src="${note.fileUrl}"></iframe>` : `<img class="attachment-image" src="${note.fileUrl}" alt="Attachment">`}
-                <div class="attachment-actions">
-                    <a href="${note.fileUrl}" target="_blank" class="action-button"><i class="fas fa-external-link-alt"></i> Open File</a>
-                </div>`;
+            const h = document.createElement('h2');
+            h.innerHTML = '<i class="fas fa-paperclip" aria-hidden="true"></i> ';
+            h.appendChild(document.createTextNode(name));
+            section.appendChild(h);
+
+            const actions = document.createElement('div');
+            actions.className = 'attachment-actions';
+            const open = document.createElement('a');
+            open.className = 'btn btn-sm';
+            open.href = url; open.target = '_blank'; open.rel = 'noopener';
+            open.innerHTML = '<i class="fas fa-up-right-from-square" aria-hidden="true"></i> Open in new tab';
+
+            if (isImage) {
+                const holder = document.createElement('div');
+                const show = () => {
+                    const img = document.createElement('img');
+                    img.className = 'attachment-image'; img.loading = 'lazy';
+                    img.alt = note.noteTopic ? `Image for ${note.noteTopic}` : 'Note image';
+                    img.src = url;
+                    holder.replaceChildren(img);
+                };
+                if (dataSaver) {
+                    const btn = document.createElement('button');
+                    btn.type = 'button'; btn.className = 'btn btn-sm';
+                    btn.innerHTML = '<i class="fas fa-image" aria-hidden="true"></i> Show image';
+                    btn.addEventListener('click', show);
+                    actions.appendChild(btn);
+                } else { show(); }
+                section.appendChild(holder);
+            } else if (isPdf && !dataSaver && window.matchMedia('(min-width: 768px)').matches) {
+                // Many phones cannot preview PDFs inline, so only wide screens get the viewer
+                const frame = document.createElement('iframe');
+                frame.className = 'attachment-pdf'; frame.title = name; frame.src = url; frame.loading = 'lazy';
+                section.appendChild(frame);
+            }
+            actions.appendChild(open);
+            section.appendChild(actions);
             slot.appendChild(section);
         }
 
-        function formatTimeAgo(date) {
-            const seconds = Math.floor((new Date() - date) / 1000);
-            let interval = Math.floor(seconds / 31536000);
-            if (interval >= 1) return `${interval} year${interval > 1 ? 's' : ''} ago`;
-            interval = Math.floor(seconds / 2592000);
-            if (interval >= 1) return `${interval} month${interval > 1 ? 's' : ''} ago`;
-            interval = Math.floor(seconds / 86400);
-            if (interval >= 1) return `${interval} day${interval > 1 ? 's' : ''} ago`;
-            interval = Math.floor(seconds / 3600);
-            if (interval >= 1) return `${interval} hour${interval > 1 ? 's' : ''} ago`;
-            interval = Math.floor(seconds / 60);
-            if (interval >= 1) return `${interval} minute${interval > 1 ? 's' : ''} ago`;
-            return 'just now';
+        /* --- reading preferences (set in the settings dialog) --- */
+        function applyUserDisplayPrefs() {
+            const p = getPrefs();
+            const el = document.querySelector('#note-article .note-content');
+            if (el) { el.style.fontSize = p.fontSize; el.style.lineHeight = p.lineHeight; }
         }
 
-        function downloadNote() {
-            const element = document.getElementById('note-detail-area');
-            const btn = document.querySelector('.download-button');
-            const attachment = document.getElementById('attachment-slot');
-            btn.style.display = 'none';
-            if (attachment) attachment.style.display = 'none';
-            
-            const opt = {
-              margin: [15, 15, 15, 15],
-              filename: `Note_${currentNoteTitle.replace(/[^a-z0-9]/gi, '_')}.pdf`,
-              image: { type: 'jpeg', quality: 0.98 },
-              html2canvas: { scale: 2, useCORS: true, letterRendering: true },
-              jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        /* --- PDF --- */
+        function downloadNote(btn) {
+            const el = document.getElementById('note-article');
+            if (!el) return;
+            setLoading(btn, true);
+            el.classList.add('pdf-export');
+            const finish = (ok) => {
+                el.classList.remove('pdf-export');
+                setLoading(btn, false);
+                if (ok) confirmButton(btn, 'Downloaded'); else showToast('The PDF could not be created. Please try again.');
             };
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                btn.style.display = 'inline-flex';
-                if (attachment) attachment.style.display = '';
-            }).catch(err => {
-                console.error(err);
-                btn.style.display = 'inline-flex';
-                if (attachment) attachment.style.display = '';
-                alert("Error generating PDF.");
-            });
+            try {
+                html2pdf().from(el).save(`Note_${currentNoteTitle}.pdf`).then(() => finish(true)).catch(() => finish(false));
+            } catch (e) { finish(false); }
         }
 
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
+        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
     </script>
 </body>
 </html>
