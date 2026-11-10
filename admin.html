@@ -3,216 +3,225 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Panel | Boom AI</title>
-  
+  <meta name="robots" content="noindex">
+  <title>Admin | Boom AI</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
-  
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="theme.css">
   <script src="theme.js"></script>
 
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* Page-specific layout only. */
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); }
+    #main-content { width: 100%; max-width: 1100px; flex: 1; }
 
-    body {
-      font-family: 'Poppins', sans-serif;
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      justify-content: space-between; align-items: center;
-      padding: 20px; position: relative;
-    }
+    .login-section, .dashboard-section { display: none; padding: var(--sp-5); }
+    .login-section.active, .dashboard-section.active { display: block; }
+    .login-section { max-width: 420px; margin: var(--sp-7) auto 0; }
+    .login-section h1 { margin: 0 0 var(--sp-5); font-size: var(--fs-5); }
+    @media (min-width: 768px) { .dashboard-section { padding: var(--sp-6); } }
 
-    #main-content {
-      flex-grow: 1; display: flex;
-      justify-content: center; align-items: center;
-      width: 100%; max-width: 1100px;
-      padding-top: 50px;
-    }
+    .dash-head { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-5); }
+    .dash-head h1 { margin: 0; font-size: var(--fs-5); }
 
-    .container {
-      width: 100%; display: flex; flex-direction: column;
-      gap: 20px; padding: 20px; border-radius: 15px;
-    }
+    .field { display: block; margin-bottom: var(--sp-3); }
+    .field > label, .field > span { display: block; margin-bottom: var(--sp-1); font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+    .field input, .field select { width: 100%; }
+    .field-row { display: grid; gap: var(--sp-3); }
+    @media (min-width: 560px) { .field-row.cols-3 { grid-template-columns: repeat(3, 1fr); } }
 
-    .card {
-      background: var(--button-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px; padding: 30px;
-      box-shadow: 0 4px 20px var(--shadow-color);
-      text-align: center; transition: all 0.4s ease-in-out;
-      opacity: 0; transform: translateY(20px);
-      pointer-events: none; display: none;
-    }
-    .card.active { opacity: 1; transform: translateY(0); pointer-events: auto; display: block; }
-    .card h2 { margin-bottom: 25px; color: var(--accent-color-1); font-weight: 600; }
+    .password-group { position: relative; }
+    .password-group input { padding-right: var(--tap); }
+    .password-toggle { position: absolute; right: 0; top: 0; border: 0; background: transparent; }
+    .error { margin: var(--sp-3) 0 0; color: var(--danger); font-size: var(--fs-2); font-weight: var(--fw-semibold); }
+    .error:empty { display: none; }
 
-    #main-content input[type="email"],
-    #main-content input[type="password"],
-    #main-content input[type="text"],
-    #main-content textarea,
-    #main-content select {
-      width: 100%; padding: 12px; margin: 10px 0;
-      border: 1px solid var(--border-color);
-      border-radius: 8px; background: var(--button-bg);
-      color: var(--text-color); font-size: 1rem; font-family: inherit;
-      transition: border-color 0.3s ease;
-    }
-    #main-content input[type="file"] { width: 100%; margin: 10px 0; color: var(--text-color); }
-    #main-content input:focus, #main-content textarea:focus, #main-content select:focus { border-color: var(--accent-color-1); outline: none; }
-    #main-content select option { background: var(--bg-gradient-end); color: var(--text-color); }
+    .admin-workspace { display: grid; gap: var(--sp-5); }
+    @media (min-width: 900px) { .admin-workspace { grid-template-columns: 1fr 1fr; align-items: start; } }
 
-    .char-counter { font-size: 0.8rem; text-align: right; opacity: 0.7; margin-bottom: 5px; }
+    /* Editor: toolbar + writing area read as one control (concentric radii) */
+    .editor-toolbar { display: flex; flex-wrap: wrap; gap: var(--sp-1); padding: var(--sp-1); border: 1px solid var(--text-muted); border-bottom: 0; border-radius: var(--r-sm) var(--r-sm) 0 0; background: var(--surface-2); }
+    .editor-toolbar button, .editor-toolbar select { min-height: var(--tap); min-width: var(--tap); border: 1px solid transparent; border-radius: 4px; background: transparent; color: var(--text); font: inherit; font-size: var(--fs-2); cursor: pointer; padding: 0 var(--sp-2); }
+    .editor-toolbar button:hover, .editor-toolbar select:hover { background: var(--accent); color: var(--on-accent); }
+    .editor-toolbar select { max-width: 9rem; }
+    .editor-content-area { min-height: 200px; max-height: 350px; overflow-y: auto; padding: var(--sp-3) var(--sp-4); margin-bottom: var(--sp-1); border: 1px solid var(--text-muted); border-radius: 0 0 var(--r-sm) var(--r-sm); background: var(--surface); color: var(--text); }
+    .editor-content-area:focus { border-color: var(--accent); outline: none; }
+    .editor-content-area:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+    .editor-content-area:empty::before { content: attr(data-placeholder); color: var(--text-muted); }
+    .char-counter { font-size: var(--fs-1); color: var(--text-muted); text-align: right; margin-bottom: var(--sp-3); }
 
-    .checkbox-group { display: flex; align-items: center; gap: 10px; margin: 12px 0; text-align: left; font-size: 0.95rem; color: var(--text-color); cursor: pointer; }
-    .checkbox-group input { width: 18px; height: 18px; cursor: pointer; }
+    .check { display: flex; align-items: center; gap: var(--sp-3); min-height: var(--tap); font-size: var(--fs-2); cursor: pointer; }
+    .check input { width: 20px; height: 20px; accent-color: var(--accent); }
+    .attachment-box { margin: var(--sp-3) 0; padding: var(--sp-3); border-radius: var(--r-sm); background: var(--surface-2); font-size: var(--fs-2); }
 
-    .password-group { position: relative; width: 100%; }
-    .password-toggle { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: var(--text-color); opacity: 0.7; }
+    .progress-bar-container { display: none; height: var(--sp-2); margin: var(--sp-3) 0; border-radius: var(--r-pill); background: var(--surface-2); overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background: var(--accent); transition: width var(--dur-med) var(--ease); }
+    .last-saved-timestamp { margin: var(--sp-1) 0 var(--sp-3); font-size: var(--fs-1); color: var(--text-muted); text-align: right; }
+    .form-actions { display: flex; gap: var(--sp-3); flex-wrap: wrap; }
+    .form-actions .btn-primary { flex: 2 1 12rem; }
+    .form-actions .btn:not(.btn-primary) { flex: 1 1 6rem; }
 
-    #main-content button {
-      background: var(--button-hover-bg); color: var(--button-hover-text);
-      padding: 12px 25px; border: none; border-radius: 8px;
-      cursor: pointer; font-size: 1rem; font-weight: 500; font-family: inherit;
-      margin: 10px 5px; display: inline-flex;
-      align-items: center; justify-content: center; gap: 8px;
-      transition: filter 0.3s ease, transform 0.2s ease;
-    }
-    #main-content button:hover { filter: brightness(1.12); transform: translateY(-2px); }
-    #main-content .logout-button { background: #e5484d; color: #fff; float: right; margin-bottom: 20px; }
+    .preview-pane { padding: var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-inner-lg); background: var(--surface-2); max-height: 560px; overflow-y: auto; }
+    @media (min-width: 900px) { .preview-pane { position: sticky; top: var(--sp-4); } }
+    .preview-pane h2 { margin: 0 0 var(--sp-3); padding-bottom: var(--sp-2); border-bottom: 1px solid var(--border); font-size: var(--fs-2); color: var(--text-muted); }
+    #livePreviewContent { overflow-wrap: anywhere; }
+    #livePreviewContent .pv-topic { margin: 0; font-size: var(--fs-4); }
+    #livePreviewContent .pv-sub { margin: var(--sp-1) 0 0; font-size: var(--fs-2); color: var(--text-muted); }
+    #livePreviewContent .pv-title { margin: var(--sp-3) 0 var(--sp-2); font-size: var(--fs-3); }
 
-    .error { color: #e5484d; margin-top: 15px; font-size: 0.9rem; font-weight: 600; }
+    .list-section { margin-top: var(--sp-6); padding-top: var(--sp-5); border-top: 1px solid var(--border); }
+    .list-section h2 { margin: 0 0 var(--sp-3); font-size: var(--fs-4); }
+    .subject-counter-summary { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+    .count-chip { display: inline-flex; gap: var(--sp-2); padding: var(--sp-1) var(--sp-3); border: 1px solid var(--border); border-radius: var(--r-pill); font-size: var(--fs-1); }
+    .count-chip b { font-weight: var(--fw-bold); }
+    .admin-filter-bar { display: grid; gap: var(--sp-3); margin-bottom: var(--sp-4); }
+    @media (min-width: 768px) { .admin-filter-bar { grid-template-columns: 2fr 1fr 1fr; } }
 
-    .admin-workspace { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; text-align: left; }
-    @media(max-width: 768px) { .admin-workspace { grid-template-columns: 1fr; } }
+    .note-list { display: grid; gap: var(--sp-2); max-height: 480px; overflow-y: auto; }
+    .note-list .note-row { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: var(--sp-3) var(--sp-4); border: 1px solid var(--border); border-radius: var(--r-inner-lg); background: var(--surface-2); }
+    .note-row .info { min-width: 0; overflow-wrap: anywhere; }
+    .note-row .info small { display: block; margin-top: var(--sp-1); color: var(--text-muted); font-size: var(--fs-1); }
+    .note-row .actions { display: flex; gap: var(--sp-1); flex: none; }
+    .icon-btn.is-loading .fas { display: none; }
+    .icon-btn.danger { color: var(--danger); }
+    .icon-btn.danger:hover { background: var(--danger); color: var(--bg); }
 
-    .preview-pane { background: rgba(0,0,0,0.15); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; max-height: 500px; overflow-y: auto; }
-    .preview-pane h3 { font-size: 1rem; margin-bottom: 10px; opacity: 0.8; border-bottom: 1px solid var(--border-color); padding-bottom: 5px; }
-
-    .admin-filter-bar { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .admin-filter-bar input, .admin-filter-bar select { flex: 1; min-width: 150px; margin: 0; padding: 8px; }
-    
-    .subject-counter-summary { font-size: 0.85rem; margin-bottom: 15px; opacity: 0.85; text-align: left; background: var(--button-bg); padding: 10px; border-radius: 8px; border: 1px solid var(--border-color); }
-
-    .progress-bar-container { width: 100%; background: rgba(255,255,255,0.1); border-radius: 8px; height: 10px; overflow: hidden; margin: 10px 0; display: none; }
-    .progress-bar-fill { height: 100%; background: #00c853; width: 0%; transition: width 0.2s ease; }
-
-    .note-list { margin-top: 20px; background: var(--button-bg); border-radius: 10px; padding: 15px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border-color); }
-    .note-item { background: var(--button-bg); border: 1px solid var(--border-color); border-left: 5px solid var(--accent-color-1); border-radius: 8px; padding: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-    .note-item span { flex-grow: 1; text-align: left; color: var(--text-color); }
-    .note-item strong { color: var(--heading-color); font-size: 1.1em; }
-    .note-item .actions button { padding: 6px 10px; font-size: 0.85rem; margin-left: 5px; color: #fff; }
-
-    .last-saved-timestamp { font-size: 0.8rem; opacity: 0.7; text-align: right; margin-top: 5px; }
-
-    .footer { margin-top: 30px; text-align: center; font-size: 0.9em; color: var(--text-color); opacity: 0.8; }
-    .footer a { color: inherit; text-decoration: none; }
+    .footer { margin-top: var(--sp-7); padding: var(--sp-5) 0 var(--sp-2); }
   </style>
 </head>
 
 <body>
-  <div class="background-aurora">
-    <div class="aurora-shape shape1"></div>
-    <div class="aurora-shape shape2"></div>
-    <div class="aurora-shape shape3"></div>
-  </div>
+  <main id="main-content">
 
-  <div id="main-content">
-    <div class="container">
-      
-      <!-- Login Section -->
-      <div class="card login-section active" id="login-section">
-        <h2>Admin Login</h2>
-        <form id="login-form" onsubmit="login(event)" novalidate>
-          <input type="email" id="email" placeholder="Email" autocomplete="username" required>
+    <!-- Login -->
+    <section class="card login-section active" id="login-section">
+      <h1>Admin login</h1>
+      <form id="login-form" onsubmit="login(event)" novalidate>
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
           <div class="password-group">
-            <input type="password" id="password" placeholder="Password" autocomplete="current-password" required>
-            <i class="fas fa-eye password-toggle" id="togglePassword" onclick="togglePasswordVisibility()"></i>
+            <input type="password" id="password" autocomplete="current-password" required>
+            <button type="button" class="icon-btn password-toggle" id="togglePassword" onclick="togglePasswordVisibility()" aria-label="Show password"><i class="fas fa-eye"></i></button>
           </div>
-          <button type="submit" id="login-button">Login</button>
-        </form>
-        <div class="error" id="login-error" role="alert"></div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="login-button" style="width:100%;">Log in</button>
+      </form>
+      <p class="error" id="login-error" role="alert"></p>
+    </section>
+
+    <!-- Dashboard -->
+    <section class="card dashboard-section" id="dashboard-section">
+      <div class="dash-head">
+        <h1>Admin dashboard</h1>
+        <button type="button" class="btn btn-sm" onclick="logout()"><i class="fas fa-right-from-bracket" aria-hidden="true"></i> Log out</button>
       </div>
 
-      <!-- Dashboard Section -->
-      <div class="card dashboard-section" id="dashboard-section">
-        <button class="logout-button" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
-        <h2>Admin Dashboard</h2>
+      <div class="admin-workspace">
+        <form id="note-form">
+          <div class="field-row cols-3">
+            <div class="field"><label for="note-topic">Topic</label><input type="text" id="note-topic" placeholder="e.g. Algebra" required oninput="triggerAutosave(); updateLivePreview();"></div>
+            <div class="field"><label for="sub-topic">Subtopic</label><input type="text" id="sub-topic" placeholder="e.g. Quadratic equations" required oninput="triggerAutosave(); updateLivePreview();"></div>
+            <div class="field"><label for="note-title">Title</label><input type="text" id="note-title" maxlength="60" required oninput="updateCharCount(); triggerAutosave(); updateLivePreview();"></div>
+          </div>
+          <div class="char-counter" id="charCounter">0 / 60 characters</div>
 
-        <div class="admin-workspace">
-          <!-- Editor Form -->
-          <form id="note-form">
-            <input type="text" id="note-topic" placeholder="Note Topic (e.g., Algebra)" required oninput="triggerAutosave(); updateLivePreview();">
-            
-            <input type="text" id="sub-topic" placeholder="Sub Topic (e.g., Quadratic Equations)" required oninput="triggerAutosave(); updateLivePreview();">
-            
-            <div>
-              <input type="text" id="note-title" placeholder="Note Title" maxlength="60" required oninput="updateCharCount(); triggerAutosave(); updateLivePreview();">
-              <div class="char-counter" id="charCounter">0 / 60 characters</div>
-            </div>
-
-            <textarea id="content" rows="6" placeholder="Note Content (HTML tags allowed)" required oninput="triggerAutosave(); updateLivePreview();"></textarea>
-
-            <select id="grade" required onchange="updateSubjectDropdown(); saveLastSubjectGrade(); triggerAutosave();">
-              <option value="" disabled selected>Select Grade First</option>
-              <option value="Grade 7">Grade 7</option>
-              <option value="Grade 8">Grade 8</option>
-              <option value="Grade 9">Grade 9</option>
-              <option value="Grade 10">Grade 10 (Senior School)</option>
+          <div class="editor-toolbar" role="toolbar" aria-label="Text formatting">
+            <button type="button" onclick="formatText('bold')" aria-label="Bold" title="Bold"><i class="fas fa-bold"></i></button>
+            <button type="button" onclick="formatText('italic')" aria-label="Italic" title="Italic"><i class="fas fa-italic"></i></button>
+            <button type="button" onclick="formatText('underline')" aria-label="Underline" title="Underline"><i class="fas fa-underline"></i></button>
+            <button type="button" onclick="formatText('strikeThrough')" aria-label="Strikethrough" title="Strikethrough"><i class="fas fa-strikethrough"></i></button>
+            <select onchange="changeFontSize(this.value)" aria-label="Letter size" title="Letter size">
+              <option value="" disabled selected>Size</option>
+              <option value="1">Small</option>
+              <option value="3">Normal</option>
+              <option value="5">Large</option>
+              <option value="7">Extra large</option>
             </select>
+            <button type="button" onclick="formatText('formatBlock', 'H2')" aria-label="Heading" title="Heading"><i class="fas fa-heading"></i></button>
+            <button type="button" onclick="formatText('insertUnorderedList')" aria-label="Bullet list" title="Bullet list"><i class="fas fa-list-ul"></i></button>
+            <button type="button" onclick="formatText('insertOrderedList')" aria-label="Numbered list" title="Numbered list"><i class="fas fa-list-ol"></i></button>
+            <button type="button" onclick="formatText('justifyLeft')" aria-label="Align left" title="Align left"><i class="fas fa-align-left"></i></button>
+            <button type="button" onclick="formatText('justifyCenter')" aria-label="Align centre" title="Align centre"><i class="fas fa-align-center"></i></button>
+            <button type="button" onclick="formatText('removeFormat')" aria-label="Clear formatting" title="Clear formatting"><i class="fas fa-eraser"></i></button>
+          </div>
+          <div id="content" class="editor-content-area" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Note content" data-placeholder="Type the note here" oninput="triggerAutosave(); updateLivePreview();"></div>
 
-            <select id="subject" required onchange="saveLastSubjectGrade(); triggerAutosave();">
-              <option value="" disabled selected>Select Grade First</option>
-            </select>
-
-            <label class="checkbox-group">
-              <input type="checkbox" id="isPinned" onchange="triggerAutosave()"> Pin / Feature this note to top
-            </label>
-
-            <div id="current-attachment-box" style="display:none; text-align:left; font-size:0.85rem; margin: 10px 0; padding:8px; background:var(--button-bg); border-radius:6px;">
-              <strong>Current Attachment:</strong> <a id="current-attachment-link" href="#" target="_blank">View File</a>
-              <label style="display:block; margin-top:5px; cursor:pointer;"><input type="checkbox" id="removeFileCheckbox"> Remove attached file</label>
+          <div class="field-row cols-3" style="margin-top: var(--sp-3);">
+            <div class="field">
+              <label for="grade">Grade</label>
+              <select id="grade" required onchange="updateSubjectDropdown(); saveLastSubjectGrade(); triggerAutosave();">
+                <option value="" disabled selected>Select grade</option>
+                <option value="Grade 7">Grade 7</option>
+                <option value="Grade 8">Grade 8</option>
+                <option value="Grade 9">Grade 9</option>
+                <option value="Grade 10">Grade 10 (Senior School)</option>
+              </select>
             </div>
-
-            <input type="file" id="fileInput" accept="application/pdf,image/*" onchange="validateFile(this)">
-            
-            <div class="progress-bar-container" id="uploadProgressContainer">
-              <div class="progress-bar-fill" id="uploadProgressBar"></div>
+            <div class="field">
+              <label for="subject">Subject</label>
+              <select id="subject" required onchange="saveLastSubjectGrade(); triggerAutosave();">
+                <option value="" disabled selected>Select grade first</option>
+              </select>
             </div>
-
-            <div class="last-saved-timestamp" id="lastSavedTimestamp">Draft not saved yet</div>
-
-            <div style="display:flex; gap:10px; margin-top:15px; flex-wrap:wrap;">
-              <button type="submit" id="submit-button" style="flex:2;"><i class="fas fa-upload"></i> Upload Note</button>
-              <button type="button" onclick="clearForm()" style="flex:1; background:#6c757d;"><i class="fas fa-eraser"></i> Clear</button>
-              <button type="button" id="cancel-edit-button" style="display: none; flex:1; background:#ff9800;" onclick="cancelEdit()">Cancel</button>
-            </div>
-          </form>
-
-          <!-- Live Preview Pane -->
-          <div class="preview-pane">
-            <h3><i class="fas fa-eye"></i> Live Preview</h3>
-            <div id="livePreviewContent" style="color:var(--text-color); word-break:break-word;">
-              <em>Start typing to see live preview...</em>
+            <div class="field">
+              <label for="contentType">Content type</label>
+              <select id="contentType" required onchange="triggerAutosave()">
+                <option value="Notes" selected>Notes</option>
+                <option value="Revision">Revision guide</option>
+                <option value="Exam">Exam practice</option>
+              </select>
             </div>
           </div>
-        </div>
 
-        <!-- Filter & Search Bar for Admin Notes -->
-        <hr style="border-color:var(--border-color); margin: 25px 0;">
-        
-        <div class="subject-counter-summary" id="subjectCounterSummary">
-          Calculating notes-per-subject...
-        </div>
+          <label class="check"><input type="checkbox" id="isPinned" onchange="triggerAutosave()"> Pin this note to the top</label>
+
+          <div id="current-attachment-box" class="attachment-box" style="display:none;">
+            <strong>Current attachment:</strong> <a id="current-attachment-link" href="#" target="_blank" rel="noopener">View file</a>
+            <label class="check"><input type="checkbox" id="removeFileCheckbox"> Remove attached file</label>
+          </div>
+
+          <div class="field">
+            <label for="fileInput">Attachment (PDF or image, up to 10 MB)</label>
+            <input type="file" id="fileInput" accept="application/pdf,image/*" onchange="validateFile(this)">
+          </div>
+          <div class="progress-bar-container" id="uploadProgressContainer" role="progressbar" aria-label="Upload progress">
+            <div class="progress-bar-fill" id="uploadProgressBar"></div>
+          </div>
+
+          <div class="last-saved-timestamp" id="lastSavedTimestamp" aria-live="polite">Draft not saved yet</div>
+
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary" id="submit-button"><i class="fas fa-upload" aria-hidden="true"></i> Upload Note</button>
+            <button type="button" class="btn" onclick="clearForm()">Clear</button>
+            <button type="button" class="btn" id="cancel-edit-button" style="display:none;" onclick="cancelEdit()">Cancel edit</button>
+          </div>
+        </form>
+
+        <aside class="preview-pane" aria-label="Live preview">
+          <h2>Live preview</h2>
+          <div id="livePreviewContent"><p class="pv-sub">The preview appears as you type.</p></div>
+        </aside>
+      </div>
+
+      <div class="list-section">
+        <h2>Uploaded notes</h2>
+        <div class="subject-counter-summary" id="subjectCounterSummary" aria-label="Notes per subject"></div>
 
         <div class="admin-filter-bar">
-          <input type="text" id="adminSearchInput" placeholder="Search uploaded notes..." oninput="filterAdminNotes()">
-          <select id="adminSubjectFilter" onchange="filterAdminNotes()">
-            <option value="">All Subjects</option>
+          <input type="search" id="adminSearchInput" placeholder="Search uploaded notes" aria-label="Search uploaded notes" oninput="filterAdminNotes()">
+          <select id="adminSubjectFilter" onchange="filterAdminNotes()" aria-label="Filter by subject">
+            <option value="">All subjects</option>
             <option value="mathematics">Mathematics</option>
             <option value="english">English</option>
             <option value="kiswahili">Kiswahili</option>
@@ -230,8 +239,8 @@
             <option value="computer-studies">Computer Studies</option>
             <option value="business-studies">Business Studies</option>
           </select>
-          <select id="adminGradeFilter" onchange="filterAdminNotes()">
-            <option value="">All Grades</option>
+          <select id="adminGradeFilter" onchange="filterAdminNotes()" aria-label="Filter by grade">
+            <option value="">All grades</option>
             <option value="Grade 7">Grade 7</option>
             <option value="Grade 8">Grade 8</option>
             <option value="Grade 9">Grade 9</option>
@@ -239,11 +248,11 @@
           </select>
         </div>
 
-        <div class="note-list" id="note-list"></div>
+        <div class="note-list" id="note-list" aria-live="polite"></div>
       </div>
+    </section>
 
-    </div>
-  </div>
+  </main>
 
   <footer class="footer">
     <p>&copy; 2026 Boom AI. Powered by Pope John.</p>
@@ -272,6 +281,11 @@
     let idleTimer = null;
     let formHasUnsavedChanges = false;
 
+    // Escape text before it goes into innerHTML
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     const juniorSubjectsList = [
       { id: 'mathematics', name: 'Mathematics' },
       { id: 'english', name: 'English' },
@@ -285,28 +299,18 @@
     ];
 
     const seniorSchoolCategoriesList = [
-      {
-        category: 'Core Subjects',
-        subjects: [
+      { category: 'Core Subjects', subjects: [
           { id: 'senior-english', name: 'English' },
           { id: 'senior-kiswahili', name: 'Kiswahili / KSL' },
           { id: 'core-mathematics', name: 'Core Mathematics' },
           { id: 'essential-mathematics', name: 'Essential Mathematics' },
-          { id: 'csl', name: 'Community Service Learning (CSL)' }
-        ]
-      },
-      {
-        category: 'Arts & Sports Science',
-        subjects: [
+          { id: 'csl', name: 'Community Service Learning (CSL)' } ] },
+      { category: 'Arts & Sports Science', subjects: [
           { id: 'sports-recreation', name: 'Sports and Recreation' },
           { id: 'music-dance', name: 'Music and Dance' },
           { id: 'theatre-film', name: 'Theatre and Film' },
-          { id: 'fine-arts', name: 'Fine Arts' }
-        ]
-      },
-      {
-        category: 'Social Sciences',
-        subjects: [
+          { id: 'fine-arts', name: 'Fine Arts' } ] },
+      { category: 'Social Sciences', subjects: [
           { id: 'literature-english', name: 'Literature in English' },
           { id: 'indigenous-languages', name: 'Indigenous Languages' },
           { id: 'fasihi-kiswahili', name: 'Fasihi ya Kiswahili' },
@@ -320,12 +324,8 @@
           { id: 'hre-senior', name: 'Hindu Religious Education' },
           { id: 'business-studies', name: 'Business Studies' },
           { id: 'history-citizenship', name: 'History and Citizenship' },
-          { id: 'geography', name: 'Geography' }
-        ]
-      },
-      {
-        category: 'Science, Technology, Engineering & Mathematics (STEM)',
-        subjects: [
+          { id: 'geography', name: 'Geography' } ] },
+      { category: 'Science, Technology, Engineering & Mathematics (STEM)', subjects: [
           { id: 'biology', name: 'Biology' },
           { id: 'chemistry', name: 'Chemistry' },
           { id: 'physics', name: 'Physics' },
@@ -340,9 +340,7 @@
           { id: 'power-mechanics', name: 'Power Mechanics' },
           { id: 'wood-technology', name: 'Wood Technology' },
           { id: 'media-technology', name: 'Media Technology' },
-          { id: 'marine-fisheries', name: 'Marine and Fisheries Technology' }
-        ]
-      }
+          { id: 'marine-fisheries', name: 'Marine and Fisheries Technology' } ] }
     ];
 
     auth.onAuthStateChanged(user => {
@@ -358,7 +356,7 @@
       clearTimeout(idleTimer);
       idleTimer = setTimeout(() => {
         auth.signOut().then(() => {
-          alert("Auto logged out due to 30 minutes of inactivity.");
+          showToast('You were logged out after 30 minutes of inactivity.', 5000);
           showLogin();
         });
       }, 30 * 60 * 1000);
@@ -378,13 +376,16 @@
 
     function togglePasswordVisibility() {
       const passField = document.getElementById('password');
-      const icon = document.getElementById('togglePassword');
+      const btn = document.getElementById('togglePassword');
+      const icon = btn.querySelector('i');
       if (passField.type === 'password') {
         passField.type = 'text';
         icon.classList.replace('fa-eye', 'fa-eye-slash');
+        btn.setAttribute('aria-label', 'Hide password');
       } else {
         passField.type = 'password';
         icon.classList.replace('fa-eye-slash', 'fa-eye');
+        btn.setAttribute('aria-label', 'Show password');
       }
     }
 
@@ -392,13 +393,19 @@
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value;
-      
+      const btn = document.getElementById('login-button');
+      const errorEl = document.getElementById('login-error');
+      errorEl.textContent = '';
+      setLoading(btn, true);
+
       try {
         await auth.signInWithEmailAndPassword(email, password);
         localStorage.setItem('boom_admin_email', email);
         showDashboard();
       } catch (err) {
-        document.getElementById('login-error').textContent = err.message;
+        errorEl.textContent = err.message;
+      } finally {
+        setLoading(btn, false);
       }
     }
 
@@ -413,10 +420,22 @@
       loadAdminNotes();
     }
 
+    function formatText(command, value = null) {
+      document.execCommand(command, false, value);
+      triggerAutosave();
+      updateLivePreview();
+    }
+
+    function changeFontSize(size) {
+      document.execCommand('fontSize', false, size);
+      triggerAutosave();
+      updateLivePreview();
+    }
+
     function updateSubjectDropdown(selectedSubj = '') {
       const grade = document.getElementById('grade').value;
       const subjectSelect = document.getElementById('subject');
-      subjectSelect.innerHTML = '<option value="" disabled selected>Select Subject</option>';
+      subjectSelect.innerHTML = '<option value="" disabled selected>Select subject</option>';
 
       if (grade === 'Grade 10') {
         seniorSchoolCategoriesList.forEach(cat => {
@@ -477,13 +496,13 @@
       const topic = document.getElementById('note-topic').value;
       const subtopic = document.getElementById('sub-topic').value;
       const title = document.getElementById('note-title').value;
-      const content = document.getElementById('content').value;
+      const content = document.getElementById('content').innerHTML;
 
       document.getElementById('livePreviewContent').innerHTML = `
-        <h4 style="color:var(--heading-color);">${topic || 'Topic Preview'}</h4>
-        <em style="font-size:0.85rem;">${subtopic}</em>
-        <h2 style="font-size:1.2rem; margin:8px 0;">${title || 'Title Preview'}</h2>
-        <div style="margin-top:10px;">${content || 'Content preview will appear here...'}</div>
+        <h3 class="pv-topic">${esc(topic) || 'Topic'}</h3>
+        <p class="pv-sub">${esc(subtopic)}</p>
+        <h4 class="pv-title">${esc(title) || 'Title'}</h4>
+        <div>${content || '<p class="pv-sub">The note text appears here.</p>'}</div>
       `;
       markFormChanged();
     }
@@ -493,14 +512,15 @@
         topic: document.getElementById('note-topic').value,
         subtopic: document.getElementById('sub-topic').value,
         title: document.getElementById('note-title').value,
-        content: document.getElementById('content').value,
+        content: document.getElementById('content').innerHTML,
+        contentType: document.getElementById('contentType').value,
         subject: document.getElementById('subject').value,
         grade: document.getElementById('grade').value,
         isPinned: document.getElementById('isPinned').checked
       };
       localStorage.setItem('boom_admin_draft', JSON.stringify(draft));
       const nowStr = new Date().toLocaleTimeString();
-      document.getElementById('lastSavedTimestamp').textContent = `Last saved at ${nowStr}`;
+      document.getElementById('lastSavedTimestamp').textContent = `Draft saved at ${nowStr}`;
     }
 
     function loadDraftFromBrowser() {
@@ -511,7 +531,8 @@
           document.getElementById('note-topic').value = d.topic || '';
           document.getElementById('sub-topic').value = d.subtopic || '';
           document.getElementById('note-title').value = d.title || '';
-          document.getElementById('content').value = d.content || '';
+          document.getElementById('content').innerHTML = d.content || '';
+          if (d.contentType) document.getElementById('contentType').value = d.contentType;
           if (d.grade) {
             document.getElementById('grade').value = d.grade;
             updateSubjectDropdown(d.subject);
@@ -528,12 +549,12 @@
         const file = input.files[0];
         const maxSize = 10 * 1024 * 1024;
         if (file.size > maxSize) {
-          alert("File is too large! Maximum size allowed is 10MB.");
+          showToast('That file is too large. The limit is 10 MB.', 4000);
           input.value = '';
           return;
         }
         if (!['application/pdf', 'image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
-          alert("Invalid file type. Only PDF and images are allowed.");
+          showToast('Only PDF, JPG, PNG or WebP files are allowed.', 4000);
           input.value = '';
           return;
         }
@@ -542,23 +563,32 @@
 
     function clearForm() {
       document.getElementById('note-form').reset();
+      document.getElementById('content').innerHTML = '';
       document.getElementById('current-attachment-box').style.display = 'none';
       editingNoteId = null;
       currentFileUrl = null;
       localStorage.removeItem('boom_admin_draft');
       loadLastSubjectGrade();
       document.getElementById('lastSavedTimestamp').textContent = 'Form cleared';
-      document.getElementById('submit-button').innerHTML = '<i class="fas fa-upload"></i> Upload Note';
+      document.getElementById('submit-button').innerHTML = '<i class="fas fa-upload" aria-hidden="true"></i> Upload Note';
       document.getElementById('cancel-edit-button').style.display = 'none';
       formHasUnsavedChanges = false;
       updateLivePreview();
       updateCharCount();
+      formHasUnsavedChanges = false;
+    }
+
+    function listState(message, buttonLabel, onClick) {
+      const list = document.getElementById('note-list');
+      list.innerHTML = `<div class="state-block"><p>${esc(message)}</p>` +
+        (buttonLabel ? `<button type="button" class="btn btn-primary" id="listStateBtn">${esc(buttonLabel)}</button>` : '') + '</div>';
+      if (buttonLabel) document.getElementById('listStateBtn').addEventListener('click', onClick);
     }
 
     async function loadAdminNotes() {
       const listContainer = document.getElementById('note-list');
-      listContainer.innerHTML = `<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading notes...</div>`;
-      
+      listContainer.innerHTML = '<div class="skeleton skeleton-card" style="height:72px; margin:0;"></div>'.repeat(3);
+
       try {
         const snapshot = await db.collection('notes').orderBy('createdAt', 'desc').get();
         allAdminNotes = [];
@@ -573,37 +603,42 @@
         renderSubjectCounters(counts);
         renderAdminNotesList(allAdminNotes);
       } catch (err) {
-        listContainer.innerHTML = '<p style="color:red; text-align:center;">Error loading notes.</p>';
+        listState('Notes could not load. Check the connection and try again.', 'Try again', loadAdminNotes);
       }
     }
 
     function renderSubjectCounters(counts) {
       const summary = document.getElementById('subjectCounterSummary');
-      let html = '<strong><i class="fas fa-chart-bar"></i> Notes per Subject:</strong> ';
       const subjects = ['mathematics', 'english', 'kiswahili', 'integrated-science', 'social-studies', 'cre', 'pre-technical', 'agriculture-nutrition', 'creative-arts-sports', 'core-mathematics', 'essential-mathematics', 'biology', 'chemistry', 'physics', 'computer-studies', 'business-studies'];
-      
-      html += subjects.map(s => `${s.replace(/-/g, ' ')} (${counts[s] || 0})`).join(' | ');
-      summary.innerHTML = html;
+      summary.innerHTML = subjects.map(s => `<span class="count-chip"><span>${s.replace(/-/g, ' ')}</span><b class="num">${counts[s] || 0}</b></span>`).join('');
     }
 
     function renderAdminNotesList(notes) {
       const listContainer = document.getElementById('note-list');
       if (notes.length === 0) {
-        listContainer.innerHTML = '<p style="text-align:center; opacity:0.8;">No matching notes found.</p>';
+        if (allAdminNotes.length === 0) {
+          listState('No notes yet. Fill in the form above to upload the first one.');
+        } else {
+          listState('No notes match these filters.', 'Clear filters', () => {
+            document.getElementById('adminSearchInput').value = '';
+            document.getElementById('adminSubjectFilter').value = '';
+            document.getElementById('adminGradeFilter').value = '';
+            filterAdminNotes();
+          });
+        }
         return;
       }
 
       listContainer.innerHTML = notes.map(n => `
-        <div class="note-item">
-          <span>
-            ${n.isPinned ? '<i class="fas fa-thumbtack" style="color:#ff9800; margin-right:5px;" title="Pinned Note"></i>' : ''}
-            <strong>${n.noteTopic}</strong> - <em>${n.noteTitle}</em><br>
-            <small style="opacity:0.7;">${n.subject} | ${n.grade}</small>
-          </span>
+        <div class="note-row">
+          <div class="info">
+            ${n.isPinned ? '<i class="fas fa-thumbtack" style="color:var(--accent);" aria-hidden="true"></i><span class="visually-hidden">Pinned. </span> ' : ''}<strong>${esc(n.noteTopic)}</strong>, ${esc(n.noteTitle)}
+            <small>${esc(n.subject)}, ${esc(n.grade)}, ${esc(n.contentType || 'Notes')}</small>
+          </div>
           <div class="actions">
-            <button onclick="duplicateNote('${n.id}')" style="background:#00bcd4;" title="Duplicate"><i class="fas fa-copy"></i></button>
-            <button onclick="editNote('${n.id}')" style="background:#2196F3;" title="Edit"><i class="fas fa-edit"></i></button>
-            <button onclick="deleteNote('${n.id}')" style="background:#e5484d;" title="Delete"><i class="fas fa-trash"></i></button>
+            <button type="button" class="icon-btn" onclick="duplicateNote('${n.id}')" aria-label="Duplicate note" title="Duplicate"><i class="fas fa-copy"></i></button>
+            <button type="button" class="icon-btn" onclick="editNote('${n.id}')" aria-label="Edit note" title="Edit"><i class="fas fa-pen"></i></button>
+            <button type="button" class="icon-btn danger" onclick="deleteNote('${n.id}', this)" aria-label="Delete note" title="Delete"><i class="fas fa-trash"></i></button>
           </div>
         </div>
       `).join('');
@@ -631,7 +666,8 @@
       document.getElementById('note-topic').value = note.noteTopic + ' (Copy)';
       document.getElementById('sub-topic').value = note.subTopic || '';
       document.getElementById('note-title').value = note.noteTitle || '';
-      document.getElementById('content').value = note.content || '';
+      document.getElementById('content').innerHTML = note.content || '';
+      document.getElementById('contentType').value = note.contentType || 'Notes';
       document.getElementById('grade').value = note.grade || '';
       updateSubjectDropdown(note.subject);
       document.getElementById('isPinned').checked = !!note.isPinned;
@@ -639,11 +675,12 @@
       editingNoteId = null;
       currentFileUrl = null;
       document.getElementById('current-attachment-box').style.display = 'none';
-      document.getElementById('submit-button').innerHTML = '<i class="fas fa-upload"></i> Upload Note (Duplicate)';
+      document.getElementById('submit-button').innerHTML = '<i class="fas fa-upload" aria-hidden="true"></i> Upload Note (Duplicate)';
       window.scrollTo({ top: 0, behavior: 'smooth' });
       updateCharCount();
       updateLivePreview();
       markFormChanged();
+      showToast('Copied into the form. Edit it and upload.');
     }
 
     async function editNote(id) {
@@ -653,7 +690,8 @@
       document.getElementById('note-topic').value = note.noteTopic || '';
       document.getElementById('sub-topic').value = note.subTopic || '';
       document.getElementById('note-title').value = note.noteTitle || '';
-      document.getElementById('content').value = note.content || '';
+      document.getElementById('content').innerHTML = note.content || '';
+      document.getElementById('contentType').value = note.contentType || 'Notes';
       document.getElementById('grade').value = note.grade || '';
       updateSubjectDropdown(note.subject);
       document.getElementById('isPinned').checked = !!note.isPinned;
@@ -669,7 +707,7 @@
         document.getElementById('current-attachment-box').style.display = 'none';
       }
 
-      document.getElementById('submit-button').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+      document.getElementById('submit-button').innerHTML = '<i class="fas fa-floppy-disk" aria-hidden="true"></i> Save Changes';
       document.getElementById('cancel-edit-button').style.display = 'inline-flex';
       window.scrollTo({ top: 0, behavior: 'smooth' });
       updateCharCount();
@@ -681,13 +719,14 @@
     document.getElementById('note-form').addEventListener('submit', async function(e) {
       e.preventDefault();
       const submitBtn = document.getElementById('submit-button');
-      submitBtn.disabled = true;
+      setLoading(submitBtn, true);
 
       const noteData = {
         noteTopic: document.getElementById('note-topic').value.trim(),
         subTopic: document.getElementById('sub-topic').value.trim(),
         noteTitle: document.getElementById('note-title').value.trim(),
-        content: document.getElementById('content').value,
+        content: document.getElementById('content').innerHTML,
+        contentType: document.getElementById('contentType').value,
         subject: document.getElementById('subject').value,
         grade: document.getElementById('grade').value,
         isPinned: document.getElementById('isPinned').checked,
@@ -704,7 +743,7 @@
       } else if (fileInput.files.length > 0) {
         const file = fileInput.files[0];
         const filePath = `notes/${Date.now()}-${file.name}`;
-        
+
         const progContainer = document.getElementById('uploadProgressContainer');
         const progFill = document.getElementById('uploadProgressBar');
         progContainer.style.display = 'block';
@@ -721,8 +760,8 @@
           noteData.fileName = file.name;
           progFill.style.width = '100%';
         } catch (err) {
-          alert('File upload failed: ' + err.message);
-          submitBtn.disabled = false;
+          showToast('File upload failed: ' + err.message, 5000);
+          setLoading(submitBtn, false);
           progContainer.style.display = 'none';
           return;
         }
@@ -733,32 +772,34 @@
       try {
         if (editingNoteId) {
           await db.collection('notes').doc(editingNoteId).update(noteData);
-          alert('Note updated successfully!');
+          showToast('Note updated');
         } else {
           noteData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
           await db.collection('notes').add(noteData);
-          alert('Note added successfully!');
+          showToast('Note added');
         }
         formHasUnsavedChanges = false;
         localStorage.removeItem('boom_admin_draft');
         clearForm();
         loadAdminNotes();
       } catch (err) {
-        alert('Error saving note: ' + err.message);
+        showToast('Error saving note: ' + err.message, 5000);
       } finally {
-        submitBtn.disabled = false;
+        setLoading(submitBtn, false);
         document.getElementById('uploadProgressContainer').style.display = 'none';
       }
     });
 
-    async function deleteNote(id) {
+    async function deleteNote(id, btn) {
       if (confirm('Are you sure you want to delete this note?')) {
+        setLoading(btn, true);
         try {
           await db.collection('notes').doc(id).delete();
+          showToast('Note deleted');
           loadAdminNotes();
-          alert('Note deleted.');
         } catch (err) {
-          alert('Error deleting note.');
+          setLoading(btn, false);
+          showToast('The note could not be deleted. Please try again.', 4000);
         }
       }
     }
