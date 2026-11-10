@@ -3,150 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Boom AI - Select Grade</title>
-  
+  <title>Choose your grade | Boom AI</title>
+
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  
+
   <link rel="stylesheet" href="theme.css">
   <script src="theme.js"></script>
 
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Poppins', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 20px;
-      position: relative;
-    }
-    .moe-logo { position: absolute; top: 20px; left: 20px; height: 50px; z-index: 10; }
-    
-    #main-content {
-      animation: fadeIn 1s ease-in-out;
-      width: 100%;
-      max-width: 500px;
-      flex-grow: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      padding: 40px 0;
-    }
-    #grade-selection {
-      border-radius: 20px;
-      padding: 40px;
-      text-align: center;
-      width: 100%;
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-    }
-    h1 {
-      font-weight: 700;
-      font-size: 2.5rem;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 15px;
-      color: var(--heading-color);
-    }
-    
-    .weekly-summary-card {
-      background: var(--button-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 12px 20px;
-      margin-bottom: 25px;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-color);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-    }
+    /* Page-specific layout only. */
+    body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); position: relative; }
+    .moe-logo { position: absolute; top: var(--sp-4); left: var(--sp-4); height: var(--sp-7); width: auto; }
 
-    .inspiration-message {
-      font-size: 1.05rem;
-      margin-bottom: 30px;
-      padding: 18px;
-      background: var(--button-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 15px;
-      font-style: italic;
-      line-height: 1.6;
-      color: var(--text-color);
-    }
-    .grade-list { display: flex; flex-direction: column; gap: 15px; }
-    .grade-list button {
-      padding: 16px 30px;
-      border: 1px solid var(--border-color);
-      border-radius: 50px;
-      font-size: 1.2rem;
-      font-weight: 600;
-      cursor: pointer;
-      background: var(--button-bg);
-      color: var(--button-text);
-      transition: all 0.3s ease;
-    }
-    .grade-list button:hover {
-      background: var(--button-hover-bg);
-      color: var(--button-hover-text);
-      transform: translateY(-3px);
-    }
+    #main-content { width: 100%; max-width: 520px; flex: 1; padding-top: calc(var(--sp-7) * 2 + var(--sp-3)); }
+    @media (min-width: 768px) { #main-content { padding-top: var(--sp-7); } }
 
-    /* Senior School Section Separator */
-    .section-divider {
-      margin-top: 25px;
-      margin-bottom: 15px;
-      text-align: center;
-    }
-    .section-title {
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--heading-color);
-      margin-bottom: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    .divider-line {
-      width: 100%;
-      height: 1px;
-      background: var(--border-color);
-      border: none;
-      margin-bottom: 15px;
-    }
+    #grade-selection { padding: var(--sp-5); }
+    #grade-selection h1 { margin: 0 0 var(--sp-5); }
 
-    .home-button {
-      margin-top: 25px; padding: 12px 25px; border-radius: 50px;
-      font-size: 1rem; font-weight: 600; cursor: pointer;
-      background: var(--button-bg); color: var(--button-text);
-      border: 1px solid var(--border-color); display: inline-flex; align-items: center; gap: 8px;
-    }
+    .grade-group + .grade-group { margin-top: var(--sp-5); }
+    .grade-group h2 { font-size: var(--fs-3); font-weight: var(--fw-semibold); color: var(--text-muted); margin: 0 0 var(--sp-2); }
 
-    .footer { margin-top: 30px; padding: 15px; font-size: 0.9rem; text-align: center; width: 100%; color: var(--text-color); }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .grade-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+    /* Main feature: large, easy-to-hit grade buttons */
+    .grade-list button { width: 100%; justify-content: space-between; padding: var(--sp-4) var(--sp-5); font-size: var(--fs-4); }
+    /* The grade you picked last time is the one solid action */
+    .grade-list button.is-last { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+    .grade-list button.is-last:hover { background: var(--accent); border-color: var(--accent); filter: brightness(1.08); }
+
+    .read-summary { margin: var(--sp-5) 0 0; font-size: var(--fs-2); color: var(--text-muted); }
+    .home-link { margin-top: var(--sp-4); border-color: transparent; color: var(--text-muted); padding-left: 0; }
+    .home-link:hover { background: transparent; color: var(--text); border-color: transparent; }
+
+    .footer { margin-top: var(--sp-7); padding: var(--sp-5) 0 var(--sp-2); }
   </style>
 </head>
 <body>
-  <div class="background-aurora">
-      <div class="aurora-shape shape1"></div>
-      <div class="aurora-shape shape2"></div>
-      <div class="aurora-shape shape3"></div>
-  </div>
-
   <div class="theme-switcher">
     <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
     <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
     <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
-    <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star-of-david"></i></button>
+    <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star"></i></button>
     <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
     <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
     <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
@@ -154,46 +52,37 @@
 
   <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
 
-  <div id="main-content">
+  <main id="main-content">
     <section id="grade-selection">
-      <h1><i class="fas fa-graduation-cap"></i> Select Grade</h1>
+      <h1>Choose your grade</h1>
 
-      <div class="weekly-summary-card" id="weeklySummaryCard">
-        <i class="fas fa-chart-line" style="color: var(--accent-color-1);"></i>
-        <span id="weeklyReadText">You’ve read 0 notes this week</span>
-      </div>
-
-      <div class="inspiration-message">
-        "Every step you take in learning builds a stronger future. Embrace the journey of discovery!"
-      </div>
-
-      <div class="grade-list">
-        <!-- Junior Secondary Section -->
-        <button onclick="selectGrade('Grade 7')">Grade 7</button>
-        <button onclick="selectGrade('Grade 8')">Grade 8</button>
-        <button onclick="selectGrade('Grade 9')">Grade 9</button>
-
-        <!-- Senior School Divider & Section Header -->
-        <div class="section-divider">
-          <div class="section-title">
-            <i class="fas fa-award" style="color: var(--accent-color-1);"></i> Senior School
-          </div>
-          <hr class="divider-line">
+      <div class="grade-group">
+        <h2>Junior school</h2>
+        <div class="grade-list">
+          <button type="button" data-grade="Grade 7" onclick="selectGrade('Grade 7')">Grade 7 <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+          <button type="button" data-grade="Grade 8" onclick="selectGrade('Grade 8')">Grade 8 <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+          <button type="button" data-grade="Grade 9" onclick="selectGrade('Grade 9')">Grade 9 <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
         </div>
-
-        <!-- Senior School Grades -->
-        <button onclick="selectGrade('Grade 10')" style="border-color: var(--accent-color-1);">Grade 10 🎉</button>
       </div>
 
-      <button class="home-button" onclick="window.location.href='index.html'">
-        <i class="fas fa-home"></i> Go back to home page
+      <div class="grade-group">
+        <h2>Senior school</h2>
+        <div class="grade-list">
+          <button type="button" data-grade="Grade 10" onclick="selectGrade('Grade 10')">Grade 10 <i class="fas fa-chevron-right" aria-hidden="true"></i></button>
+        </div>
+      </div>
+
+      <p class="read-summary" id="weeklySummaryCard"><span id="weeklyReadText">You have read 0 notes</span></p>
+
+      <button type="button" class="home-button home-link" onclick="window.location.href='index.html'">
+        <i class="fas fa-arrow-left" aria-hidden="true"></i> Back to home
       </button>
     </section>
-  </div>
+  </main>
 
   <footer class="footer">
-      <p>&copy; 2026 Boom AI. Powered by Pope John.</p>
-  </footer> 
+    <p>&copy; 2026 Boom AI. Powered by Pope John.</p>
+  </footer>
 
   <script>
     function selectGrade(grade) {
@@ -202,22 +91,23 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      calculateWeeklyReadSummary();
-
-      window.addEventListener('scroll', () => {
-        const switcher = document.querySelector('.theme-switcher');
-        if (window.scrollY > 50 && switcher) {
-          switcher.style.opacity = '0.3';
-        } else if (switcher) {
-          switcher.style.opacity = '1';
-        }
-      });
+      calculateReadSummary();
+      markLastGrade();
     });
 
-    function calculateWeeklyReadSummary() {
-      const readNotes = JSON.parse(localStorage.getItem('boom_read_notes') || '[]');
-      const count = readNotes.length;
-      document.getElementById('weeklyReadText').textContent = `You’ve read ${count} note${count === 1 ? '' : 's'} this week!`;
+    // Highlight the grade chosen last time, if any
+    function markLastGrade() {
+      const last = localStorage.getItem('selectedGrade');
+      if (!last) return;
+      const btn = document.querySelector(`.grade-list button[data-grade="${last}"]`);
+      if (btn) btn.classList.add('is-last');
+    }
+
+    // boom_read_notes holds every note ever read (no dates), so the text no longer says "this week"
+    function calculateReadSummary() {
+      let count = 0;
+      try { count = JSON.parse(localStorage.getItem('boom_read_notes') || '[]').length; } catch (e) {}
+      document.getElementById('weeklyReadText').textContent = `You have read ${count} note${count === 1 ? '' : 's'}`;
     }
   </script>
 </body>
