@@ -1,201 +1,513 @@
-/**
- * Theme + font-size manager (+ small shared UI helpers)
- * - Load in <head> right after theme.css so the saved theme applies before first paint.
- * - Safe to include more than once (guarded).
- * - Theme buttons are handled by ONE delegated click listener.
- */
-(function () {
-    'use strict';
+/* =====================================================================
+   BOOM AI - DESIGN SYSTEM
+   1. Tokens (scales)      2. Themes (colour only)   3. Legacy aliases
+   4. Base                 5. Components             6. Motion
+   Contrast: every text/background pair below is >= 4.5:1 (see report).
+   ===================================================================== */
 
-    if (window.__themeManagerLoaded) return;
-    window.__themeManagerLoaded = true;
+/* ---------- 1. TOKENS ---------- */
+:root {
+  /* Type scale: 12 14 16 20 24 32 40 (rem so the font-size control still works) */
+  --fs-1: 0.75rem;
+  --fs-2: 0.875rem;
+  --fs-3: 1rem;
+  --fs-4: 1.25rem;
+  --fs-5: 1.5rem;
+  --fs-6: 2rem;
+  --fs-7: 2.5rem;
+  --lh-tight: 1.2;
+  --lh-body: 1.6;
+  --fw-regular: 400;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --font: 'Poppins', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
-    var CONFIG = {
-        storageKey: 'site_theme',
-        fontKey: 'site_font_size',
-        defaultTheme: 'dark',
-        defaultFontSize: 16,
-        minFontSize: 12,
-        maxFontSize: 28,
-        themes: ['dark', 'light', 'sepia', 'midnight', 'ocean', 'forest', 'rose']
-    };
+  /* Spacing scale: 4 8 12 16 24 32 48 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
 
-    // Browser UI colour per theme (matches --bg in theme.css)
-    var CHROME_COLOR = {
-        dark: '#0E1116', light: '#F5F7FA', sepia: '#F3E9D2', midnight: '#000000',
-        ocean: '#0B1C26', forest: '#14261D', rose: '#FCEBEF'
-    };
+  /* Radius scale. Nested radius = outer radius - padding between them (min 0). */
+  --r-sm: 8px;
+  --r-md: 16px;
+  --r-lg: 24px;
+  --r-pill: 999px;
+  --pad-card: var(--sp-4);                                  /* padding inside a card */
+  --r-inner: max(0px, calc(var(--r-md) - var(--pad-card))); /* 16 - 16 = 0 -> use for flush items */
+  --r-inner-lg: max(0px, calc(var(--r-lg) - var(--sp-4)));  /* 24 - 16 = 8: inputs/buttons/items inside a page panel */
 
-    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* Layout */
+  --tap: 44px;
+  --content-w: 1000px;
+  --reading-w: 68ch;
 
-    // ---------- storage helpers (never throw) ----------
-    function load(key) {
-        try { return localStorage.getItem(key); } catch (e) { return null; }
-    }
-    function save(key, value) {
-        try { localStorage.setItem(key, value); } catch (e) { /* private mode etc. */ }
-    }
-    function remove(key) {
-        try { localStorage.removeItem(key); } catch (e) {}
-    }
+  /* Shadows (3 levels) */
+  --shadow-rgb: 0 0 0;
+  --shadow-1: 0 1px 2px rgb(var(--shadow-rgb) / 0.12);
+  --shadow-2: 0 4px 12px rgb(var(--shadow-rgb) / 0.16);
+  --shadow-3: 0 12px 32px rgb(var(--shadow-rgb) / 0.24);
 
-    // ---------- theme ----------
-    function updateActiveButtons(activeTheme) {
-        var buttons = document.querySelectorAll('.theme-button, .theme-option-button');
-        for (var i = 0; i < buttons.length; i++) {
-            var isActive = buttons[i].getAttribute('data-theme') === activeTheme;
-            buttons[i].classList.toggle('active', isActive);
-            buttons[i].setAttribute('aria-pressed', isActive ? 'true' : 'false');
-        }
-    }
+  /* Z-index layers */
+  --z-base: 1;
+  --z-sticky: 100;
+  --z-popover: 500;
+  --z-modal: 1000;
+  --z-toast: 1100;
 
-    function setChromeColor(name) {
-        var meta = document.querySelector('meta[name="theme-color"]');
-        if (!meta) {
-            if (!document.head) return;
-            meta = document.createElement('meta');
-            meta.setAttribute('name', 'theme-color');
-            document.head.appendChild(meta);
-        }
-        meta.setAttribute('content', CHROME_COLOR[name] || CHROME_COLOR.dark);
-    }
+  /* Motion */
+  --dur-fast: 120ms;
+  --dur-med: 180ms;
+  --dur-slow: 250ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-    function applyTheme(name) {
-        if (CONFIG.themes.indexOf(name) === -1) name = CONFIG.defaultTheme;
-        document.documentElement.setAttribute('data-theme', name);
-        if (document.body) document.body.setAttribute('data-theme', name);
-        updateActiveButtons(name);
-        setChromeColor(name);
-        return name;
-    }
+  /* Icon sizes: 16 inline, 20 buttons, 24 headings */
+  --icon-inline: 1rem;
+  --icon-button: 1.25rem;
+  --icon-heading: 1.5rem;
+}
 
-    function closeModal() {
-        var overlay = document.getElementById('themeModalOverlay');
-        if (overlay) overlay.classList.remove('visible');
-    }
+/* ---------- 2. THEMES (colour only; one accent each) ---------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1116;  --surface: #161B22;  --surface-2: #1D242D;
+  --text: #D5DBE3; --text-muted: #9AA4B2; --heading: #FFFFFF;
+  --border: rgb(255 255 255 / 0.12);
+  --accent: #4C9AFF; --on-accent: #06142B;
+  --danger: #FF8A8A; --success: #6FD08C;
+  --shadow-rgb: 0 0 0;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #F5F7FA;  --surface: #FFFFFF;  --surface-2: #EEF1F6;
+  --text: #2B3340; --text-muted: #5A6472; --heading: #141A24;
+  --border: rgb(0 0 0 / 0.12);
+  --accent: #3B45B8; --on-accent: #FFFFFF;
+  --danger: #B42318; --success: #1A7F37;
+  --shadow-rgb: 20 30 50;
+}
+:root[data-theme="sepia"] {
+  color-scheme: light;
+  --bg: #F3E9D2;  --surface: #FBF5E6;  --surface-2: #F1E6CE;
+  --text: #3F3022; --text-muted: #6B5A48; --heading: #2A1F15;
+  --border: rgb(63 48 34 / 0.18);
+  --accent: #7A4A2B; --on-accent: #FFFFFF;
+  --danger: #A3261C; --success: #2E6B34;
+  --shadow-rgb: 63 48 34;
+}
+:root[data-theme="midnight"] {
+  color-scheme: dark;
+  --bg: #000000;  --surface: #0D0D10;  --surface-2: #17171C;
+  --text: #D9D9DE; --text-muted: #A0A0AA; --heading: #FFFFFF;
+  --border: rgb(255 255 255 / 0.14);
+  --accent: #B794F6; --on-accent: #150A2B;
+  --danger: #FF8A9B; --success: #6FD08C;
+  --shadow-rgb: 0 0 0;
+}
+:root[data-theme="ocean"] {
+  color-scheme: dark;
+  --bg: #0B1C26;  --surface: #12303F;  --surface-2: #193D50;
+  --text: #D3E3F0; --text-muted: #9DB6C9; --heading: #FFFFFF;
+  --border: rgb(255 255 255 / 0.14);
+  --accent: #5CCBEA; --on-accent: #041A24;
+  --danger: #FF9A9A; --success: #6FD08C;
+  --shadow-rgb: 0 0 0;
+}
+:root[data-theme="forest"] {
+  color-scheme: dark;
+  --bg: #14261D;  --surface: #1D3629;  --surface-2: #264632;
+  --text: #DCEBDD; --text-muted: #A5BDAA; --heading: #F4FFF4;
+  --border: rgb(255 255 255 / 0.14);
+  --accent: #9AD05B; --on-accent: #112008;
+  --danger: #FF9C8F; --success: #9AD05B;
+  --shadow-rgb: 0 0 0;
+}
+:root[data-theme="rose"] {
+  color-scheme: light;
+  --bg: #FCEBEF;  --surface: #FFF7F9;  --surface-2: #FBE1E8;
+  --text: #4A2A33; --text-muted: #74505A; --heading: #33141E;
+  --border: rgb(74 42 51 / 0.16);
+  --accent: #A8195F; --on-accent: #FFFFFF;
+  --danger: #B42318; --success: #1A7F37;
+  --shadow-rgb: 74 42 51;
+}
 
-    function setTheme(name) {
-        if (!name) return;
-        // Brief colour transition only on a user action, never on page load
-        if (!reduceMotion) {
-            document.documentElement.classList.add('theme-anim');
-            setTimeout(function () { document.documentElement.classList.remove('theme-anim'); }, 300);
-        }
-        name = applyTheme(name);
-        save(CONFIG.storageKey, name);
-        closeModal();
-    }
+/* ---------- 3. LEGACY ALIASES (so pages not yet migrated keep working) ---------- */
+:root {
+  --bg-gradient-start: var(--bg);
+  --bg-gradient-end: var(--bg);
+  --card-bg: var(--surface);
+  --text-color: var(--text);
+  --heading-color: var(--heading);
+  --accent-color-1: var(--accent);
+  --border-color: var(--border);
+  --shadow-color: rgb(var(--shadow-rgb) / 0.2);
+  --button-bg: var(--surface-2);
+  --button-text: var(--text);
+  --button-hover-bg: var(--accent);
+  --button-hover-text: var(--on-accent);
+}
 
-    // ---------- font size ----------
-    function applyFontSize(px) {
-        document.documentElement.style.fontSize = px + 'px';
-    }
+/* ---------- 4. BASE ---------- */
+*, *::before, *::after { box-sizing: border-box; }
 
-    function adjustFontSize(amount) {
-        var current = parseFloat(window.getComputedStyle(document.documentElement).fontSize) || CONFIG.defaultFontSize;
-        var next = Math.min(CONFIG.maxFontSize, Math.max(CONFIG.minFontSize, current + amount));
-        applyFontSize(next);
-        save(CONFIG.fontKey, next);
-    }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: var(--fs-3);
+  line-height: var(--lh-body);
+  -webkit-text-size-adjust: 100%;
+}
 
-    function resetFontSize() {
-        remove(CONFIG.fontKey);
-        document.documentElement.style.fontSize = '';
-    }
+h1, h2, h3, h4, h5, h6 {
+  color: var(--heading);
+  line-height: var(--lh-tight);
+  text-wrap: balance;          /* no orphan words in headings */
+  overflow-wrap: anywhere;     /* very long curriculum titles on 360px */
+}
+h1 { font-size: clamp(var(--fs-6), 6vw, var(--fs-7)); }
+h2 { font-size: clamp(var(--fs-5), 5vw, var(--fs-6)); }
+h3 { font-size: var(--fs-4); }
+p, li, .note-content { text-wrap: pretty; max-width: var(--reading-w); }
 
-    // ---------- shared feedback helpers (replace alert()) ----------
-    // showToast('Saved')  ->  slides in, auto-dismisses in ~2.5s
-    function showToast(message, ms) {
-        var old = document.querySelector('.toast');
-        if (old) old.remove();
-        var el = document.createElement('div');
-        el.className = 'toast';
-        el.setAttribute('role', 'status');
-        el.textContent = message;
-        document.body.appendChild(el);
-        setTimeout(function () {
-            el.classList.add('is-leaving');
-            setTimeout(function () { el.remove(); }, 200);
-        }, ms || 2500);
-    }
+a { color: var(--accent); text-underline-offset: 0.2em; }
 
-    // confirmButton(btn, 'Saved') -> label changes briefly, then returns
-    function confirmButton(btn, label, ms) {
-        if (!btn) return;
-        var original = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-check" aria-hidden="true"></i> ' + label;
-        btn.classList.add('is-done');
-        setTimeout(function () {
-            btn.innerHTML = original;
-            btn.classList.remove('is-done');
-        }, ms || 1800);
-    }
+/* Visible focus for keyboard users, everywhere */
+:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+:focus:not(:focus-visible) { outline: none; }
 
-    // setLoading(btn, true) -> spinner + disabled; setLoading(btn, false) restores
-    function setLoading(btn, on) {
-        if (!btn) return;
-        btn.classList.toggle('is-loading', !!on);
-        btn.disabled = !!on;
-        if (btn.hasAttribute('aria-busy') || on) btn.setAttribute('aria-busy', on ? 'true' : 'false');
-    }
+/* Numbers that change or line up never jiggle */
+.num, .tabular, time, #streak-counter, #streakCountText, #weeklyReadText,
+.progress-text, .results-count, .calc-box input, #calc-input, #calc-history-log,
+.subject-counter-summary, .badge-count, .last-saved-timestamp {
+  font-variant-numeric: tabular-nums;
+}
 
-    // Expose for inline onclick attributes and for testing in the console
-    window.setTheme = setTheme;
-    window.adjustFontSize = adjustFontSize;
-    window.resetFontSize = resetFontSize;
-    window.showToast = showToast;
-    window.confirmButton = confirmButton;
-    window.setLoading = setLoading;
+/* Monospace ONLY for calculator output and code */
+code, pre, kbd, samp, #calc-input, #calc-history-log { font-family: var(--font-mono); }
 
-    // ---------- 1. Run immediately (before the page paints) ----------
-    var savedTheme = load(CONFIG.storageKey);
-    applyTheme(savedTheme || CONFIG.defaultTheme);
+/* Italics only for real emphasis / terms / titles of works */
+em, i.term, cite, dfn { font-style: italic; }
+small, .date-info, .note-sub-topic, .inspiration-message, .no-results { font-style: normal; }
+/* Font Awesome <i> icons must never be italic */
+i.fas, i.far, i.fab, i[class^="fa-"] { font-style: normal; }
 
-    var savedFont = parseFloat(load(CONFIG.fontKey));
-    if (savedFont) applyFontSize(savedFont);
+/* Static background. The animated aurora was removed: it cost GPU and battery
+   on cheap phones and lowered text contrast. Old markup stays harmless. */
+.background-aurora { display: none; }
 
-    // ---------- 2. One delegated click listener for every theme button ----------
-    document.addEventListener('click', function (event) {
-        var target = event.target;
-        if (!target || !target.closest) return;
+/* ---------- 5. COMPONENTS ---------- */
 
-        var button = target.closest('.theme-button, .theme-option-button');
-        if (button) {
-            setTheme(button.getAttribute('data-theme'));
-            return;
-        }
+/* Icons: one set (Font Awesome solid), aligned to text */
+.fas, .far { line-height: 1; vertical-align: -0.125em; }
+.icon-btn .fas, button .fas, .action-button .fas { font-size: var(--icon-button); }
+h1 .fas, h2 .fas { font-size: var(--icon-heading); }
+.breadcrumb .fas, .badge .fas, small .fas { font-size: var(--icon-inline); }
+/* Optical nudge: arrow/chevron glyphs sit visually low/left when centred mathematically */
+.fa-arrow-left { transform: translateX(-1px); }
+.fa-arrow-right, .fa-chevron-right { transform: translateX(1px); }
 
-        // Clicking the dark backdrop of the first-visit modal keeps the default theme
-        if (target.id === 'themeModalOverlay') {
-            setTheme(load(CONFIG.storageKey) || CONFIG.defaultTheme);
-        }
-    });
+/* Panels / cards. Solid colours, no blur. */
+.container, #grade-selection, #subjects-page, #notes-page, #detail-page, .card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-1);
+}
+.note-item, .subject-card, .widget-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-inner-lg);   /* 24 - 16 = 8, concentric inside the panel */
+}
 
-    // ---------- 3. Once the DOM exists ----------
-    document.addEventListener('DOMContentLoaded', function () {
-        var current = load(CONFIG.storageKey) || CONFIG.defaultTheme;
-        applyTheme(current); // now <body> exists, so it gets the attribute too
+/* Buttons. Exactly one .btn-primary per screen; the rest are quiet. */
+.btn, .action-button, .back-button, .home-button, .download-button,
+.grade-list button, .cta-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  min-height: var(--tap);
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit; font-weight: var(--fw-semibold); font-size: var(--fs-3);
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--dur-med) var(--ease), color var(--dur-med) var(--ease),
+              border-color var(--dur-med) var(--ease), transform var(--dur-fast) var(--ease);
+}
+.btn:hover, .action-button:hover, .back-button:hover, .home-button:hover,
+.download-button:hover, .grade-list button:hover {
+  background: var(--surface-2);
+  border-color: var(--text-muted);
+  transform: none;
+  box-shadow: none;
+}
+.btn:active, .action-button:active, .back-button:active, .home-button:active,
+.download-button:active, .grade-list button:active, .cta-button:active { transform: scale(0.97); }
 
-        // Neutral icon for midnight (was a religious symbol), fixes every page without editing each one
-        var midnightIcons = document.querySelectorAll('[data-theme="midnight"] .fa-star-of-david');
-        for (var i = 0; i < midnightIcons.length; i++) {
-            midnightIcons[i].classList.remove('fa-star-of-david');
-            midnightIcons[i].classList.add('fa-star');
-        }
+.btn-primary, .cta-button {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+}
+.btn-primary:hover, .cta-button:hover {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-color: var(--accent);
+  filter: brightness(1.08);
+}
+.btn-danger { color: var(--danger); border-color: var(--danger); }
+.btn-sm { min-height: var(--tap); padding: var(--sp-2) var(--sp-4); font-size: var(--fs-2); }
 
-        // Accessible names for every theme button that lacks a visible label
-        var names = { dark: 'Dark', light: 'Light', sepia: 'Sepia', midnight: 'Midnight', ocean: 'Ocean', forest: 'Forest', rose: 'Rose' };
-        var themeButtons = document.querySelectorAll('.theme-button');
-        for (var j = 0; j < themeButtons.length; j++) {
-            var t = themeButtons[j].getAttribute('data-theme');
-            if (!themeButtons[j].getAttribute('aria-label')) themeButtons[j].setAttribute('aria-label', (names[t] || t) + ' theme');
-            themeButtons[j].setAttribute('title', (names[t] || t) + ' theme');
-        }
+/* Disabled + loading (rule 19). Add .is-loading and a spinner appears; set disabled too. */
+.btn[disabled], button[disabled], .is-loading { opacity: 0.6; cursor: not-allowed; pointer-events: none; }
+.is-loading::before {
+  content: ""; width: 1em; height: 1em; flex: none;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+/* Confirmation state ("Saved", "Link copied") */
+.btn.is-done { background: var(--success); border-color: var(--success); color: var(--on-accent); }
 
-        // First visit: show the picker if this page has one
-        var overlay = document.getElementById('themeModalOverlay');
-        if (!load(CONFIG.storageKey) && overlay) {
-            overlay.classList.add('visible');
-        }
-    });
-})();
+/* Icon-only buttons (44px hit area) */
+.icon-btn, .util-btn, .font-button {
+  width: var(--tap); height: var(--tap); padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background var(--dur-med) var(--ease), color var(--dur-med) var(--ease);
+}
+.icon-btn:hover, .util-btn:hover, .font-button:hover { background: var(--accent); color: var(--on-accent); transform: none; }
+
+/* Inputs: border uses muted text colour so the control edge passes 3:1 */
+input[type="text"], input[type="email"], input[type="password"], input[type="number"],
+input[type="search"], select, textarea, #search-input {
+  min-height: var(--tap);
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--text-muted);
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--text);
+  font: inherit; font-size: var(--fs-3);
+}
+input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+
+/* Chips */
+.chip, .search-chip {
+  display: inline-flex; align-items: center; gap: var(--sp-2);
+  min-height: var(--tap); padding: 0 var(--sp-4);
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  background: transparent; color: var(--text);
+  font-size: var(--fs-2); cursor: pointer;
+}
+.chip:hover, .search-chip:hover { background: var(--surface-2); }
+
+/* Badges: only for real state (NEW, Read). Text + icon, never colour alone. */
+.badge {
+  display: inline-flex; align-items: center; gap: var(--sp-1);
+  padding: var(--sp-1) var(--sp-2);
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: transparent; color: var(--text);
+  font-size: var(--fs-1); font-weight: var(--fw-semibold);
+  text-transform: none; letter-spacing: 0;
+}
+.badge-new { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* Boxes inside notes: neutral, not a rainbow */
+.outcomes-box, .key-points-box {
+  background: var(--surface-2);
+  border: 0; border-left: 4px solid var(--accent);
+  border-radius: var(--r-sm);
+  padding: var(--sp-4);
+  color: var(--text);
+}
+.outcomes-box h4, .key-points-box h4 { color: var(--heading); margin: 0 0 var(--sp-2); font-size: var(--fs-3); }
+
+/* Theme switcher. 44px targets, grid so it never overlaps the logo or utilities on phones. */
+.theme-switcher {
+  position: absolute; top: var(--sp-2); right: var(--sp-2);
+  display: grid; grid-template-columns: repeat(4, var(--tap)); gap: var(--sp-1);
+  padding: var(--sp-1);
+  background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--r-md);
+  z-index: var(--z-popover);
+}
+.theme-button {
+  width: var(--tap); height: var(--tap);
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 2px solid transparent; border-radius: var(--r-sm);   /* 16 - 4 - ... concentric inside switcher */
+  background: transparent; color: var(--text);
+  font-size: var(--icon-button); cursor: pointer;
+  transition: background var(--dur-med) var(--ease);
+}
+.theme-button:hover { background: var(--surface-2); transform: none; }
+.theme-button.active { border-color: var(--accent); color: var(--accent); transform: none; }
+@media (min-width: 768px) { .theme-switcher { grid-template-columns: repeat(7, var(--tap)); } }
+
+/* First-visit theme picker modal */
+.theme-modal-overlay {
+  position: fixed; inset: 0; z-index: var(--z-modal);
+  display: flex; align-items: center; justify-content: center;
+  background: rgb(0 0 0 / 0.7);
+  opacity: 0; pointer-events: none; transition: opacity var(--dur-med) var(--ease);
+}
+.theme-modal-overlay.visible { opacity: 1; pointer-events: auto; }
+.theme-modal {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: var(--sp-5); box-shadow: var(--shadow-3);
+  text-align: center; max-width: 90vw;
+}
+.theme-options { display: flex; flex-wrap: wrap; gap: var(--sp-3); justify-content: center; max-width: 500px; }
+.theme-option-button {
+  width: 96px; min-height: var(--tap); padding: var(--sp-3);
+  display: flex; flex-direction: column; align-items: center; gap: var(--sp-2);
+  background: var(--surface-2); color: var(--text);
+  border: 2px solid var(--border); border-radius: var(--r-sm);
+  font: inherit; font-size: var(--fs-2); font-weight: var(--fw-semibold); cursor: pointer;
+}
+.theme-option-button i { font-size: var(--icon-heading); }
+.theme-option-button:hover, .theme-option-button.active { border-color: var(--accent); transform: none; }
+
+/* Favourites */
+.favorite-icon-container {
+  position: absolute; top: var(--sp-2); right: var(--sp-2);
+  width: var(--tap); height: var(--tap);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; z-index: var(--z-base);
+}
+.favorite-icon { color: var(--text-muted); font-size: var(--icon-heading); }
+.favorite-icon.favorited { color: var(--accent); }
+.favorite-icon.pop { animation: heart-pop var(--dur-slow) var(--ease); }   /* what just happened: favourited */
+.favorite-button.favorited { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+
+/* Font controls */
+.font-controls {
+  position: fixed; top: calc(var(--sp-7) * 2 + var(--sp-5)); right: var(--sp-2); z-index: var(--z-sticky);
+  display: flex; flex-direction: column; gap: var(--sp-2);
+}
+@media (max-width: 768px) {
+  .font-controls { top: auto; bottom: var(--sp-4); left: var(--sp-4); right: auto; flex-direction: row; }
+}
+
+/* Toast (slides in/out, replaces alert()) */
+.toast, .favorite-toast, .milestone-toast {
+  position: fixed; left: 50%; bottom: var(--sp-5); top: auto;
+  transform: translate(-50%, 0);
+  max-width: calc(100vw - var(--sp-5));
+  padding: var(--sp-3) var(--sp-5);
+  border-radius: var(--r-sm);
+  background: var(--heading); color: var(--bg);
+  font-size: var(--fs-2); font-weight: var(--fw-semibold);
+  box-shadow: var(--shadow-3);
+  z-index: var(--z-toast);
+  animation: toast-in var(--dur-slow) var(--ease);
+}
+.toast.is-leaving { animation: toast-out var(--dur-med) var(--ease) forwards; }
+
+/* Skeletons (match note card and detail layout) */
+.skeleton {
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+  position: relative; overflow: hidden;
+}
+.skeleton::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent, rgb(128 128 128 / 0.18), transparent);
+  transform: translateX(-100%);
+  animation: shimmer 1.2s linear infinite;
+}
+.skeleton-card { height: 144px; margin-bottom: var(--sp-4); border-radius: var(--r-inner-lg); }
+.skeleton-line { height: 1em; margin-bottom: var(--sp-2); }
+.skeleton-line.short { width: 60%; }
+
+/* Empty / error states: say what happened and what to do next */
+.state-block { text-align: center; padding: var(--sp-6) var(--sp-4); }
+.state-block p { margin: 0 auto var(--sp-4); }
+.loading-state, .error-state { text-align: center; padding: var(--sp-6); color: var(--text); }
+
+/* Progress */
+.progress-container { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-pill); height: var(--sp-2); overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); transition: width var(--dur-slow) var(--ease); }
+.reading-progress-bar { background: var(--accent); }
+
+/* Highlighted search matches (readable in all themes) */
+mark.search-highlight { background: var(--accent); color: var(--on-accent); padding: 0 var(--sp-1); border-radius: 4px; }
+
+/* Footer */
+.footer, footer { color: var(--text-muted); font-size: var(--fs-2); text-align: center; }
+
+/* Utility */
+.visually-hidden {
+  position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---------- 6. MOTION ---------- */
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes shimmer { to { transform: translateX(100%); } }
+@keyframes heart-pop { 0% { transform: scale(1); } 45% { transform: scale(1.3); } 100% { transform: scale(1); } }
+@keyframes toast-in { from { opacity: 0; transform: translate(-50%, 16px); } to { opacity: 1; transform: translate(-50%, 0); } }
+@keyframes toast-out { to { opacity: 0; transform: translate(-50%, 16px); } }
+
+/* Smooth theme switch, only while theme.js sets .theme-anim (not on page load) */
+.theme-anim, .theme-anim * {
+  transition: background-color var(--dur-slow) var(--ease), color var(--dur-slow) var(--ease),
+              border-color var(--dur-slow) var(--ease) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton::after { display: none; }
+}
+
+/* ---------- 7. SHARED PAGE COMPONENTS (note, detail, favorites) ---------- */
+.breadcrumb { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-2); font-size: var(--fs-2); color: var(--text-muted); }
+.breadcrumb a { display: inline-flex; align-items: center; min-height: var(--tap); font-weight: var(--fw-semibold); }
+.breadcrumb .fa-chevron-right { font-size: var(--fs-1); }
+.breadcrumb [aria-current] { color: var(--text); }
+
+.note-list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); }
+.note-item { position: relative; padding: var(--sp-4); }
+.note-item:hover { border-color: var(--accent); }
+.note-item:has(.note-link:focus-visible) { outline: 3px solid var(--accent); outline-offset: 2px; }
+.note-flags { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-2); padding-right: var(--tap); font-size: var(--fs-1); color: var(--text-muted); }
+.note-topic { font-size: var(--fs-4); margin: 0; padding-right: var(--tap); }
+.note-link { color: var(--heading); text-decoration: none; }
+.note-link::after { content: ""; position: absolute; inset: 0; }   /* whole card is the tap target */
+.note-link:focus-visible { outline: none; }
+.note-custom-title { display: block; margin-top: var(--sp-1); font-weight: var(--fw-semibold); color: var(--text); }
+.note-sub-topic { display: block; margin-top: var(--sp-1); font-size: var(--fs-2); color: var(--text-muted); }
+.note-item .note-content {
+  margin: var(--sp-3) 0 0; display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3;
+  -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere;
+}
+button.favorite-icon-container { background: none; border: 0; padding: 0; color: var(--text); cursor: pointer; z-index: 2; }
+.favorite-icon-container .fa-heart { font-size: var(--icon-heading); }
+
+.back-to-top {
+  position: fixed; bottom: var(--sp-4); right: var(--sp-4); width: var(--tap); height: var(--tap);
+  display: none; align-items: center; justify-content: center; border: 0; border-radius: 50%;
+  background: var(--accent); color: var(--on-accent); cursor: pointer; box-shadow: var(--shadow-2); z-index: var(--z-sticky);
+}
