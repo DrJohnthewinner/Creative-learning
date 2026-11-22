@@ -19,7 +19,6 @@
     <script src="tools.js"></script>
 
     <style>
-        /* Page-specific layout only. */
         body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); position: relative; }
         .moe-logo { position: absolute; top: var(--sp-4); left: var(--sp-4); height: var(--sp-7); width: auto; }
         .reading-progress-bar { position: fixed; top: 0; left: 0; height: 4px; width: 0%; z-index: var(--z-toast); transition: width var(--dur-fast) linear; }
@@ -35,30 +34,38 @@
         .page-actions .btn { padding: var(--sp-2) var(--sp-4); font-size: var(--fs-2); }
         .btn[aria-pressed="true"] { border-color: var(--accent); color: var(--accent); }
 
-        /* The note is the main feature: comfortable measure, large text */
         #note-article { max-width: var(--reading-w); }
         #note-article h1 { margin: 0 0 var(--sp-2); }
         .note-meta { display: flex; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); align-items: center; margin: 0 0 var(--sp-5); font-size: var(--fs-2); color: var(--text-muted); }
         .note-content { font-size: 1.1rem; line-height: 1.9; max-width: none; overflow-wrap: anywhere; }
-        .note-content.plain { white-space: pre-wrap; }                 /* only for old plain-text notes */
+        .note-content.plain { white-space: pre-wrap; }
         .note-content h2, .note-content h3 { margin: var(--sp-5) 0 var(--sp-2); }
-        .note-content img, .note-content table { max-width: 100%; }
+        .note-content img, .note-content table { max-width: 100%; cursor: zoom-in; }
         .note-content table { display: block; overflow-x: auto; }
+
+        .toc-box { background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--r-sm); padding: var(--sp-4); margin-bottom: var(--sp-5); }
+        .toc-box h3 { font-size: var(--fs-3); margin: 0 0 var(--sp-2); }
+        .toc-box ul { margin: 0; padding-left: var(--sp-4); }
+        .toc-box li { margin-bottom: var(--sp-1); font-size: var(--fs-2); }
+
+        .user-highlight { background-color: var(--accent); color: var(--on-accent); padding: 0 3px; border-radius: 3px; cursor: pointer; }
+        .user-highlight:hover { filter: brightness(1.1); }
+
+        .lightbox-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center; padding: var(--sp-4); opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+        .lightbox-overlay.open { opacity: 1; pointer-events: auto; }
+        .lightbox-overlay img { max-width: 90vw; max-height: 90vh; border-radius: var(--r-sm); box-shadow: var(--shadow-3); }
 
         .attachment-section { margin-top: var(--sp-6); max-width: var(--reading-w); }
         .attachment-section h2 { font-size: var(--fs-4); margin: 0 0 var(--sp-3); }
-        .attachment-image { display: block; max-width: 100%; height: auto; border-radius: var(--r-inner-lg); border: 1px solid var(--border); }
+        .attachment-image { display: block; max-width: 100%; height: auto; border-radius: var(--r-inner-lg); border: 1px solid var(--border); cursor: zoom-in; }
         .attachment-pdf { display: block; width: 100%; height: 75vh; min-height: 420px; border: 1px solid var(--border); border-radius: var(--r-inner-lg); background: #fff; margin-top: var(--sp-3); }
         .attachment-actions { display: flex; gap: var(--sp-2); flex-wrap: wrap; }
 
         .download-row { margin-top: var(--sp-6); }
-
-        /* PDF export: force readable black-on-white whatever the theme */
         .pdf-export, .pdf-export * { color: #000 !important; background: #fff !important; border-color: #ccc !important; }
 
-        /* Reading mode: hide everything except the note and the way out */
         .distraction-free .moe-logo, .distraction-free .theme-switcher, .distraction-free .breadcrumb,
-        .distraction-free #tools-slot, .distraction-free .footer, .distraction-free .page-actions .secondary,
+        .distraction-free #tools-slot, .distraction-free .footer, .distraction-free .page-actions .secondary:not(#highlightBtn), 
         .distraction-free .download-row, .distraction-free .back-to-top { display: none; }
         .distraction-free #main-content { padding-top: var(--sp-4); }
 
@@ -68,31 +75,24 @@
 <body>
     <div class="reading-progress-bar" id="progressBar" role="presentation"></div>
 
-    <div class="theme-switcher">
-        <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
-        <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
-        <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
-        <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star"></i></button>
-        <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
-        <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
-        <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
-    </div>
-
     <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
 
     <main id="main-content">
         <section id="detail-page">
             <div class="page-top">
                 <nav class="breadcrumb" aria-label="Breadcrumb">
-                    <a href="landing.html" id="bc-grade-link"><span id="bc-grade">Grade</span></a>
+                    <a href="landing.html" id="bc-grade-link" title="Change Grade"><span id="bc-grade">Grade</span></a>
                     <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                    <a id="bc-subject-link" href="subjects.html"><span id="bc-subject">Subjects</span></a>
+                    <a id="bc-subject-link" href="subjects.html" title="Subjects Page"><span id="bc-subject">Subjects</span></a>
                 </nav>
                 <div id="tools-slot" class="toolbar"></div>
             </div>
 
             <div class="page-actions">
                 <button type="button" class="btn secondary" onclick="history.back()"><i class="fas fa-arrow-left" aria-hidden="true"></i> Back</button>
+                <button type="button" class="btn secondary" id="highlightBtn" onclick="highlightSelectedText()" title="Select text in note and click to highlight">
+                    <i class="fas fa-highlighter" aria-hidden="true"></i> <span>Highlight</span>
+                </button>
                 <button type="button" class="btn secondary" id="favBtn" aria-pressed="false" onclick="toggleFavoriteNote(this)" hidden>
                     <i class="far fa-heart" aria-hidden="true"></i> <span>Add to favourites</span>
                 </button>
@@ -105,11 +105,13 @@
                 <div class="skeleton skeleton-line short" style="height:2rem; margin-bottom: var(--sp-4);"></div>
                 <div class="skeleton skeleton-line"></div>
                 <div class="skeleton skeleton-line"></div>
-                <div class="skeleton skeleton-line"></div>
-                <div class="skeleton skeleton-line short"></div>
             </div>
         </section>
     </main>
+
+    <div class="lightbox-overlay" id="lightboxOverlay" onclick="closeLightbox()">
+        <img id="lightboxImg" src="" alt="Enlarged view">
+    </div>
 
     <button type="button" class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Back to top">
         <i class="fas fa-arrow-up"></i>
@@ -137,7 +139,12 @@
         document.addEventListener('DOMContentLoaded', () => {
             const noteId = new URLSearchParams(window.location.search).get('noteId');
             currentNoteId = noteId;
-            document.getElementById('bc-grade').textContent = localStorage.getItem('selectedGrade') || 'Grade 8';
+            const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
+            document.getElementById('bc-grade').textContent = grade;
+            document.getElementById('bc-grade-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'landing.html';
+            });
             touchStreak();
 
             if (noteId) {
@@ -176,7 +183,6 @@
             document.getElementById('progressBar').style.width = Math.min(100, pct) + '%';
         }
 
-        /* --- favourites --- */
         function syncFavButton() {
             const on = getFavs().includes(currentNoteId);
             const btn = document.getElementById('favBtn');
@@ -192,7 +198,6 @@
             showToast(on ? 'Added to favourites' : 'Removed from favourites');
         }
 
-        /* --- reading mode --- */
         function toggleReadingMode() {
             const on = document.body.classList.toggle('distraction-free');
             const btn = document.getElementById('readingBtn');
@@ -200,24 +205,16 @@
             btn.querySelector('span').textContent = on ? 'Exit reading mode' : 'Reading mode';
         }
 
-        /* --- loading --- */
         function loadNoteDetails(noteId) {
             db.collection('notes').doc(noteId).get().then(doc => {
                 if (doc.exists) {
                     renderNoteDetails(doc.data(), doc.id);
                 } else {
-                    showState('This note could not be found. It may have been removed.', 'Choose a subject', 'subjects.html');
+                    showState('This note could not be found.', 'Choose a subject', 'subjects.html');
                 }
             }).catch(err => {
-                console.error('Error loading note:', err);
-                showState('The note could not load. Check your internet connection and try again.', 'Try again', null,
-                    () => { showSkeleton(); loadNoteDetails(noteId); });
+                showState('The note could not load. Try again.', 'Try again', null, () => loadNoteDetails(noteId));
             });
-        }
-        function showSkeleton() {
-            document.getElementById('note-detail-area').innerHTML =
-                '<div class="skeleton skeleton-line short" style="height:2rem; margin-bottom: var(--sp-4);"></div>' +
-                '<div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line"></div><div class="skeleton skeleton-line short"></div>';
         }
 
         function renderNoteDetails(note, noteId) {
@@ -229,12 +226,17 @@
             const isPlain = !/<[a-z][\s\S]*>/i.test(raw);
             const type = note.contentType && note.contentType !== 'Notes' ? note.contentType : '';
 
-            // Breadcrumb: link back to this note's subject list
             if (note.subject) {
                 document.getElementById('bc-subject').textContent = formatSubject(note.subject);
                 document.getElementById('bc-subject-link').href = 'note.html?subject=' + encodeURIComponent(note.subject);
             }
             document.title = `${safeTopic} | Boom AI`;
+
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = cleanContent;
+            const textContent = tempDiv.textContent || tempDiv.innerText || '';
+            const wordCount = textContent.trim() ? textContent.trim().split(/\s+/).length : 0;
+            const readingMins = Math.ceil(wordCount / 200);
 
             area.innerHTML = `
                 <article id="note-article">
@@ -242,8 +244,9 @@
                     <p class="note-meta">
                         ${note.subTopic ? `<span>${escapeHtml(note.subTopic)}</span>` : ''}
                         ${type ? `<span class="badge">${escapeHtml(type)}</span>` : ''}
-                        ${note.createdAt && note.createdAt.toDate ? `<time datetime="${note.createdAt.toDate().toISOString()}">Added ${note.createdAt.toDate().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</time>` : ''}
+                        <span><i class="fas fa-clock" aria-hidden="true"></i> ~${readingMins} min read (${wordCount} words)</span>
                     </p>
+                    <div id="toc-container"></div>
                     <div class="note-content ${isPlain ? 'plain' : ''}">${cleanContent}</div>
                 </article>
                 <div id="attachment-slot"></div>
@@ -253,12 +256,131 @@
 
             document.getElementById('favBtn').hidden = false;
             syncFavButton();
+            generateTableOfContents();
+            restoreHighlights();
+            setupImageLightbox();
             renderAttachment(note);
             applyUserDisplayPrefs();
             updateProgressBar();
         }
 
-        /* --- attachment (was never shown before) --- */
+        function generateTableOfContents() {
+            const article = document.getElementById('note-article');
+            const headings = article.querySelectorAll('h2, h3');
+            if (headings.length < 2) return;
+
+            const tocContainer = document.getElementById('toc-container');
+            const tocBox = document.createElement('nav');
+            tocBox.className = 'toc-box';
+            tocBox.setAttribute('aria-label', 'Table of Contents');
+            
+            let html = '<h3>Table of Contents</h3><ul>';
+            headings.forEach((h, index) => {
+                if (!h.id) h.id = 'heading-' + index;
+                const indent = h.tagName === 'H3' ? 'style="margin-left: 1rem;"' : '';
+                html += `<li ${indent}><a href="#${h.id}">${escapeHtml(h.textContent)}</a></li>`;
+            });
+            html += '</ul>';
+            tocBox.innerHTML = html;
+            tocContainer.appendChild(tocBox);
+        }
+
+        function saveHighlights() {
+            const contentArea = document.querySelector('.note-content');
+            if (!contentArea) return;
+            const highlights = contentArea.querySelectorAll('.user-highlight');
+            const highlightData = [];
+            highlights.forEach(el => { highlightData.push(el.textContent); });
+            try {
+                const allHighlights = JSON.parse(localStorage.getItem('boom_note_highlights') || '{}');
+                allHighlights[currentNoteId] = highlightData;
+                localStorage.setItem('boom_note_highlights', JSON.stringify(allHighlights));
+            } catch (e) {}
+        }
+
+        function highlightSelectedText() {
+            const selection = window.getSelection();
+            if (!selection.rangeCount || selection.isCollapsed) {
+                showToast('First select some text in the note to highlight.');
+                return;
+            }
+            const range = selection.getRangeAt(0);
+            const contentArea = document.querySelector('.note-content');
+            if (!contentArea.contains(range.commonAncestorContainer)) {
+                showToast('Please select text inside the note content.');
+                return;
+            }
+            const span = document.createElement('span');
+            span.className = 'user-highlight';
+            span.title = 'Click to remove highlight';
+            try {
+                span.appendChild(range.extractContents());
+                range.insertNode(span);
+                selection.removeAllRanges();
+                saveHighlights();
+                showToast('Highlighted!');
+            } catch (e) {}
+        }
+
+        function restoreHighlights() {
+            try {
+                const allHighlights = JSON.parse(localStorage.getItem('boom_note_highlights') || '{}');
+                const noteHighlights = allHighlights[currentNoteId];
+                if (!noteHighlights || !noteHighlights.length) return;
+                const contentArea = document.querySelector('.note-content');
+                if (!contentArea) return;
+                noteHighlights.forEach(text => { walkAndHighlight(contentArea, text); });
+            } catch (e) {}
+        }
+
+        function walkAndHighlight(node, searchText) {
+            if (node.nodeType === Node.TEXT_NODE) {
+                const pos = node.nodeValue.indexOf(searchText);
+                if (pos >= 0) {
+                    const spannable = node.splitText(pos);
+                    spannable.splitText(searchText.length);
+                    const highlightSpan = document.createElement('span');
+                    highlightSpan.className = 'user-highlight';
+                    highlightSpan.textContent = searchText;
+                    spannable.parentNode.replaceChild(highlightSpan, spannable);
+                }
+            } else if (node.nodeType === Node.ELEMENT_NODE && node.nodeName !== 'SCRIPT' && node.nodeName !== 'STYLE') {
+                for (let i = 0; i < node.childNodes.length; i++) {
+                    walkAndHighlight(node.childNodes[i], searchText);
+                }
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('user-highlight')) {
+                const parent = e.target.parentNode;
+                parent.replaceChild(document.createTextNode(e.target.textContent), e.target);
+                parent.normalize();
+                saveHighlights();
+                showToast('Highlight removed');
+            }
+        });
+
+        function setupImageLightbox() {
+            const images = document.querySelectorAll('.note-content img, .attachment-image');
+            images.forEach(img => {
+                img.addEventListener('click', () => {
+                    openLightbox(img.src);
+                });
+            });
+        }
+
+        function openLightbox(src) {
+            const overlay = document.getElementById('lightboxOverlay');
+            const modalImg = document.getElementById('lightboxImg');
+            modalImg.src = src;
+            overlay.classList.add('open');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightboxOverlay').classList.remove('open');
+        }
+
         function renderAttachment(note) {
             const url = note.fileUrl;
             if (!url || !/^https?:\/\//i.test(url)) return;
@@ -289,6 +411,7 @@
                     img.className = 'attachment-image'; img.loading = 'lazy';
                     img.alt = note.noteTopic ? `Image for ${note.noteTopic}` : 'Note image';
                     img.src = url;
+                    img.addEventListener('click', () => openLightbox(url));
                     holder.replaceChildren(img);
                 };
                 if (dataSaver) {
@@ -300,7 +423,6 @@
                 } else { show(); }
                 section.appendChild(holder);
             } else if (isPdf && !dataSaver && window.matchMedia('(min-width: 768px)').matches) {
-                // Many phones cannot preview PDFs inline, so only wide screens get the viewer
                 const frame = document.createElement('iframe');
                 frame.className = 'attachment-pdf'; frame.title = name; frame.src = url; frame.loading = 'lazy';
                 section.appendChild(frame);
@@ -310,14 +432,20 @@
             slot.appendChild(section);
         }
 
-        /* --- reading preferences (set in the settings dialog) --- */
         function applyUserDisplayPrefs() {
             const p = getPrefs();
             const el = document.querySelector('#note-article .note-content');
-            if (el) { el.style.fontSize = p.fontSize; el.style.lineHeight = p.lineHeight; }
+            if (el) {
+                el.style.fontSize = p.fontSize;
+                el.style.lineHeight = p.lineHeight;
+                if (p.dyslexiaFont) {
+                    el.style.fontFamily = '"Comic Sans MS", "Comic Sans", cursive, sans-serif';
+                } else {
+                    el.style.fontFamily = '';
+                }
+            }
         }
 
-        /* --- PDF --- */
         function downloadNote(btn) {
             const el = document.getElementById('note-article');
             if (!el) return;
@@ -326,7 +454,7 @@
             const finish = (ok) => {
                 el.classList.remove('pdf-export');
                 setLoading(btn, false);
-                if (ok) confirmButton(btn, 'Downloaded'); else showToast('The PDF could not be created. Please try again.');
+                if (ok) confirmButton(btn, 'Downloaded'); else showToast('PDF generation failed.');
             };
             try {
                 html2pdf().from(el).save(`Note_${currentNoteTitle}.pdf`).then(() => finish(true)).catch(() => finish(false));
