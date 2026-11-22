@@ -16,7 +16,6 @@
     <script src="tools.js"></script>
 
     <style>
-        /* Page-specific layout only. */
         body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); position: relative; }
         .moe-logo { position: absolute; top: var(--sp-4); left: var(--sp-4); height: var(--sp-7); width: auto; }
 
@@ -29,6 +28,20 @@
         .page-top { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
         #notes-page h1 { margin: 0 0 var(--sp-4); }
 
+        /* Subject Quick Switcher Dropdown in Breadcrumb */
+        .subject-switcher-select {
+            background: var(--surface-2);
+            color: var(--text);
+            border: 1px solid var(--border);
+            border-radius: var(--r-sm);
+            padding: var(--sp-1) var(--sp-3);
+            font: inherit;
+            font-size: var(--fs-2);
+            font-weight: var(--fw-semibold);
+            cursor: pointer;
+        }
+        .subject-switcher-select:focus { border-color: var(--accent); outline: none; }
+
         .search-container { position: relative; margin-bottom: var(--sp-3); }
         #search-input { width: 100%; padding-right: calc(var(--tap) * 2); border-radius: var(--r-pill); padding-left: var(--sp-5); }
         .search-clear-btn { position: absolute; right: var(--tap); top: 0; width: var(--tap); height: var(--tap); border: 0; background: transparent; color: var(--text); cursor: pointer; display: none; }
@@ -36,31 +49,29 @@
 
         .search-chips-container { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-3); }
         .search-chips-container .label { font-size: var(--fs-1); color: var(--text-muted); }
-        .results-count { margin: 0 0 var(--sp-3); font-size: var(--fs-2); color: var(--text-muted); }
+        .clear-history-btn { font-size: var(--fs-1); background: transparent; border: none; color: var(--danger); cursor: pointer; padding: 2px 4px; }
+        
+        .filter-bar { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-4); align-items: center; }
+        .filter-pill { padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: var(--fs-2); cursor: pointer; }
+        .filter-pill.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
+        .results-count { margin: 0 0 var(--sp-3); font-size: var(--fs-2); color: var(--text-muted); }
         .footer { margin-top: var(--sp-7); padding: var(--sp-5) 0 var(--sp-2); }
     </style>
 </head>
 <body>
-    <div class="theme-switcher">
-        <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
-        <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
-        <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
-        <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star"></i></button>
-        <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
-        <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
-        <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
-    </div>
-
     <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
 
     <main id="main-content">
         <section id="notes-page">
             <div class="page-top">
                 <nav class="breadcrumb" aria-label="Breadcrumb">
-                    <a href="landing.html" id="bc-grade-link"><span id="bc-grade">Grade</span></a>
+                    <a href="landing.html" id="bc-grade-link" title="Change Grade"><span id="bc-grade">Grade</span></a>
                     <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                    <a href="subjects.html">Subjects</a>
+                    <!-- Quick Subject Switcher Dropdown -->
+                    <select id="subjectQuickSwitcher" class="subject-switcher-select" onchange="quickSwitchSubject(this.value)" aria-label="Switch subject">
+                        <option value="" disabled selected>Select subject</option>
+                    </select>
                 </nav>
                 <div id="tools-slot" class="toolbar"></div>
             </div>
@@ -74,6 +85,14 @@
             </div>
 
             <div class="search-chips-container" id="search-chips"></div>
+
+            <div class="filter-bar">
+                <button type="button" class="filter-pill active" data-filter="all" onclick="setFilter('all')">All</button>
+                <button type="button" class="filter-pill" data-filter="pinned" onclick="setFilter('pinned')"><i class="fas fa-thumbtack"></i> Pinned</button>
+                <button type="button" class="filter-pill" data-filter="Revision" onclick="setFilter('Revision')">Revision Guides</button>
+                <button type="button" class="filter-pill" data-filter="Exam" onclick="setFilter('Exam')">Exam Practice</button>
+            </div>
+
             <p class="results-count" id="results-count" aria-live="polite"></p>
 
             <div id="subject-notes-area">
@@ -107,7 +126,20 @@
         let allNotes = [];
         let currentSubject = '';
         let currentGrade = '';
+        let activeFilter = 'all';
         const NEW_DAYS = 7;
+
+        const juniorSubjects = [
+            { id: 'mathematics', name: 'Mathematics' },
+            { id: 'english', name: 'English' },
+            { id: 'kiswahili', name: 'Kiswahili' },
+            { id: 'integrated-science', name: 'Integrated Science' },
+            { id: 'social-studies', name: 'Social Studies' },
+            { id: 'cre', name: 'Christian Religious Education' },
+            { id: 'pre-technical', name: 'Pre-Technical' },
+            { id: 'agriculture-nutrition', name: 'Agriculture and Nutrition' },
+            { id: 'creative-arts-sports', name: 'Creative Arts and Sports' }
+        ];
 
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -115,6 +147,12 @@
             const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
             currentGrade = grade;
             document.getElementById('bc-grade').textContent = grade;
+            document.getElementById('bc-grade-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.location.href = 'landing.html';
+            });
+
+            populateSubjectSwitcher(subjectId);
             touchStreak();
             renderSearchChips();
 
@@ -123,9 +161,6 @@
                 const formatted = formatSubject(subjectId);
                 document.getElementById('subject-name').textContent = formatted;
                 document.title = `${formatted}, ${grade} | Boom AI`;
-
-                // Calculator opens by itself for Mathematics on wide screens only
-                // (on a phone it would cover the notes)
                 if (currentSubject === 'mathematics' && window.matchMedia('(min-width: 768px)').matches) {
                     toggleCalculator();
                 }
@@ -141,7 +176,6 @@
                 if (val) saveSearchHistory(val);
             });
 
-            // One delegated listener for every heart button
             document.getElementById('subject-notes-area').addEventListener('click', (e) => {
                 const btn = e.target.closest('[data-fav]');
                 if (!btn) return;
@@ -157,6 +191,17 @@
                 document.getElementById('backToTop').style.display = window.scrollY > 300 ? 'flex' : 'none';
             });
         });
+
+        function populateSubjectSwitcher(currentSubj) {
+            const switcher = document.getElementById('subjectQuickSwitcher');
+            switcher.innerHTML = juniorSubjects.map(s => `<option value="${s.id}" ${s.id === currentSubj ? 'selected' : ''}>${s.name}</option>`).join('');
+        }
+
+        function quickSwitchSubject(newSubj) {
+            if (newSubj) {
+                window.location.href = `note.html?subject=${newSubj}`;
+            }
+        }
 
         function showState(message, buttonLabel, href, onClick) {
             const area = document.getElementById('subject-notes-area');
@@ -180,20 +225,45 @@
                         const data = doc.data();
                         return { id: doc.id, ...data, _text: getSnippet(data.content, 100000).toLowerCase() };
                     });
-                    // Pinned notes first (admin "Pin" option); otherwise newest first as returned
                     allNotes = allNotes.filter(n => n.isPinned).concat(allNotes.filter(n => !n.isPinned));
-                    renderNotes(allNotes);
+                    filterAndRenderNotes();
                 })
                 .catch(err => {
-                    console.error('Error loading notes:', err);
-                    showState('Notes could not load. Check your internet connection and try again.', 'Try again', null,
-                        () => loadSubjectNotes(subjectId, grade));
+                    showState('Notes could not load. Try again.', 'Try again', null, () => loadSubjectNotes(subjectId, grade));
                 });
+        }
+
+        function setFilter(filterType) {
+            activeFilter = filterType;
+            document.querySelectorAll('.filter-pill').forEach(btn => {
+                btn.classList.toggle('active', btn.getAttribute('data-filter') === filterType);
+            });
+            filterAndRenderNotes();
         }
 
         function isNew(note) {
             try { return note.createdAt && (Date.now() - note.createdAt.toDate().getTime()) < NEW_DAYS * 864e5; }
             catch (e) { return false; }
+        }
+
+        function filterAndRenderNotes() {
+            const query = document.getElementById('search-input').value.trim().toLowerCase();
+            let filtered = allNotes.filter(note => {
+                const matchesSearch = !query || 
+                    (note.noteTopic || '').toLowerCase().includes(query) ||
+                    (note.noteTitle || '').toLowerCase().includes(query) ||
+                    (note.subTopic || '').toLowerCase().includes(query) ||
+                    (note._text || '').includes(query);
+                
+                if (!matchesSearch) return false;
+
+                if (activeFilter === 'pinned') return note.isPinned;
+                if (activeFilter === 'Revision') return note.contentType === 'Revision';
+                if (activeFilter === 'Exam') return note.contentType === 'Exam';
+                return true;
+            });
+
+            renderNotes(filtered, query);
         }
 
         function renderNotes(notesToRender, query = '') {
@@ -202,12 +272,13 @@
 
             if (notesToRender.length === 0) {
                 counter.textContent = '';
-                notesArea.innerHTML = `<div class="state-block"><p>No notes match “${escapeHtml(query)}”.</p>
-                    <button type="button" class="btn" id="clearBtn">Clear search</button></div>`;
-                document.getElementById('clearBtn').addEventListener('click', clearSearch);
+                notesArea.innerHTML = `<div class="state-block"><p>No notes found matching “${escapeHtml(query)}”.</p>` +
+                    `<p style="font-size: var(--fs-2); color: var(--text-muted); margin-bottom: var(--sp-3);">Try searching for broader keywords like <em>introduction</em>, <em>formula</em>, or <em>summary</em>.</p>` +
+                    `<button type="button" class="btn" id="clearBtn">Clear search & filters</button></div>`;
+                document.getElementById('clearBtn').addEventListener('click', () => { clearSearch(); setFilter('all'); });
                 return;
             }
-            counter.textContent = query ? `${notesToRender.length} ${notesToRender.length === 1 ? 'note' : 'notes'} found` : '';
+            counter.textContent = `${notesToRender.length} ${notesToRender.length === 1 ? 'note' : 'notes'} found`;
 
             const readNotes = JSON.parse(localStorage.getItem('boom_read_notes') || '[]');
             const favs = getFavs();
@@ -220,7 +291,7 @@
                     note.isPinned ? '<span><i class="fas fa-thumbtack" aria-hidden="true"></i> Pinned</span>' : '',
                     isNew(note) ? '<span class="badge badge-new">New</span>' : '',
                     type ? `<span class="badge">${escapeHtml(type)}</span>` : '',
-                    note.fileUrl ? '<span><i class="fas fa-paperclip" aria-hidden="true"></i><span class="visually-hidden">Has attachment</span></span>' : '',
+                    note.fileUrl ? '<span><i class="fas fa-paperclip" aria-hidden="true"></i></span>' : '',
                     isRead ? '<span><i class="fas fa-check" aria-hidden="true"></i> Read</span>' : ''
                 ].filter(Boolean).join('');
 
@@ -252,39 +323,37 @@
             const history = JSON.parse(localStorage.getItem('boom_search_history') || '[]');
             if (history.length === 0) { container.innerHTML = ''; return; }
             container.innerHTML = '<span class="label">Recent:</span>' +
-                history.map(q => `<button type="button" class="chip" data-q="${escapeHtml(q)}" onclick="applySearchChip(this.dataset.q)">${escapeHtml(q)}</button>`).join('');
+                history.map(q => `<button type="button" class="chip" data-q="${escapeHtml(q)}" onclick="applySearchChip(this.dataset.q)">${escapeHtml(q)}</button>`).join('') +
+                '<button type="button" class="clear-history-btn" onclick="clearSearchHistory()">Clear history</button>';
+        }
+
+        function clearSearchHistory() {
+            localStorage.removeItem('boom_search_history');
+            renderSearchChips();
+            showToast('Search history cleared');
         }
 
         function applySearchChip(query) {
             document.getElementById('search-input').value = query;
             toggleClearButton();
-            searchNotes();
+            filterAndRenderNotes();
         }
 
         function searchNotes() {
-            const query = document.getElementById('search-input').value.trim().toLowerCase();
-            const filtered = allNotes.filter(note =>
-                (note.noteTopic || '').toLowerCase().includes(query) ||
-                (note.noteTitle || '').toLowerCase().includes(query) ||
-                (note.subTopic || '').toLowerCase().includes(query) ||
-                (note._text || '').includes(query)
-            );
-            renderNotes(filtered, query);
+            filterAndRenderNotes();
         }
 
         function clearSearch() {
             const input = document.getElementById('search-input');
             input.value = '';
             toggleClearButton();
-            renderNotes(allNotes, '');
+            filterAndRenderNotes();
             input.focus();
         }
 
         function toggleClearButton() {
             const input = document.getElementById('search-input');
             document.getElementById('search-clear').style.display = input.value.length > 0 ? 'flex' : 'none';
-            document.getElementById('search-clear').style.alignItems = 'center';
-            document.getElementById('search-clear').style.justifyContent = 'center';
         }
 
         function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
