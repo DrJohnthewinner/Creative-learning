@@ -15,7 +15,6 @@
   <script src="theme.js"></script>
 
   <style>
-    /* Page-specific layout only. */
     body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); position: relative; }
     .logo-container { position: absolute; top: var(--sp-4); left: var(--sp-4); }
     .logo-container img { height: var(--sp-7); width: auto; display: block; }
@@ -30,6 +29,21 @@
     .breadcrumb a { display: inline-flex; align-items: center; min-height: var(--tap); font-weight: var(--fw-semibold); }
     .breadcrumb .fa-chevron-right { font-size: var(--fs-1); }
 
+    /* Grade Quick Switcher Dropdown Styling */
+    .grade-switcher-select {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--r-sm);
+      padding: var(--sp-1) var(--sp-3);
+      font: inherit;
+      font-size: var(--fs-2);
+      font-weight: var(--fw-semibold);
+      cursor: pointer;
+      min-height: auto;
+    }
+    .grade-switcher-select:focus { border-color: var(--accent); outline: none; }
+
     #subjects-page h1 { margin: 0 0 var(--sp-2); }
     .streak { margin: 0 0 var(--sp-5); font-size: var(--fs-2); color: var(--text-muted); }
 
@@ -38,7 +52,6 @@
 
     .subject-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-3); }
 
-    /* Subject card is a link: keyboard and long-press friendly */
     .subject-card {
       display: flex; flex-direction: column; gap: var(--sp-3);
       padding: var(--sp-4);
@@ -77,7 +90,13 @@
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="landing.html">Grades</a>
         <i class="fas fa-chevron-right" aria-hidden="true"></i>
-        <span id="grade-display" aria-current="page"></span>
+        <!-- Grade Quick Switcher Dropdown in Breadcrumb -->
+        <select id="gradeQuickSwitcher" class="grade-switcher-select" onchange="quickSwitchGrade(this.value)" aria-label="Switch active grade">
+          <option value="Grade 7">Grade 7</option>
+          <option value="Grade 8">Grade 8</option>
+          <option value="Grade 9">Grade 9</option>
+          <option value="Grade 10">Grade 10</option>
+        </select>
       </nav>
 
       <h1>Choose a subject</h1>
@@ -178,12 +197,21 @@
 
     document.addEventListener('DOMContentLoaded', async function () {
       const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
-      document.getElementById('grade-display').textContent = grade;
+      const switcher = document.getElementById('gradeQuickSwitcher');
+      if (switcher) switcher.value = grade;
       document.title = `${grade} subjects | Boom AI`;
 
       checkStreakAndMilestones();
       await renderSubjects(grade);
     });
+
+    // Grade Quick Switcher Handler
+    async function quickSwitchGrade(newGrade) {
+      localStorage.setItem('selectedGrade', newGrade);
+      document.title = `${newGrade} subjects | Boom AI`;
+      await renderSubjects(newGrade);
+      showToast(`Switched to ${newGrade}`);
+    }
 
     function checkStreakAndMilestones() {
       const today = new Date().toDateString();
@@ -265,7 +293,6 @@
           `;
         }
       } catch (err) {
-        console.error("Error loading subjects:", err);
         container.innerHTML = `
           <div class="state-block">
             <p>Subjects could not load. Check your internet connection and try again.</p>
