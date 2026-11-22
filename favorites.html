@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Notes | Boom AI</title>
+    <title>Your favourites | Boom AI</title>
 
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
@@ -16,6 +16,7 @@
     <script src="tools.js"></script>
 
     <style>
+        /* Page-specific layout only. */
         body { min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: var(--sp-4); position: relative; }
         .moe-logo { position: absolute; top: var(--sp-4); left: var(--sp-4); height: var(--sp-7); width: auto; }
 
@@ -26,86 +27,44 @@
         @media (min-width: 768px) { #notes-page { padding: var(--sp-6); } }
 
         .page-top { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-3); }
-        #notes-page h1 { margin: 0 0 var(--sp-4); }
+        #notes-page h1 { margin: 0 0 var(--sp-5); }
+        .note-meta-line { display: block; margin-top: var(--sp-1); font-size: var(--fs-1); color: var(--text-muted); }
 
-        /* Subject Quick Switcher Dropdown in Breadcrumb */
-        .subject-switcher-select {
-            background: var(--surface-2);
-            color: var(--text);
-            border: 1px solid var(--border);
-            border-radius: var(--r-sm);
-            padding: var(--sp-1) var(--sp-3);
-            font: inherit;
-            font-size: var(--fs-2);
-            font-weight: var(--fw-semibold);
-            cursor: pointer;
-        }
-        .subject-switcher-select:focus { border-color: var(--accent); outline: none; }
-
-        .search-container { position: relative; margin-bottom: var(--sp-3); }
-        #search-input { width: 100%; padding-right: calc(var(--tap) * 2); border-radius: var(--r-pill); padding-left: var(--sp-5); }
-        .search-clear-btn { position: absolute; right: var(--tap); top: 0; width: var(--tap); height: var(--tap); border: 0; background: transparent; color: var(--text); cursor: pointer; display: none; }
-        .search-icon { position: absolute; right: 0; top: 0; width: var(--tap); height: var(--tap); display: flex; align-items: center; justify-content: center; color: var(--text-muted); pointer-events: none; }
-
-        .search-chips-container { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-3); }
-        .search-chips-container .label { font-size: var(--fs-1); color: var(--text-muted); }
-        .clear-history-btn { font-size: var(--fs-1); background: transparent; border: none; color: var(--danger); cursor: pointer; padding: 2px 4px; }
-        
-        .filter-bar { display: flex; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: var(--sp-4); align-items: center; }
-        .filter-pill { padding: var(--sp-1) var(--sp-3); border-radius: var(--r-pill); border: 1px solid var(--border); background: var(--surface); color: var(--text); font-size: var(--fs-2); cursor: pointer; }
-        .filter-pill.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-
-        .results-count { margin: 0 0 var(--sp-3); font-size: var(--fs-2); color: var(--text-muted); }
         .footer { margin-top: var(--sp-7); padding: var(--sp-5) 0 var(--sp-2); }
     </style>
 </head>
 <body>
+    <div class="theme-switcher">
+        <button class="theme-button" data-theme="dark" aria-label="Dark theme"><i class="fas fa-moon"></i></button>
+        <button class="theme-button" data-theme="light" aria-label="Light theme"><i class="fas fa-sun"></i></button>
+        <button class="theme-button" data-theme="sepia" aria-label="Sepia theme"><i class="fas fa-book-open"></i></button>
+        <button class="theme-button" data-theme="midnight" aria-label="Midnight theme"><i class="fas fa-star"></i></button>
+        <button class="theme-button" data-theme="ocean" aria-label="Ocean theme"><i class="fas fa-water"></i></button>
+        <button class="theme-button" data-theme="forest" aria-label="Forest theme"><i class="fas fa-leaf"></i></button>
+        <button class="theme-button" data-theme="rose" aria-label="Rose theme"><i class="fas fa-spa"></i></button>
+    </div>
+
     <img src="moe-logo.webp" alt="Ministry of Education Logo" class="moe-logo">
 
     <main id="main-content">
         <section id="notes-page">
             <div class="page-top">
                 <nav class="breadcrumb" aria-label="Breadcrumb">
-                    <a href="landing.html" id="bc-grade-link" title="Change Grade"><span id="bc-grade">Grade</span></a>
+                    <a href="subjects.html">Subjects</a>
                     <i class="fas fa-chevron-right" aria-hidden="true"></i>
-                    <!-- Quick Subject Switcher Dropdown -->
-                    <select id="subjectQuickSwitcher" class="subject-switcher-select" onchange="quickSwitchSubject(this.value)" aria-label="Switch subject">
-                        <option value="" disabled selected>Select subject</option>
-                    </select>
+                    <span aria-current="page">Favourites</span>
                 </nav>
                 <div id="tools-slot" class="toolbar"></div>
             </div>
 
-            <h1 id="subject-name">Notes</h1>
+            <h1>Your favourites</h1>
 
-            <div class="search-container">
-                <input type="search" id="search-input" placeholder="Search by topic, subtopic or keyword" aria-label="Search notes" autocomplete="off">
-                <button type="button" class="search-clear-btn" id="search-clear" onclick="clearSearch()" aria-label="Clear search"><i class="fas fa-xmark"></i></button>
-                <span class="search-icon" aria-hidden="true"><i class="fas fa-magnifying-glass"></i></span>
-            </div>
-
-            <div class="search-chips-container" id="search-chips"></div>
-
-            <div class="filter-bar">
-                <button type="button" class="filter-pill active" data-filter="all" onclick="setFilter('all')">All</button>
-                <button type="button" class="filter-pill" data-filter="pinned" onclick="setFilter('pinned')"><i class="fas fa-thumbtack"></i> Pinned</button>
-                <button type="button" class="filter-pill" data-filter="Revision" onclick="setFilter('Revision')">Revision Guides</button>
-                <button type="button" class="filter-pill" data-filter="Exam" onclick="setFilter('Exam')">Exam Practice</button>
-            </div>
-
-            <p class="results-count" id="results-count" aria-live="polite"></p>
-
-            <div id="subject-notes-area">
-                <div class="skeleton skeleton-card"></div>
+            <div id="favorite-notes-area" aria-live="polite">
                 <div class="skeleton skeleton-card"></div>
                 <div class="skeleton skeleton-card"></div>
             </div>
         </section>
     </main>
-
-    <button type="button" class="back-to-top" id="backToTop" onclick="scrollToTop()" aria-label="Back to top">
-        <i class="fas fa-arrow-up"></i>
-    </button>
 
     <footer class="footer">
         <p>&copy; 2026 Boom AI. Powered by Pope John.</p>
@@ -123,240 +82,66 @@
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.firestore();
 
-        let allNotes = [];
-        let currentSubject = '';
-        let currentGrade = '';
-        let activeFilter = 'all';
-        const NEW_DAYS = 7;
-
-        const juniorSubjects = [
-            { id: 'mathematics', name: 'Mathematics' },
-            { id: 'english', name: 'English' },
-            { id: 'kiswahili', name: 'Kiswahili' },
-            { id: 'integrated-science', name: 'Integrated Science' },
-            { id: 'social-studies', name: 'Social Studies' },
-            { id: 'cre', name: 'Christian Religious Education' },
-            { id: 'pre-technical', name: 'Pre-Technical' },
-            { id: 'agriculture-nutrition', name: 'Agriculture and Nutrition' },
-            { id: 'creative-arts-sports', name: 'Creative Arts and Sports' }
-        ];
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const subjectId = urlParams.get('subject');
-            const grade = localStorage.getItem('selectedGrade') || 'Grade 8';
-            currentGrade = grade;
-            document.getElementById('bc-grade').textContent = grade;
-            document.getElementById('bc-grade-link').addEventListener('click', (e) => {
-                e.preventDefault();
-                window.location.href = 'landing.html';
-            });
-
-            populateSubjectSwitcher(subjectId);
-            touchStreak();
-            renderSearchChips();
-
-            if (subjectId) {
-                currentSubject = subjectId.toLowerCase();
-                const formatted = formatSubject(subjectId);
-                document.getElementById('subject-name').textContent = formatted;
-                document.title = `${formatted}, ${grade} | Boom AI`;
-                if (currentSubject === 'mathematics' && window.matchMedia('(min-width: 768px)').matches) {
-                    toggleCalculator();
-                }
-                loadSubjectNotes(currentSubject, grade);
-            } else {
-                showState('Choose a subject first to see its notes.', 'Choose a subject', 'subjects.html');
-            }
-
-            const searchInput = document.getElementById('search-input');
-            searchInput.addEventListener('input', () => { toggleClearButton(); searchNotes(); });
-            searchInput.addEventListener('change', () => {
-                const val = searchInput.value.trim();
-                if (val) saveSearchHistory(val);
-            });
-
-            document.getElementById('subject-notes-area').addEventListener('click', (e) => {
-                const btn = e.target.closest('[data-fav]');
-                if (!btn) return;
-                const nowOn = toggleFav(btn.dataset.fav);
-                btn.setAttribute('aria-pressed', nowOn);
-                btn.setAttribute('aria-label', nowOn ? 'Remove from favourites' : 'Add to favourites');
-                const icon = btn.querySelector('.fa-heart');
-                icon.className = `${nowOn ? 'fas' : 'far'} fa-heart favorite-icon ${nowOn ? 'favorited pop' : ''}`;
-                showToast(nowOn ? 'Added to favourites' : 'Removed from favourites');
-            });
-
-            window.addEventListener('scroll', () => {
-                document.getElementById('backToTop').style.display = window.scrollY > 300 ? 'flex' : 'none';
-            });
-        });
-
-        function populateSubjectSwitcher(currentSubj) {
-            const switcher = document.getElementById('subjectQuickSwitcher');
-            switcher.innerHTML = juniorSubjects.map(s => `<option value="${s.id}" ${s.id === currentSubj ? 'selected' : ''}>${s.name}</option>`).join('');
-        }
-
-        function quickSwitchSubject(newSubj) {
-            if (newSubj) {
-                window.location.href = `note.html?subject=${newSubj}`;
-            }
-        }
+        const area = () => document.getElementById('favorite-notes-area');
 
         function showState(message, buttonLabel, href, onClick) {
-            const area = document.getElementById('subject-notes-area');
-            area.innerHTML = `<div class="state-block"><p>${escapeHtml(message)}</p>` +
+            area().innerHTML = `<div class="state-block"><p>${escapeHtml(message)}</p>` +
                 (href ? `<a class="btn btn-primary" href="${href}">${escapeHtml(buttonLabel)}</a>`
                       : `<button type="button" class="btn btn-primary" id="stateBtn">${escapeHtml(buttonLabel)}</button>`) + '</div>';
             if (!href && onClick) document.getElementById('stateBtn').addEventListener('click', onClick);
-            document.getElementById('results-count').textContent = '';
         }
 
-        function loadSubjectNotes(subjectId, grade) {
-            const notesArea = document.getElementById('subject-notes-area');
-            notesArea.innerHTML = '<div class="skeleton skeleton-card"></div>'.repeat(3);
-            db.collection('notes').where('subject', '==', subjectId).where('grade', '==', grade).orderBy('createdAt', 'desc').get()
-                .then(querySnapshot => {
-                    if (querySnapshot.empty) {
-                        showState('No notes for this subject in ' + grade + ' yet. Try another subject.', 'Back to subjects', 'subjects.html');
-                        return;
-                    }
-                    allNotes = querySnapshot.docs.map(doc => {
-                        const data = doc.data();
-                        return { id: doc.id, ...data, _text: getSnippet(data.content, 100000).toLowerCase() };
-                    });
-                    allNotes = allNotes.filter(n => n.isPinned).concat(allNotes.filter(n => !n.isPinned));
-                    filterAndRenderNotes();
-                })
-                .catch(err => {
-                    showState('Notes could not load. Try again.', 'Try again', null, () => loadSubjectNotes(subjectId, grade));
-                });
-        }
-
-        function setFilter(filterType) {
-            activeFilter = filterType;
-            document.querySelectorAll('.filter-pill').forEach(btn => {
-                btn.classList.toggle('active', btn.getAttribute('data-filter') === filterType);
-            });
-            filterAndRenderNotes();
-        }
-
-        function isNew(note) {
-            try { return note.createdAt && (Date.now() - note.createdAt.toDate().getTime()) < NEW_DAYS * 864e5; }
-            catch (e) { return false; }
-        }
-
-        function filterAndRenderNotes() {
-            const query = document.getElementById('search-input').value.trim().toLowerCase();
-            let filtered = allNotes.filter(note => {
-                const matchesSearch = !query || 
-                    (note.noteTopic || '').toLowerCase().includes(query) ||
-                    (note.noteTitle || '').toLowerCase().includes(query) ||
-                    (note.subTopic || '').toLowerCase().includes(query) ||
-                    (note._text || '').includes(query);
-                
-                if (!matchesSearch) return false;
-
-                if (activeFilter === 'pinned') return note.isPinned;
-                if (activeFilter === 'Revision') return note.contentType === 'Revision';
-                if (activeFilter === 'Exam') return note.contentType === 'Exam';
-                return true;
-            });
-
-            renderNotes(filtered, query);
-        }
-
-        function renderNotes(notesToRender, query = '') {
-            const notesArea = document.getElementById('subject-notes-area');
-            const counter = document.getElementById('results-count');
-
-            if (notesToRender.length === 0) {
-                counter.textContent = '';
-                notesArea.innerHTML = `<div class="state-block"><p>No notes found matching “${escapeHtml(query)}”.</p>` +
-                    `<p style="font-size: var(--fs-2); color: var(--text-muted); margin-bottom: var(--sp-3);">Try searching for broader keywords like <em>introduction</em>, <em>formula</em>, or <em>summary</em>.</p>` +
-                    `<button type="button" class="btn" id="clearBtn">Clear search & filters</button></div>`;
-                document.getElementById('clearBtn').addEventListener('click', () => { clearSearch(); setFilter('all'); });
+        function renderNotes(notes) {
+            if (notes.length === 0) {
+                showState('You have not saved any notes yet. Tap the heart on a note to keep it here for revision.', 'Browse subjects', 'subjects.html');
                 return;
             }
-            counter.textContent = `${notesToRender.length} ${notesToRender.length === 1 ? 'note' : 'notes'} found`;
-
-            const readNotes = JSON.parse(localStorage.getItem('boom_read_notes') || '[]');
-            const favs = getFavs();
-
-            notesArea.innerHTML = '<ul class="note-list">' + notesToRender.map(note => {
-                const isRead = readNotes.includes(note.id);
-                const isFav = favs.includes(note.id);
-                const type = note.contentType && note.contentType !== 'Notes' ? note.contentType : '';
-                const flags = [
-                    note.isPinned ? '<span><i class="fas fa-thumbtack" aria-hidden="true"></i> Pinned</span>' : '',
-                    isNew(note) ? '<span class="badge badge-new">New</span>' : '',
-                    type ? `<span class="badge">${escapeHtml(type)}</span>` : '',
-                    note.fileUrl ? '<span><i class="fas fa-paperclip" aria-hidden="true"></i></span>' : '',
-                    isRead ? '<span><i class="fas fa-check" aria-hidden="true"></i> Read</span>' : ''
-                ].filter(Boolean).join('');
-
+            area().innerHTML = '<ul class="note-list">' + notes.map(note => {
+                const subject = note.subject ? formatSubject(note.subject) : '';
+                const meta = [subject, note.grade].filter(Boolean).map(escapeHtml).join(' · ');
                 return `
                 <li class="note-item">
-                    <button type="button" class="favorite-icon-container" data-fav="${note.id}" aria-pressed="${isFav}" aria-label="${isFav ? 'Remove from favourites' : 'Add to favourites'}">
-                        <i class="${isFav ? 'fas' : 'far'} fa-heart favorite-icon ${isFav ? 'favorited' : ''}"></i>
+                    <button type="button" class="favorite-icon-container" data-fav="${note.id}" aria-pressed="true" aria-label="Remove from favourites">
+                        <i class="fas fa-heart favorite-icon favorited"></i>
                     </button>
-                    ${flags ? `<div class="note-flags">${flags}</div>` : ''}
-                    <h2 class="note-topic"><a class="note-link" href="detail.html?noteId=${note.id}">${highlightText(note.noteTopic || 'Untitled note', query)}</a></h2>
-                    ${note.noteTitle ? `<span class="note-custom-title">${highlightText(note.noteTitle, query)}</span>` : ''}
-                    ${note.subTopic ? `<span class="note-sub-topic">${highlightText(note.subTopic, query)}</span>` : ''}
-                    <p class="note-content">${highlightText(getSnippet(note.content), query)}</p>
+                    <h2 class="note-topic"><a class="note-link" href="detail.html?noteId=${note.id}">${escapeHtml(note.noteTopic || 'Untitled note')}</a></h2>
+                    ${note.subTopic ? `<span class="note-sub-topic">${escapeHtml(note.subTopic)}</span>` : ''}
+                    ${meta ? `<span class="note-meta-line">${meta}</span>` : ''}
+                    <p class="note-content">${escapeHtml(getSnippet(note.content))}</p>
                 </li>`;
             }).join('') + '</ul>';
         }
 
-        function saveSearchHistory(query) {
-            let history = JSON.parse(localStorage.getItem('boom_search_history') || '[]');
-            history = history.filter(q => q.toLowerCase() !== query.toLowerCase());
-            history.unshift(query);
-            if (history.length > 5) history.pop();
-            localStorage.setItem('boom_search_history', JSON.stringify(history));
-            renderSearchChips();
+        function loadFavoriteNotes() {
+            const favoriteIds = getFavs();
+            if (favoriteIds.length === 0) { renderNotes([]); return; }
+
+            area().innerHTML = '<div class="skeleton skeleton-card"></div>'.repeat(Math.min(favoriteIds.length, 3));
+
+            Promise.all(favoriteIds.map(id => db.collection('notes').doc(id).get()))
+                .then(snaps => {
+                    const notes = snaps.filter(d => d.exists).map(d => ({ id: d.id, ...d.data() }));
+                    notes.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
+                    renderNotes(notes);
+                })
+                .catch(error => {
+                    console.error('Error fetching favourite notes:', error);
+                    showState('Your favourites could not load. Check your internet connection and try again.', 'Try again', null, loadFavoriteNotes);
+                });
         }
 
-        function renderSearchChips() {
-            const container = document.getElementById('search-chips');
-            const history = JSON.parse(localStorage.getItem('boom_search_history') || '[]');
-            if (history.length === 0) { container.innerHTML = ''; return; }
-            container.innerHTML = '<span class="label">Recent:</span>' +
-                history.map(q => `<button type="button" class="chip" data-q="${escapeHtml(q)}" onclick="applySearchChip(this.dataset.q)">${escapeHtml(q)}</button>`).join('') +
-                '<button type="button" class="clear-history-btn" onclick="clearSearchHistory()">Clear history</button>';
-        }
-
-        function clearSearchHistory() {
-            localStorage.removeItem('boom_search_history');
-            renderSearchChips();
-            showToast('Search history cleared');
-        }
-
-        function applySearchChip(query) {
-            document.getElementById('search-input').value = query;
-            toggleClearButton();
-            filterAndRenderNotes();
-        }
-
-        function searchNotes() {
-            filterAndRenderNotes();
-        }
-
-        function clearSearch() {
-            const input = document.getElementById('search-input');
-            input.value = '';
-            toggleClearButton();
-            filterAndRenderNotes();
-            input.focus();
-        }
-
-        function toggleClearButton() {
-            const input = document.getElementById('search-input');
-            document.getElementById('search-clear').style.display = input.value.length > 0 ? 'flex' : 'none';
-        }
-
-        function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFavoriteNotes();
+            // Tapping a heart here removes the note from the list
+            area().addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-fav]');
+                if (!btn) return;
+                toggleFav(btn.dataset.fav);
+                showToast('Removed from favourites');
+                btn.closest('li').remove();
+                if (!area().querySelector('.note-item')) renderNotes([]);
+            });
+        });
     </script>
 </body>
 </html>
